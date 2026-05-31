@@ -1,6 +1,9 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
+require:
+  - ./lib/rubocop/cop/homecart/service_class_name
+
 plugins:
   - rubocop-rspec
 
@@ -12,3 +15,6 @@ RSpec/ExampleLength:
 
 RSpec/MultipleExpectations:
   Max: 5
+
+Homecart/ServiceClassName:
+  Enabled: true
