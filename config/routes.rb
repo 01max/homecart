@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   root "home#index"
 
+  get "receipts", to: "home#index", as: :receipts
+
   post "hotwire/ping", to: "home#ping", as: :hotwire_ping
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
