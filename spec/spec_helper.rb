@@ -13,6 +13,17 @@
 # it.
 #
 # See https://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
+require "simplecov"
+
+SimpleCov.start "rails" do
+  enable_coverage :branch
+  coverage_dir "tmp/coverage"
+
+  add_filter "/config/"
+  add_filter "/db/schema.rb"
+  add_filter "/bin/"
+end
+
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest

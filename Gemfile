@@ -63,4 +63,8 @@ group :development do
   gem "web-console"
 end
 
+group :test do
+  gem "simplecov", require: false
+end
+
 gem "rspec-rails", "~> 8.0", groups: [:development, :test]
