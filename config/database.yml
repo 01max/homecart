@@ -88,8 +88,10 @@ production:
   primary: &primary_production
     <<: *default
     database: homecart_production
-    username: homecart
-    password: <%= ENV["HOMECART_DATABASE_PASSWORD"] %>
+    username: <%= ENV.fetch("POSTGRES_USER", "homecart") %>
+    password: <%= ENV["POSTGRES_PASSWORD"] %>
+    host: <%= ENV.fetch("POSTGRES_HOST", "db") %>
+    port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
   cache:
     <<: *primary_production
     database: homecart_production_cache
