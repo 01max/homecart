@@ -12,7 +12,11 @@ Ruby 4.0.5, Rails 8.1.3, Postgres 16, Solid Queue, Active Storage (disk), Tesser
 
 ## Setup
 
-This project is just bootstrapped. The Docker-based one-command setup lands in the next sub-task.
+Start the app stack with Docker:
+
+```sh
+docker compose up
+```
 
 For local Ruby development:
 
@@ -20,4 +24,14 @@ For local Ruby development:
 bundle install
 bundle exec rails db:prepare
 bundle exec rspec
+```
+
+## Seed Data
+
+Retail brands and stores are loaded from YAML by `db/seeds.rb`. The tracked file at `db/seeds/retail_locations.yml` is anonymised so the public repository does not expose real-world shopping locations.
+
+For local real data, create `db/seeds/retail_locations.local.yml` with the same shape. That file is ignored by git and takes precedence when present. When a new brand or store appears in the receipt corpus, add it to your local YAML file and re-run:
+
+```sh
+bundle exec rails db:seed
 ```
