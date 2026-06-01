@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict E80eb9vJAEVl0cnVrUn7oKmppmGprOzYFpgXgc8tcyI5hlPf8jnKYRC0pnhayFL
+\restrict hEZe3fpyrQuIzDrKngjUCekHNp02V8zWgPSZNV0NboiZL7BEYMXCkAeCobl86hG
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -176,6 +176,39 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: source_documents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.source_documents (
+    id bigint NOT NULL,
+    content_hash character varying NOT NULL,
+    mime_type character varying NOT NULL,
+    ingested_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: source_documents_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.source_documents_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: source_documents_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.source_documents_id_seq OWNED BY public.source_documents.id;
+
+
+--
 -- Name: stores; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -240,6 +273,13 @@ ALTER TABLE ONLY public.retail_brands ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: source_documents id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.source_documents ALTER COLUMN id SET DEFAULT nextval('public.source_documents_id_seq'::regclass);
+
+
+--
 -- Name: stores id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -295,6 +335,14 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: source_documents source_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.source_documents
+    ADD CONSTRAINT source_documents_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: stores stores_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -335,6 +383,13 @@ CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.ac
 --
 
 CREATE UNIQUE INDEX index_retail_brands_on_slug ON public.retail_brands USING btree (slug);
+
+
+--
+-- Name: index_source_documents_on_content_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_source_documents_on_content_hash ON public.source_documents USING btree (content_hash);
 
 
 --
@@ -379,13 +434,13 @@ ALTER TABLE ONLY public.active_storage_attachments
 -- PostgreSQL database dump complete
 --
 
-\unrestrict E80eb9vJAEVl0cnVrUn7oKmppmGprOzYFpgXgc8tcyI5hlPf8jnKYRC0pnhayFL
+\unrestrict hEZe3fpyrQuIzDrKngjUCekHNp02V8zWgPSZNV0NboiZL7BEYMXCkAeCobl86hG
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict M8zilGZ5rhaIr2DmdDQ4xKeeyB5o6DY8ksOUDMXyTgzsHV9id76QGLMeAi2j1f5
+\restrict pTjIQzOTx8Zt2wo85Tja30cKv56Hpuiax9eAjtYjb0sZQWsCOYKj8WcBI8fRr1L
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -407,11 +462,12 @@ SET row_security = off;
 
 INSERT INTO public.schema_migrations (version) VALUES ('20260531093116');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601064235');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601085807');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict M8zilGZ5rhaIr2DmdDQ4xKeeyB5o6DY8ksOUDMXyTgzsHV9id76QGLMeAi2j1f5
+\unrestrict pTjIQzOTx8Zt2wo85Tja30cKv56Hpuiax9eAjtYjb0sZQWsCOYKj8WcBI8fRr1L
 
