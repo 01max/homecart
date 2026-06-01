@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict CUhkue4nhqP1Def05VSn7P4KQRKEMHH77u5USuatooWPKXAncB7d8VBLytKCFyY
+\restrict Nmx5Q8f2X54c4G3OfzzMZV7Qvrm3PWgd4dZgYNwHD2pm60F5pgmVLHeI7lWQWkj
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -23,6 +23,20 @@ SET row_security = off;
 --
 
 COMMENT ON SCHEMA public IS '';
+
+
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 --
@@ -189,32 +203,13 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.active_storage_attachments (
-    id bigint NOT NULL,
     name character varying NOT NULL,
     record_type character varying NOT NULL,
-    record_id bigint NOT NULL,
-    blob_id bigint NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL
+    created_at timestamp(6) without time zone NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    blob_id uuid NOT NULL,
+    record_id uuid NOT NULL
 );
-
-
---
--- Name: active_storage_attachments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.active_storage_attachments_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: active_storage_attachments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.active_storage_attachments_id_seq OWNED BY public.active_storage_attachments.id;
 
 
 --
@@ -222,7 +217,6 @@ ALTER SEQUENCE public.active_storage_attachments_id_seq OWNED BY public.active_s
 --
 
 CREATE TABLE public.active_storage_blobs (
-    id bigint NOT NULL,
     key character varying NOT NULL,
     filename character varying NOT NULL,
     content_type character varying,
@@ -230,27 +224,9 @@ CREATE TABLE public.active_storage_blobs (
     service_name character varying NOT NULL,
     byte_size bigint NOT NULL,
     checksum character varying,
-    created_at timestamp(6) without time zone NOT NULL
+    created_at timestamp(6) without time zone NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL
 );
-
-
---
--- Name: active_storage_blobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.active_storage_blobs_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: active_storage_blobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.active_storage_blobs_id_seq OWNED BY public.active_storage_blobs.id;
 
 
 --
@@ -258,29 +234,10 @@ ALTER SEQUENCE public.active_storage_blobs_id_seq OWNED BY public.active_storage
 --
 
 CREATE TABLE public.active_storage_variant_records (
-    id bigint NOT NULL,
-    blob_id bigint NOT NULL,
-    variation_digest character varying NOT NULL
+    variation_digest character varying NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    blob_id uuid NOT NULL
 );
-
-
---
--- Name: active_storage_variant_records_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.active_storage_variant_records_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: active_storage_variant_records_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.active_storage_variant_records_id_seq OWNED BY public.active_storage_variant_records.id;
 
 
 --
@@ -300,8 +257,6 @@ CREATE TABLE public.ar_internal_metadata (
 --
 
 CREATE TABLE public.receipt_lines (
-    id bigint NOT NULL,
-    receipt_id bigint NOT NULL,
     "position" integer NOT NULL,
     raw_text text NOT NULL,
     label text NOT NULL,
@@ -315,27 +270,10 @@ CREATE TABLE public.receipt_lines (
     section_label text,
     kind public.receipt_line_kind DEFAULT 'item'::public.receipt_line_kind NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    receipt_id uuid NOT NULL
 );
-
-
---
--- Name: receipt_lines_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.receipt_lines_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: receipt_lines_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.receipt_lines_id_seq OWNED BY public.receipt_lines.id;
 
 
 --
@@ -343,35 +281,16 @@ ALTER SEQUENCE public.receipt_lines_id_seq OWNED BY public.receipt_lines.id;
 --
 
 CREATE TABLE public.receipt_payments (
-    id bigint NOT NULL,
-    receipt_id bigint NOT NULL,
     "position" integer NOT NULL,
     raw_label text NOT NULL,
     category public.receipt_payment_category NOT NULL,
     amount_cents integer NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    receipt_id uuid NOT NULL,
     CONSTRAINT receipt_payments_amount_cents_positive CHECK ((amount_cents > 0))
 );
-
-
---
--- Name: receipt_payments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.receipt_payments_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: receipt_payments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.receipt_payments_id_seq OWNED BY public.receipt_payments.id;
 
 
 --
@@ -379,38 +298,18 @@ ALTER SEQUENCE public.receipt_payments_id_seq OWNED BY public.receipt_payments.i
 --
 
 CREATE TABLE public.receipt_promotions (
-    id bigint NOT NULL,
-    receipt_id bigint NOT NULL,
     program character varying NOT NULL,
     unit public.receipt_promotion_unit NOT NULL,
     delta integer NOT NULL,
     label text,
-    linked_line_id bigint,
     kind public.receipt_promotion_kind NOT NULL,
     linking_method public.receipt_promotion_linking_method NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    CONSTRAINT receipt_promotions_linking_method_matches_link CHECK ((((linked_line_id IS NULL) AND (linking_method = 'unallocated'::public.receipt_promotion_linking_method)) OR ((linked_line_id IS NOT NULL) AND (linking_method = ANY (ARRAY['parser_inferred'::public.receipt_promotion_linking_method, 'user_confirmed'::public.receipt_promotion_linking_method])))))
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    receipt_id uuid NOT NULL,
+    linked_line_id uuid
 );
-
-
---
--- Name: receipt_promotions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.receipt_promotions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: receipt_promotions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.receipt_promotions_id_seq OWNED BY public.receipt_promotions.id;
 
 
 --
@@ -418,10 +317,6 @@ ALTER SEQUENCE public.receipt_promotions_id_seq OWNED BY public.receipt_promotio
 --
 
 CREATE TABLE public.receipts (
-    id bigint NOT NULL,
-    store_id bigint NOT NULL,
-    source_document_id bigint NOT NULL,
-    text_extraction_id bigint NOT NULL,
     parser_format public.parser_format NOT NULL,
     purchased_at timestamp(6) without time zone,
     register_number character varying,
@@ -432,7 +327,11 @@ CREATE TABLE public.receipts (
     parser_status public.receipt_parser_status DEFAULT 'needs_review'::public.receipt_parser_status NOT NULL,
     parser_warnings jsonb DEFAULT '[]'::jsonb NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    store_id uuid NOT NULL,
+    source_document_id uuid NOT NULL,
+    text_extraction_id uuid NOT NULL
 );
 
 
@@ -444,55 +343,17 @@ COMMENT ON COLUMN public.receipts.purchased_at IS 'Wall-clock local transaction 
 
 
 --
--- Name: receipts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.receipts_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: receipts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.receipts_id_seq OWNED BY public.receipts.id;
-
-
---
 -- Name: retail_brands; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.retail_brands (
-    id bigint NOT NULL,
     name character varying NOT NULL,
     slug character varying NOT NULL,
     aliases jsonb DEFAULT '[]'::jsonb NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL
 );
-
-
---
--- Name: retail_brands_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.retail_brands_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: retail_brands_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.retail_brands_id_seq OWNED BY public.retail_brands.id;
 
 
 --
@@ -509,34 +370,15 @@ CREATE TABLE public.schema_migrations (
 --
 
 CREATE TABLE public.source_documents (
-    id bigint NOT NULL,
     content_hash character varying NOT NULL,
     mime_type public.source_document_mime_type NOT NULL,
     ingested_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    store_id bigint NOT NULL,
-    parser_format public.parser_format NOT NULL
+    parser_format public.parser_format NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    store_id uuid NOT NULL
 );
-
-
---
--- Name: source_documents_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.source_documents_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: source_documents_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.source_documents_id_seq OWNED BY public.source_documents.id;
 
 
 --
@@ -544,34 +386,15 @@ ALTER SEQUENCE public.source_documents_id_seq OWNED BY public.source_documents.i
 --
 
 CREATE TABLE public.stores (
-    id bigint NOT NULL,
-    retail_brand_id bigint NOT NULL,
     location_name character varying NOT NULL,
     channel public.store_channel NOT NULL,
     address text,
     identifiers jsonb DEFAULT '{}'::jsonb NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    retail_brand_id uuid NOT NULL
 );
-
-
---
--- Name: stores_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.stores_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: stores_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.stores_id_seq OWNED BY public.stores.id;
 
 
 --
@@ -579,112 +402,16 @@ ALTER SEQUENCE public.stores_id_seq OWNED BY public.stores.id;
 --
 
 CREATE TABLE public.text_extractions (
-    id bigint NOT NULL,
-    source_document_id bigint NOT NULL,
     engine character varying NOT NULL,
     text text DEFAULT ''::text NOT NULL,
     ran_at timestamp(6) without time zone NOT NULL,
     success boolean DEFAULT false NOT NULL,
     error_message text,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    source_document_id uuid NOT NULL
 );
-
-
---
--- Name: text_extractions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.text_extractions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: text_extractions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.text_extractions_id_seq OWNED BY public.text_extractions.id;
-
-
---
--- Name: active_storage_attachments id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.active_storage_attachments ALTER COLUMN id SET DEFAULT nextval('public.active_storage_attachments_id_seq'::regclass);
-
-
---
--- Name: active_storage_blobs id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.active_storage_blobs ALTER COLUMN id SET DEFAULT nextval('public.active_storage_blobs_id_seq'::regclass);
-
-
---
--- Name: active_storage_variant_records id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.active_storage_variant_records ALTER COLUMN id SET DEFAULT nextval('public.active_storage_variant_records_id_seq'::regclass);
-
-
---
--- Name: receipt_lines id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.receipt_lines ALTER COLUMN id SET DEFAULT nextval('public.receipt_lines_id_seq'::regclass);
-
-
---
--- Name: receipt_payments id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.receipt_payments ALTER COLUMN id SET DEFAULT nextval('public.receipt_payments_id_seq'::regclass);
-
-
---
--- Name: receipt_promotions id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.receipt_promotions ALTER COLUMN id SET DEFAULT nextval('public.receipt_promotions_id_seq'::regclass);
-
-
---
--- Name: receipts id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.receipts ALTER COLUMN id SET DEFAULT nextval('public.receipts_id_seq'::regclass);
-
-
---
--- Name: retail_brands id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.retail_brands ALTER COLUMN id SET DEFAULT nextval('public.retail_brands_id_seq'::regclass);
-
-
---
--- Name: source_documents id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.source_documents ALTER COLUMN id SET DEFAULT nextval('public.source_documents_id_seq'::regclass);
-
-
---
--- Name: stores id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.stores ALTER COLUMN id SET DEFAULT nextval('public.stores_id_seq'::regclass);
-
-
---
--- Name: text_extractions id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.text_extractions ALTER COLUMN id SET DEFAULT nextval('public.text_extractions_id_seq'::regclass);
 
 
 --
@@ -1052,13 +779,13 @@ ALTER TABLE ONLY public.receipt_promotions
 -- PostgreSQL database dump complete
 --
 
-\unrestrict CUhkue4nhqP1Def05VSn7P4KQRKEMHH77u5USuatooWPKXAncB7d8VBLytKCFyY
+\unrestrict Nmx5Q8f2X54c4G3OfzzMZV7Qvrm3PWgd4dZgYNwHD2pm60F5pgmVLHeI7lWQWkj
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict RxyW0DS2eBRhNkjxfU0WOWGCg0nRv5ko5R9H1P3sBY6NpZYYqmXjbOaj9vtmvpx
+\restrict 4IEMqk2vE7P0Gn0pyncXS0LjpWzySYH2fsWAYEvPIAvDIEIpNWayMFHFSsLWONZ
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -1088,11 +815,12 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260601111500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601112500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601113500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601124500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601130500');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict RxyW0DS2eBRhNkjxfU0WOWGCg0nRv5ko5R9H1P3sBY6NpZYYqmXjbOaj9vtmvpx
+\unrestrict 4IEMqk2vE7P0Gn0pyncXS0LjpWzySYH2fsWAYEvPIAvDIEIpNWayMFHFSsLWONZ
 

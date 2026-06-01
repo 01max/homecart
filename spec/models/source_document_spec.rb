@@ -35,7 +35,8 @@ RSpec.describe SourceDocument do
 
   it "rejects evidence changes through direct SQL" do
     document = source_document
-    sql = "UPDATE source_documents SET content_hash = '#{'c' * 64}' WHERE id = #{document.id}"
+    quoted_id = ActiveRecord::Base.connection.quote(document.id)
+    sql = "UPDATE source_documents SET content_hash = '#{'c' * 64}' WHERE id = #{quoted_id}"
 
     expect { execute_in_savepoint(sql) }
       .to raise_error(ActiveRecord::StatementInvalid, /source_documents evidence columns are immutable/)

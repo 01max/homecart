@@ -37,7 +37,10 @@ module Homecart
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Don't generate system test files.
-    config.generators.system_tests = nil
+    config.generators do |generators|
+      generators.system_tests = nil
+      generators.orm :active_record, primary_key_type: :uuid
+    end
 
     # Preserve PostgreSQL-specific schema features such as triggers/functions.
     config.active_record.schema_format = :sql

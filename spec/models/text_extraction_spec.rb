@@ -44,7 +44,8 @@ RSpec.describe TextExtraction do
 
   it "rejects evidence changes through direct SQL" do
     extraction = text_extraction
-    sql = "UPDATE text_extractions SET engine = 'manual-edit' WHERE id = #{extraction.id}"
+    quoted_id = ActiveRecord::Base.connection.quote(extraction.id)
+    sql = "UPDATE text_extractions SET engine = 'manual-edit' WHERE id = #{quoted_id}"
 
     expect { execute_in_savepoint(sql) }
       .to raise_error(ActiveRecord::StatementInvalid, /text_extractions evidence columns are immutable/)
