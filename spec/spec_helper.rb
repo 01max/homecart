@@ -20,7 +20,7 @@ SimpleCov.start "rails" do
   coverage_dir "tmp/coverage"
 
   add_filter "/config/"
-  add_filter "/db/schema.rb"
+  add_filter "/db/"
   add_filter "/bin/"
 end
 
