@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aNJXUmTbdeC2jszntAfGOAFGhTJRGWn9qr7VseAyqax4GwBrz8bhmxaRdNaoKOn
+\restrict EwYJqyyfugLoa5KP5O7HvVZmJMZIOxJw4rNnV44xa3ODZ9hw8J1kOInIYRtqgx8
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -36,6 +36,17 @@ CREATE TYPE public.parser_format AS ENUM (
     'leclerc.web.v1',
     'u.paper.v1',
     'u.paper.v2'
+);
+
+
+--
+-- Name: receipt_parser_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.receipt_parser_status AS ENUM (
+    'parsed',
+    'needs_review',
+    'reviewed'
 );
 
 
@@ -174,6 +185,55 @@ CREATE TABLE public.ar_internal_metadata (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
+
+
+--
+-- Name: receipts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.receipts (
+    id bigint NOT NULL,
+    store_id bigint NOT NULL,
+    source_document_id bigint NOT NULL,
+    text_extraction_id bigint NOT NULL,
+    parser_format public.parser_format NOT NULL,
+    purchased_at timestamp(6) without time zone,
+    register_number character varying,
+    ticket_number character varying,
+    cashier_code character varying,
+    total_cents integer,
+    declared_article_count integer,
+    parser_status public.receipt_parser_status DEFAULT 'needs_review'::public.receipt_parser_status NOT NULL,
+    parser_warnings jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: COLUMN receipts.purchased_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.receipts.purchased_at IS 'Wall-clock local transaction time, stored as printed or implied with no timezone offset applied. Drive and Click & Collect receipts use the PDF order-confirmation time.';
+
+
+--
+-- Name: receipts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.receipts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: receipts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.receipts_id_seq OWNED BY public.receipts.id;
 
 
 --
@@ -346,6 +406,13 @@ ALTER TABLE ONLY public.active_storage_variant_records ALTER COLUMN id SET DEFAU
 
 
 --
+-- Name: receipts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipts ALTER COLUMN id SET DEFAULT nextval('public.receipts_id_seq'::regclass);
+
+
+--
 -- Name: retail_brands id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -403,6 +470,14 @@ ALTER TABLE ONLY public.active_storage_variant_records
 
 ALTER TABLE ONLY public.ar_internal_metadata
     ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: receipts receipts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipts
+    ADD CONSTRAINT receipts_pkey PRIMARY KEY (id);
 
 
 --
@@ -474,6 +549,41 @@ CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.ac
 
 
 --
+-- Name: index_receipts_on_source_document_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipts_on_source_document_id ON public.receipts USING btree (source_document_id);
+
+
+--
+-- Name: index_receipts_on_store_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipts_on_store_id ON public.receipts USING btree (store_id);
+
+
+--
+-- Name: index_receipts_on_store_register_ticket_purchased_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_receipts_on_store_register_ticket_purchased_at ON public.receipts USING btree (store_id, register_number, ticket_number, purchased_at) WHERE ((store_id IS NOT NULL) AND (register_number IS NOT NULL) AND (ticket_number IS NOT NULL) AND (purchased_at IS NOT NULL));
+
+
+--
+-- Name: INDEX index_receipts_on_store_register_ticket_purchased_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public.index_receipts_on_store_register_ticket_purchased_at IS 'Soft duplicate guard. Intentionally excludes rows where any composite receipt identifier is NULL; source_documents.content_hash is the hard re-upload guard for exact duplicate files.';
+
+
+--
+-- Name: index_receipts_on_text_extraction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipts_on_text_extraction_id ON public.receipts USING btree (text_extraction_id);
+
+
+--
 -- Name: index_retail_brands_on_slug; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -524,11 +634,35 @@ ALTER TABLE ONLY public.stores
 
 
 --
+-- Name: receipts fk_rails_0b2f6f5e69; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipts
+    ADD CONSTRAINT fk_rails_0b2f6f5e69 FOREIGN KEY (text_extraction_id) REFERENCES public.text_extractions(id);
+
+
+--
 -- Name: source_documents fk_rails_479c8da4db; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.source_documents
     ADD CONSTRAINT fk_rails_479c8da4db FOREIGN KEY (store_id) REFERENCES public.stores(id);
+
+
+--
+-- Name: receipts fk_rails_4e2f966342; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipts
+    ADD CONSTRAINT fk_rails_4e2f966342 FOREIGN KEY (source_document_id) REFERENCES public.source_documents(id);
+
+
+--
+-- Name: receipts fk_rails_550c459587; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipts
+    ADD CONSTRAINT fk_rails_550c459587 FOREIGN KEY (store_id) REFERENCES public.stores(id);
 
 
 --
@@ -559,13 +693,13 @@ ALTER TABLE ONLY public.active_storage_attachments
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aNJXUmTbdeC2jszntAfGOAFGhTJRGWn9qr7VseAyqax4GwBrz8bhmxaRdNaoKOn
+\unrestrict EwYJqyyfugLoa5KP5O7HvVZmJMZIOxJw4rNnV44xa3ODZ9hw8J1kOInIYRtqgx8
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict saSE07A5aLg1C4je2rX5NCWulRzMOjCHHF14fzDbgrAWvb0pemfJaxWBiMgP9ZK
+\restrict swIdNYpdKgw3PvQ5b095PEffvebCQic5kMtMNCsDwc0nTtXw4mamjOfQNgOIPQe
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -590,11 +724,12 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260601064235');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601085807');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601093241');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601104500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601110500');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict saSE07A5aLg1C4je2rX5NCWulRzMOjCHHF14fzDbgrAWvb0pemfJaxWBiMgP9ZK
+\unrestrict swIdNYpdKgw3PvQ5b095PEffvebCQic5kMtMNCsDwc0nTtXw4mamjOfQNgOIPQe
 
