@@ -12,6 +12,14 @@ RSpec.describe ReceiptIngestion::ExtractPdfService do
     expect(result.engine).to eq("pdftotext-layout")
   end
 
+  it "extracts text from a fixture PDF" do
+    result = described_class.call(pdf_path: Rails.root.join("spec/fixtures/files/receipt_text.pdf"))
+
+    expect(result.text).to include("HOME CART PDF FIXTURE")
+    expect(result.text).to include("TOTAL 12,34 EUR")
+    expect(result.engine).to eq("pdftotext-layout")
+  end
+
   it "runs pdftotext with layout mode and stdout output" do
     command = nil
     runner = lambda do |*args|

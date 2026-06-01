@@ -36,6 +36,14 @@ RSpec.describe ReceiptIngestion::ExtractImageWithTesseractService do
     expect(result.engine).to eq("tesseract-5.5.1-fra-psm6")
   end
 
+  it "extracts text from a fixture PNG" do
+    result = described_class.call(image_path: Rails.root.join("spec/fixtures/files/receipt_image.png"))
+
+    expect(result.text).to include("TICKET TEST")
+    expect(result.text).to include("TOTAL 12,34 EUR")
+    expect(result.engine).to match(/\Atesseract-\d+(?:\.\d+)+-fra-psm6\z/)
+  end
+
   it "runs raw Tesseract with French data and PSM 6" do
     call_service
 
