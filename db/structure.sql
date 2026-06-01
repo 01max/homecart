@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict HrK9WOEXcWw67ANSsqvmdNg93KcJQvRmfRhRev9IjWyMLZHf857N25eiWmrjOXH
+\restrict CUhkue4nhqP1Def05VSn7P4KQRKEMHH77u5USuatooWPKXAncB7d8VBLytKCFyY
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -140,6 +140,44 @@ CREATE TYPE public.store_channel AS ENUM (
     'drive',
     'click_collect'
 );
+
+
+--
+-- Name: prevent_source_document_evidence_update(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.prevent_source_document_evidence_update() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF ROW(OLD.content_hash, OLD.mime_type, OLD.ingested_at)
+    IS DISTINCT FROM ROW(NEW.content_hash, NEW.mime_type, NEW.ingested_at) THEN
+    RAISE EXCEPTION 'source_documents evidence columns are immutable'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: prevent_text_extraction_evidence_update(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.prevent_text_extraction_evidence_update() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF ROW(OLD.source_document_id, OLD.engine, OLD.text, OLD.ran_at, OLD.success, OLD.error_message)
+    IS DISTINCT FROM ROW(NEW.source_document_id, NEW.engine, NEW.text, NEW.ran_at, NEW.success, NEW.error_message) THEN
+    RAISE EXCEPTION 'text_extractions evidence columns are immutable'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
 
 
 SET default_tablespace = '';
@@ -901,6 +939,20 @@ CREATE INDEX index_text_extractions_on_source_document_id ON public.text_extract
 
 
 --
+-- Name: source_documents source_documents_evidence_immutable; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER source_documents_evidence_immutable BEFORE UPDATE OF content_hash, mime_type, ingested_at ON public.source_documents FOR EACH ROW EXECUTE FUNCTION public.prevent_source_document_evidence_update();
+
+
+--
+-- Name: text_extractions text_extractions_evidence_immutable; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER text_extractions_evidence_immutable BEFORE UPDATE OF source_document_id, engine, text, ran_at, success, error_message ON public.text_extractions FOR EACH ROW EXECUTE FUNCTION public.prevent_text_extraction_evidence_update();
+
+
+--
 -- Name: receipt_payments fk_rails_01cb4412a8; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1000,13 +1052,13 @@ ALTER TABLE ONLY public.receipt_promotions
 -- PostgreSQL database dump complete
 --
 
-\unrestrict HrK9WOEXcWw67ANSsqvmdNg93KcJQvRmfRhRev9IjWyMLZHf857N25eiWmrjOXH
+\unrestrict CUhkue4nhqP1Def05VSn7P4KQRKEMHH77u5USuatooWPKXAncB7d8VBLytKCFyY
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict w1aj3kxRnLt5ed6dcvtUDMaAYtvnE3OvTWqP5dfXFhbzrbjdXgcvu2qcCtTHtmY
+\restrict RxyW0DS2eBRhNkjxfU0WOWGCg0nRv5ko5R9H1P3sBY6NpZYYqmXjbOaj9vtmvpx
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -1035,11 +1087,12 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260601110500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601111500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601112500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601113500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601124500');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict w1aj3kxRnLt5ed6dcvtUDMaAYtvnE3OvTWqP5dfXFhbzrbjdXgcvu2qcCtTHtmY
+\unrestrict RxyW0DS2eBRhNkjxfU0WOWGCg0nRv5ko5R9H1P3sBY6NpZYYqmXjbOaj9vtmvpx
 

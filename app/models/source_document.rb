@@ -1,4 +1,6 @@
 class SourceDocument < ApplicationRecord
+  include EvidenceImmutable
+
   MIME_TYPES = {
     pdf: "application/pdf",
     png: "image/png",
@@ -16,6 +18,8 @@ class SourceDocument < ApplicationRecord
 
   enum :mime_type, MIME_TYPES, prefix: true, validate: true
   enum :parser_format, PARSER_FORMATS, prefix: true, validate: true
+
+  immutable_evidence_attributes :content_hash, :mime_type, :ingested_at
 
   belongs_to :store, inverse_of: :source_documents
   has_one_attached :original_file

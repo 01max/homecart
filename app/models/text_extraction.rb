@@ -1,4 +1,8 @@
 class TextExtraction < ApplicationRecord
+  include EvidenceImmutable
+
+  immutable_evidence_attributes :source_document_id, :engine, :text, :ran_at, :success, :error_message
+
   belongs_to :source_document, inverse_of: :text_extractions
   has_one :receipt, inverse_of: :text_extraction, dependent: :restrict_with_exception
 
