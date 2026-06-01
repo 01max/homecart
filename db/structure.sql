@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict bEWf2VtAlgECV0ZjPc1WdF94QpSVdagZaY5k0W416n4lJsJyWbQkhpANSEn8236
+\restrict aNJXUmTbdeC2jszntAfGOAFGhTJRGWn9qr7VseAyqax4GwBrz8bhmxaRdNaoKOn
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -23,6 +23,20 @@ SET row_security = off;
 --
 
 COMMENT ON SCHEMA public IS '';
+
+
+--
+-- Name: parser_format; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.parser_format AS ENUM (
+    'auchan.paper.v1',
+    'leclerc.paper.v1',
+    'leclerc.paper.v2',
+    'leclerc.web.v1',
+    'u.paper.v1',
+    'u.paper.v2'
+);
 
 
 --
@@ -214,7 +228,9 @@ CREATE TABLE public.source_documents (
     mime_type public.source_document_mime_type NOT NULL,
     ingested_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    store_id bigint NOT NULL,
+    parser_format public.parser_format NOT NULL
 );
 
 
@@ -472,6 +488,13 @@ CREATE UNIQUE INDEX index_source_documents_on_content_hash ON public.source_docu
 
 
 --
+-- Name: index_source_documents_on_store_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_source_documents_on_store_id ON public.source_documents USING btree (store_id);
+
+
+--
 -- Name: index_stores_on_retail_brand_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -498,6 +521,14 @@ CREATE INDEX index_text_extractions_on_source_document_id ON public.text_extract
 
 ALTER TABLE ONLY public.stores
     ADD CONSTRAINT fk_rails_01d25a15c8 FOREIGN KEY (retail_brand_id) REFERENCES public.retail_brands(id);
+
+
+--
+-- Name: source_documents fk_rails_479c8da4db; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.source_documents
+    ADD CONSTRAINT fk_rails_479c8da4db FOREIGN KEY (store_id) REFERENCES public.stores(id);
 
 
 --
@@ -528,13 +559,13 @@ ALTER TABLE ONLY public.active_storage_attachments
 -- PostgreSQL database dump complete
 --
 
-\unrestrict bEWf2VtAlgECV0ZjPc1WdF94QpSVdagZaY5k0W416n4lJsJyWbQkhpANSEn8236
+\unrestrict aNJXUmTbdeC2jszntAfGOAFGhTJRGWn9qr7VseAyqax4GwBrz8bhmxaRdNaoKOn
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict v3ieCFKb5hiNFKRGoKWlp9ehCSO4dmhBzKr2GTrafeIWbozBlNh11QQbpk6wtay
+\restrict saSE07A5aLg1C4je2rX5NCWulRzMOjCHHF14fzDbgrAWvb0pemfJaxWBiMgP9ZK
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -558,11 +589,12 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260531093116');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601064235');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601085807');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601093241');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601104500');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict v3ieCFKb5hiNFKRGoKWlp9ehCSO4dmhBzKr2GTrafeIWbozBlNh11QQbpk6wtay
+\unrestrict saSE07A5aLg1C4je2rX5NCWulRzMOjCHHF14fzDbgrAWvb0pemfJaxWBiMgP9ZK
 
