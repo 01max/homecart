@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict hEZe3fpyrQuIzDrKngjUCekHNp02V8zWgPSZNV0NboiZL7BEYMXCkAeCobl86hG
+\restrict 5zdAFNd0iOakyQCNjoJs11ZNGaAkvdVwHslIJLF1jCdEoUDDPr8SwZx2pfHcXFy
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -245,6 +245,42 @@ ALTER SEQUENCE public.stores_id_seq OWNED BY public.stores.id;
 
 
 --
+-- Name: text_extractions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.text_extractions (
+    id bigint NOT NULL,
+    source_document_id bigint NOT NULL,
+    engine character varying NOT NULL,
+    text text DEFAULT ''::text NOT NULL,
+    ran_at timestamp(6) without time zone NOT NULL,
+    success boolean DEFAULT false NOT NULL,
+    error_message text,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: text_extractions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.text_extractions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: text_extractions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.text_extractions_id_seq OWNED BY public.text_extractions.id;
+
+
+--
 -- Name: active_storage_attachments id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -284,6 +320,13 @@ ALTER TABLE ONLY public.source_documents ALTER COLUMN id SET DEFAULT nextval('pu
 --
 
 ALTER TABLE ONLY public.stores ALTER COLUMN id SET DEFAULT nextval('public.stores_id_seq'::regclass);
+
+
+--
+-- Name: text_extractions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.text_extractions ALTER COLUMN id SET DEFAULT nextval('public.text_extractions_id_seq'::regclass);
 
 
 --
@@ -351,6 +394,14 @@ ALTER TABLE ONLY public.stores
 
 
 --
+-- Name: text_extractions text_extractions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.text_extractions
+    ADD CONSTRAINT text_extractions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: index_active_storage_attachments_on_blob_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -407,11 +458,26 @@ CREATE UNIQUE INDEX index_stores_on_retail_brand_id_and_location_name_and_channe
 
 
 --
+-- Name: index_text_extractions_on_source_document_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_text_extractions_on_source_document_id ON public.text_extractions USING btree (source_document_id);
+
+
+--
 -- Name: stores fk_rails_01d25a15c8; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stores
     ADD CONSTRAINT fk_rails_01d25a15c8 FOREIGN KEY (retail_brand_id) REFERENCES public.retail_brands(id);
+
+
+--
+-- Name: text_extractions fk_rails_848b654367; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.text_extractions
+    ADD CONSTRAINT fk_rails_848b654367 FOREIGN KEY (source_document_id) REFERENCES public.source_documents(id);
 
 
 --
@@ -434,13 +500,13 @@ ALTER TABLE ONLY public.active_storage_attachments
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hEZe3fpyrQuIzDrKngjUCekHNp02V8zWgPSZNV0NboiZL7BEYMXCkAeCobl86hG
+\unrestrict 5zdAFNd0iOakyQCNjoJs11ZNGaAkvdVwHslIJLF1jCdEoUDDPr8SwZx2pfHcXFy
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict pTjIQzOTx8Zt2wo85Tja30cKv56Hpuiax9eAjtYjb0sZQWsCOYKj8WcBI8fRr1L
+\restrict micP999TLuRJTkTtkd63QoAUK25uHgVIJnOrbC1f1MY7ZRbtbjmdB5hftihgz84
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -463,11 +529,12 @@ SET row_security = off;
 INSERT INTO public.schema_migrations (version) VALUES ('20260531093116');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601064235');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601085807');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601093241');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict pTjIQzOTx8Zt2wo85Tja30cKv56Hpuiax9eAjtYjb0sZQWsCOYKj8WcBI8fRr1L
+\unrestrict micP999TLuRJTkTtkd63QoAUK25uHgVIJnOrbC1f1MY7ZRbtbjmdB5hftihgz84
 
