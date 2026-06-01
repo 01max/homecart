@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict EwYJqyyfugLoa5KP5O7HvVZmJMZIOxJw4rNnV44xa3ODZ9hw8J1kOInIYRtqgx8
+\restrict aQa6lDXo4ORI4h3cCsyUBSZrYS0wro6kd8YwGddMRVQgmtcCYql0lOOO5SF1VoS
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -36,6 +36,30 @@ CREATE TYPE public.parser_format AS ENUM (
     'leclerc.web.v1',
     'u.paper.v1',
     'u.paper.v2'
+);
+
+
+--
+-- Name: receipt_line_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.receipt_line_kind AS ENUM (
+    'item',
+    'fee',
+    'discount'
+);
+
+
+--
+-- Name: receipt_line_unit_of_measure; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.receipt_line_unit_of_measure AS ENUM (
+    'piece',
+    'kg',
+    'g',
+    'l',
+    'ml'
 );
 
 
@@ -185,6 +209,49 @@ CREATE TABLE public.ar_internal_metadata (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
+
+
+--
+-- Name: receipt_lines; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.receipt_lines (
+    id bigint NOT NULL,
+    receipt_id bigint NOT NULL,
+    "position" integer NOT NULL,
+    raw_text text NOT NULL,
+    label text NOT NULL,
+    label_truncated boolean DEFAULT false NOT NULL,
+    quantity numeric(10,3) DEFAULT 1.0 NOT NULL,
+    unit_of_measure public.receipt_line_unit_of_measure DEFAULT 'piece'::public.receipt_line_unit_of_measure NOT NULL,
+    unit_price_cents integer,
+    total_cents integer NOT NULL,
+    vat_rate_bp integer,
+    tr_eligible boolean DEFAULT false NOT NULL,
+    section_label text,
+    kind public.receipt_line_kind DEFAULT 'item'::public.receipt_line_kind NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: receipt_lines_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.receipt_lines_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: receipt_lines_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.receipt_lines_id_seq OWNED BY public.receipt_lines.id;
 
 
 --
@@ -406,6 +473,13 @@ ALTER TABLE ONLY public.active_storage_variant_records ALTER COLUMN id SET DEFAU
 
 
 --
+-- Name: receipt_lines id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_lines ALTER COLUMN id SET DEFAULT nextval('public.receipt_lines_id_seq'::regclass);
+
+
+--
 -- Name: receipts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -470,6 +544,14 @@ ALTER TABLE ONLY public.active_storage_variant_records
 
 ALTER TABLE ONLY public.ar_internal_metadata
     ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: receipt_lines receipt_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_lines
+    ADD CONSTRAINT receipt_lines_pkey PRIMARY KEY (id);
 
 
 --
@@ -546,6 +628,20 @@ CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_b
 --
 
 CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
+
+
+--
+-- Name: index_receipt_lines_on_receipt_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_lines_on_receipt_id ON public.receipt_lines USING btree (receipt_id);
+
+
+--
+-- Name: index_receipt_lines_on_receipt_id_and_position; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_receipt_lines_on_receipt_id_and_position ON public.receipt_lines USING btree (receipt_id, "position");
 
 
 --
@@ -666,6 +762,14 @@ ALTER TABLE ONLY public.receipts
 
 
 --
+-- Name: receipt_lines fk_rails_611ac14192; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_lines
+    ADD CONSTRAINT fk_rails_611ac14192 FOREIGN KEY (receipt_id) REFERENCES public.receipts(id);
+
+
+--
 -- Name: text_extractions fk_rails_848b654367; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -693,13 +797,13 @@ ALTER TABLE ONLY public.active_storage_attachments
 -- PostgreSQL database dump complete
 --
 
-\unrestrict EwYJqyyfugLoa5KP5O7HvVZmJMZIOxJw4rNnV44xa3ODZ9hw8J1kOInIYRtqgx8
+\unrestrict aQa6lDXo4ORI4h3cCsyUBSZrYS0wro6kd8YwGddMRVQgmtcCYql0lOOO5SF1VoS
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict swIdNYpdKgw3PvQ5b095PEffvebCQic5kMtMNCsDwc0nTtXw4mamjOfQNgOIPQe
+\restrict wybsKTDAzwBCe7fYfGG3xrHVYMLWTt59Ldr7OPqbjIGV3r6wHbuhUFFdg24Ig1S
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -725,11 +829,12 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260601085807');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601093241');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601104500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601110500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601111500');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict swIdNYpdKgw3PvQ5b095PEffvebCQic5kMtMNCsDwc0nTtXw4mamjOfQNgOIPQe
+\unrestrict wybsKTDAzwBCe7fYfGG3xrHVYMLWTt59Ldr7OPqbjIGV3r6wHbuhUFFdg24Ig1S
 
