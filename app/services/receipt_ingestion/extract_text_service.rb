@@ -1,5 +1,8 @@
 module ReceiptIngestion
   class ExtractTextService < ApplicationService
+    IMAGE_FAILURE_ENGINE = "tesseract-fra-psm6"
+    UNSUPPORTED_MIME_TYPE_ENGINE = "unsupported"
+
     MissingOriginalFileError = Class.new(StandardError)
     UnsupportedMimeTypeError = Class.new(StandardError)
 
@@ -20,8 +23,10 @@ module ReceiptIngestion
 
       source_document.original_file.open do |file|
         result = extract(file.path)
-        create_text_extraction(result)
+        create_successful_text_extraction(result)
       end
+    rescue *handled_failure_errors => e
+      create_failed_text_extraction(e)
     end
 
     private
@@ -38,7 +43,7 @@ module ReceiptIngestion
       end
     end
 
-    def create_text_extraction(result)
+    def create_successful_text_extraction(result)
       TextExtraction.create!(
         source_document: source_document,
         engine: result.engine,
@@ -46,6 +51,38 @@ module ReceiptIngestion
         ran_at: clock.call,
         success: true
       )
+    end
+
+    def create_failed_text_extraction(error)
+      TextExtraction.create!(
+        source_document: source_document,
+        engine: failure_engine,
+        text: "",
+        ran_at: clock.call,
+        success: false,
+        error_message: error.message
+      )
+    end
+
+    def failure_engine
+      if source_document.mime_type_pdf?
+        return pdf_extractor::ENGINE if pdf_extractor.const_defined?(:ENGINE)
+
+        return ExtractPdfService::ENGINE
+      end
+
+      return IMAGE_FAILURE_ENGINE if source_document.mime_type_png? || source_document.mime_type_jpeg?
+
+      UNSUPPORTED_MIME_TYPE_ENGINE
+    end
+
+    def handled_failure_errors
+      [
+        MissingOriginalFileError,
+        UnsupportedMimeTypeError,
+        ExtractPdfService::ExtractionError,
+        ExtractImageWithTesseractService::ExtractionError
+      ]
     end
   end
 end

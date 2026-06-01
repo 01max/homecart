@@ -29,13 +29,13 @@ RSpec.describe ReceiptIngestion::ExtractPdfService do
     runner = ->(*) { [ "", "bad PDF", failed_status ] }
 
     expect { described_class.call(pdf_path: "/tmp/receipt.pdf", command_runner: runner) }
-      .to raise_error(described_class::Error, "pdftotext failed: bad PDF")
+      .to raise_error(described_class::ExtractionError, "pdftotext failed: bad PDF")
   end
 
   it "raises a service error when pdftotext returns empty text" do
     runner = ->(*) { [ "", "", status ] }
 
     expect { described_class.call(pdf_path: "/tmp/receipt.pdf", command_runner: runner) }
-      .to raise_error(described_class::Error, "pdftotext returned empty text")
+      .to raise_error(described_class::ExtractionError, "pdftotext returned empty text")
   end
 end

@@ -23,6 +23,23 @@ RSpec.describe ReceiptIngestion::ExtractTextService do
     [ extractor, calls ]
   end
 
+  def failing_extractor(error_class, message)
+    Class.new do
+      define_singleton_method(:call) do |**|
+        raise error_class, message
+      end
+    end
+  end
+
+  def expect_failed_extraction(extraction, engine:, error_message:)
+    expect(extraction).to have_attributes(
+      text: "",
+      engine: engine,
+      success: false,
+      error_message: error_message
+    )
+  end
+
   it "routes PDF source documents and persists a successful text extraction" do
     source_document = create_source_document(mime_type: "application/pdf")
     attach_original_file(source_document)
@@ -56,10 +73,34 @@ RSpec.describe ReceiptIngestion::ExtractTextService do
     expect(extraction.ran_at).to eq(ran_at)
   end
 
-  it "raises when the original file is missing" do
+  it "persists a failed text extraction when PDF extraction fails" do
+    source_document = create_source_document(mime_type: "application/pdf")
+    attach_original_file(source_document)
+    pdf_extractor = failing_extractor(ReceiptIngestion::ExtractPdfService::ExtractionError, "pdftotext failed")
+
+    extraction = described_class.call(source_document: source_document, pdf_extractor: pdf_extractor)
+
+    expect_failed_extraction(extraction, engine: "pdftotext-layout", error_message: "pdftotext failed")
+  end
+
+  it "persists a failed text extraction when image extraction fails" do
+    source_document = create_source_document(mime_type: "image/png")
+    attach_original_file(source_document)
+    image_extractor = failing_extractor(
+      ReceiptIngestion::ExtractImageWithTesseractService::ExtractionError,
+      "tesseract returned empty text"
+    )
+
+    extraction = described_class.call(source_document: source_document, image_extractor: image_extractor)
+
+    expect_failed_extraction(extraction, engine: "tesseract-fra-psm6", error_message: "tesseract returned empty text")
+  end
+
+  it "persists a failed text extraction when the original file is missing" do
     source_document = create_source_document
 
-    expect { described_class.call(source_document: source_document) }
-      .to raise_error(described_class::MissingOriginalFileError, "source document has no original file")
+    extraction = described_class.call(source_document: source_document)
+
+    expect_failed_extraction(extraction, engine: "pdftotext-layout", error_message: "source document has no original file")
   end
 end

@@ -4,7 +4,7 @@ module ReceiptIngestion
   class ExtractPdfService < ApplicationService
     ENGINE = "pdftotext-layout"
 
-    Error = Class.new(StandardError)
+    ExtractionError = Class.new(StandardError)
     Result = Data.define(:text, :engine)
 
     def initialize(pdf_path:, command_runner: Open3.method(:capture3))
@@ -14,10 +14,10 @@ module ReceiptIngestion
 
     def call
       stdout, stderr, status = command_runner.call("pdftotext", "-layout", pdf_path.to_s, "-")
-      raise Error, error_message(stderr) unless status.success?
+      raise ExtractionError, error_message(stderr) unless status.success?
 
       text = stdout.to_s
-      raise Error, "pdftotext returned empty text" if text.blank?
+      raise ExtractionError, "pdftotext returned empty text" if text.blank?
 
       Result.new(text: text, engine: ENGINE)
     end
