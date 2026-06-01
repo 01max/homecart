@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aQa6lDXo4ORI4h3cCsyUBSZrYS0wro6kd8YwGddMRVQgmtcCYql0lOOO5SF1VoS
+\restrict z1fXDatp6kXuFpR31mOxSLxDiPydGPiCJgtc3O6kSGU2JbmHnpefgergDRjY2SZ
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -71,6 +71,39 @@ CREATE TYPE public.receipt_parser_status AS ENUM (
     'parsed',
     'needs_review',
     'reviewed'
+);
+
+
+--
+-- Name: receipt_promotion_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.receipt_promotion_kind AS ENUM (
+    'loyalty_credit',
+    'immediate_discount',
+    'coupon',
+    'points_accrual'
+);
+
+
+--
+-- Name: receipt_promotion_linking_method; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.receipt_promotion_linking_method AS ENUM (
+    'parser_inferred',
+    'user_confirmed',
+    'unallocated'
+);
+
+
+--
+-- Name: receipt_promotion_unit; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.receipt_promotion_unit AS ENUM (
+    'euro_cents',
+    'vignette_count'
 );
 
 
@@ -252,6 +285,45 @@ CREATE SEQUENCE public.receipt_lines_id_seq
 --
 
 ALTER SEQUENCE public.receipt_lines_id_seq OWNED BY public.receipt_lines.id;
+
+
+--
+-- Name: receipt_promotions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.receipt_promotions (
+    id bigint NOT NULL,
+    receipt_id bigint NOT NULL,
+    program character varying NOT NULL,
+    unit public.receipt_promotion_unit NOT NULL,
+    delta integer NOT NULL,
+    label text,
+    linked_line_id bigint,
+    kind public.receipt_promotion_kind NOT NULL,
+    linking_method public.receipt_promotion_linking_method NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT receipt_promotions_linking_method_matches_link CHECK ((((linked_line_id IS NULL) AND (linking_method = 'unallocated'::public.receipt_promotion_linking_method)) OR ((linked_line_id IS NOT NULL) AND (linking_method = ANY (ARRAY['parser_inferred'::public.receipt_promotion_linking_method, 'user_confirmed'::public.receipt_promotion_linking_method])))))
+);
+
+
+--
+-- Name: receipt_promotions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.receipt_promotions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: receipt_promotions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.receipt_promotions_id_seq OWNED BY public.receipt_promotions.id;
 
 
 --
@@ -480,6 +552,13 @@ ALTER TABLE ONLY public.receipt_lines ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: receipt_promotions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_promotions ALTER COLUMN id SET DEFAULT nextval('public.receipt_promotions_id_seq'::regclass);
+
+
+--
 -- Name: receipts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -552,6 +631,14 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 ALTER TABLE ONLY public.receipt_lines
     ADD CONSTRAINT receipt_lines_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: receipt_promotions receipt_promotions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_promotions
+    ADD CONSTRAINT receipt_promotions_pkey PRIMARY KEY (id);
 
 
 --
@@ -642,6 +729,20 @@ CREATE INDEX index_receipt_lines_on_receipt_id ON public.receipt_lines USING btr
 --
 
 CREATE UNIQUE INDEX index_receipt_lines_on_receipt_id_and_position ON public.receipt_lines USING btree (receipt_id, "position");
+
+
+--
+-- Name: index_receipt_promotions_on_linked_line_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_promotions_on_linked_line_id ON public.receipt_promotions USING btree (linked_line_id);
+
+
+--
+-- Name: index_receipt_promotions_on_receipt_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_promotions_on_receipt_id ON public.receipt_promotions USING btree (receipt_id);
 
 
 --
@@ -794,16 +895,32 @@ ALTER TABLE ONLY public.active_storage_attachments
 
 
 --
+-- Name: receipt_promotions fk_rails_e0f65dc69f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_promotions
+    ADD CONSTRAINT fk_rails_e0f65dc69f FOREIGN KEY (receipt_id) REFERENCES public.receipts(id);
+
+
+--
+-- Name: receipt_promotions fk_rails_f78688ae38; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_promotions
+    ADD CONSTRAINT fk_rails_f78688ae38 FOREIGN KEY (linked_line_id) REFERENCES public.receipt_lines(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aQa6lDXo4ORI4h3cCsyUBSZrYS0wro6kd8YwGddMRVQgmtcCYql0lOOO5SF1VoS
+\unrestrict z1fXDatp6kXuFpR31mOxSLxDiPydGPiCJgtc3O6kSGU2JbmHnpefgergDRjY2SZ
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict wybsKTDAzwBCe7fYfGG3xrHVYMLWTt59Ldr7OPqbjIGV3r6wHbuhUFFdg24Ig1S
+\restrict W7OJTpJOqON4l7QNVOz1yZdfCcRFU4vDrHOZLdOz1z3LG7PzWNo9t9lOSM5Isyb
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -830,11 +947,12 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260601093241');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601104500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601110500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601111500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601112500');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict wybsKTDAzwBCe7fYfGG3xrHVYMLWTt59Ldr7OPqbjIGV3r6wHbuhUFFdg24Ig1S
+\unrestrict W7OJTpJOqON4l7QNVOz1yZdfCcRFU4vDrHOZLdOz1z3LG7PzWNo9t9lOSM5Isyb
 
