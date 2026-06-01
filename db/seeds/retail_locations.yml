@@ -1,0 +1,75 @@
+brands:
+  - name: Retailer A
+    slug: retailer-a
+    aliases:
+      - Retailer A
+  - name: Retailer B
+    slug: retailer-b
+    aliases:
+      - Retailer B
+  - name: Retailer C
+    slug: retailer-c
+    aliases:
+      - Retailer C
+
+stores:
+  - brand_slug: retailer-a
+    location_name: Location 01
+    channel: physical
+    identifiers:
+      corpus_label: retailer-a-location-01
+  - brand_slug: retailer-b
+    location_name: Location 01
+    channel: physical
+    identifiers:
+      corpus_label: retailer-b-location-01-physical
+  - brand_slug: retailer-b
+    location_name: Location 02
+    channel: physical
+    identifiers:
+      corpus_label: retailer-b-location-02
+  - brand_slug: retailer-b
+    location_name: Location 03
+    channel: physical
+    identifiers:
+      corpus_label: retailer-b-location-03
+  - brand_slug: retailer-b
+    location_name: Location 04
+    channel: physical
+    identifiers:
+      corpus_label: retailer-b-location-04
+  - brand_slug: retailer-b
+    location_name: Location 05
+    channel: physical
+    identifiers:
+      corpus_label: retailer-b-location-05
+  - brand_slug: retailer-b
+    location_name: Location 06
+    channel: physical
+    identifiers:
+      corpus_label: retailer-b-location-06
+  - brand_slug: retailer-b
+    location_name: Location 07
+    channel: physical
+    identifiers:
+      corpus_label: retailer-b-location-07
+  - brand_slug: retailer-b
+    location_name: Location 01
+    channel: click_collect
+    identifiers:
+      corpus_label: retailer-b-location-01-click-collect
+  - brand_slug: retailer-b
+    location_name: Fulfillment 01
+    channel: drive
+    identifiers:
+      corpus_label: retailer-b-fulfillment-01
+  - brand_slug: retailer-c
+    location_name: Location 01
+    channel: physical
+    identifiers:
+      corpus_label: retailer-c-location-01
+  - brand_slug: retailer-c
+    location_name: Location 02
+    channel: physical
+    identifiers:
+      corpus_label: retailer-c-location-02
