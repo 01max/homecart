@@ -1,0 +1,22 @@
+class Store < ApplicationRecord
+  enum :channel, {
+    physical: "physical",
+    drive: "drive",
+    click_collect: "click_collect"
+  }, validate: true
+
+  belongs_to :retail_brand, inverse_of: :stores
+  has_many :source_documents, inverse_of: :store, dependent: :restrict_with_exception
+  has_many :receipts, inverse_of: :store, dependent: :restrict_with_exception
+
+  validates :location_name, presence: true
+  validates :channel, presence: true
+  validates :location_name, uniqueness: { scope: [ :retail_brand_id, :channel ] }
+  validate :identifiers_are_an_object
+
+  private
+
+  def identifiers_are_an_object
+    errors.add(:identifiers, "must be an object") unless identifiers.is_a?(Hash)
+  end
+end
