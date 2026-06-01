@@ -43,3 +43,6 @@
 # Local receipt corpus, kept outside application source.
 /raw_data/*
 !/raw_data/.keep
+
+# Local real-world seed data; the tracked seed file stays anonymised for public repos.
+/db/seeds/*.local.yml

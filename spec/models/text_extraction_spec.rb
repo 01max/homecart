@@ -1,11 +1,11 @@
 require "rails_helper"
 
 RSpec.describe TextExtraction do
-  let(:retail_brand) { RetailBrand.create!(name: "E.Leclerc", slug: "leclerc", aliases: []) }
+  let(:retail_brand) { RetailBrand.create!(name: "Retailer B", slug: "retailer-b", aliases: []) }
   let(:store) do
     Store.create!(
       retail_brand: retail_brand,
-      location_name: "Villeneuve sur Lot",
+      location_name: "Location 01",
       channel: "physical",
       identifiers: {}
     )
