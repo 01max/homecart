@@ -97,6 +97,9 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Install extraction tools
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y poppler-utils tesseract-ocr tesseract-ocr-fra
+
       - name: Prepare test database
         run: bin/rails db:prepare
 
