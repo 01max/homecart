@@ -1,0 +1,45 @@
+ANONYMIZED CITY
+Magasin 00000
+ANONYMIZED ADDRESS
+00000 ANONYMIZED
+France
+Téléphone 0000000000
+
+TVA: FR00000000000
+
+*** VENTE ***
+
+LEGUMES
+CONCOMBRE                              (T)         0,79 €      11
+1 x        0,79 EUR
+PARFUMERIE
+SH.SEC PARF.ORIG.BATISTE 200ML                     4,54 €      13
+1 x       4,54 EUR
+RIZ
+RIZ BASMATI ORIGINE PENJAB U1K         (T)         4,19 €      11
+1 x       4,19 EUR
+
+Nombre de lignes d'article 3
+-----------
+TOTAL [3] Articles                                      9,52 €
+
+SOUS-TOTAL                                                 8,50 €
+TOTAL TVA                                                  1,02 €
+
+Dont articles éligibles TR                                4,98 €
+
+CB TRD 4COINS SANS CONTACT                                 4,98 €
+CB SANS CONTACT                                            4,54 €
+
+Payé en TITRES RESTAURANT                                  4,98 €
+
+TVA          HT         TTC
+11    5,50       0,26 €      4,72 €      4,98 €
+13 20,00         0,76 €      3,78 €      4,54 €
+-----------------------------------------------
+TOTAL            1,02 €      8,50 €      9,52 €
+
+OmniPOS version certifiéé: CP FR 3.3
+
+Date     Heure    Magasin Tpv         Util   Tick
+15/05/26 10:29:10 95206   002         102    14515
