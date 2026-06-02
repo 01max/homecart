@@ -1,0 +1,213 @@
+require "rails_helper"
+
+RSpec.describe Parser::Base do
+  subject(:parser) { test_parser.new(text: "receipt text") }
+
+  let(:test_parser) do
+    Class.new(described_class) do
+      public :result_envelope,
+             :validate_totals_sum,
+             :validate_article_count,
+             :validate_payments_sum,
+             :add_warning
+    end
+  end
+
+  describe "#call" do
+    it "requires subclasses to implement parsing" do
+      expect { parser.call }.to raise_error(NotImplementedError, /must implement #call/)
+    end
+  end
+
+  describe "#result_envelope" do
+    it "builds a parser result with receipt, lines, promotions, payments, and warnings" do
+      result = envelope(**result_input_attributes)
+
+      expect(result).to have_attributes(result_output_attributes)
+    end
+
+    it "rejects free-form warning strings" do
+      expect do
+        envelope(warnings: [ "not structured" ])
+      end.to raise_error(described_class::WarningShapeError, /warning must be a hash/)
+    end
+  end
+
+  describe "#add_warning" do
+    it "appends structured four-field warning hashes" do
+      warning = parser.add_warning(code: "parser_exception", detail: "Parser failed")
+
+      expect(warning).to eq(parser_exception_warning)
+      expect(parser.warnings).to contain_exactly(parser_exception_warning)
+    end
+
+    it "rejects non-numeric warning values" do
+      expect do
+        parser.add_warning(code: "bad_value", detail: "Bad value", value: "1")
+      end.to raise_error(described_class::WarningShapeError, "warning value must be numeric or nil")
+    end
+  end
+
+  describe "#validate_totals_sum" do
+    it "passes when line totals exactly match the receipt total" do
+      result = envelope(receipt: { total_cents: 1_000 }, lines: [ { total_cents: 400 }, { total_cents: 600 } ])
+
+      expect(parser.validate_totals_sum(result)).to be(true)
+      expect(parser.warnings).to be_empty
+    end
+
+    it "passes within the one-cent monetary tolerance" do
+      result = envelope(receipt: { total_cents: 1_000 }, lines: [ { total_cents: 999 } ])
+
+      expect(parser.validate_totals_sum(result)).to be(true)
+      expect(parser.warnings).to be_empty
+    end
+
+    it "adds a structured warning when line totals differ by more than one cent" do
+      result = envelope(receipt: { total_cents: 1_000 }, lines: [ { total_cents: 997 } ])
+
+      expect(parser.validate_totals_sum(result)).to be(false)
+      expect(parser.warnings).to contain_exactly(totals_warning)
+    end
+  end
+
+  describe "#validate_article_count" do
+    it "skips the validator when declared article count is nil" do
+      result = envelope(receipt: { declared_article_count: nil }, lines: [ piece_line(quantity: 999) ])
+
+      expect(parser.validate_article_count(result)).to be(true)
+      expect(parser.warnings).to be_empty
+    end
+
+    it "strictly counts piece quantities and non-piece item lines" do
+      result = envelope(receipt: { declared_article_count: 4 }, lines: counted_article_lines)
+
+      expect(parser.validate_article_count(result)).to be(true)
+      expect(parser.warnings).to be_empty
+    end
+
+    it "adds a structured warning when the declared count differs" do
+      result = envelope(receipt: { declared_article_count: 3 }, lines: [ piece_line(quantity: 1), kg_line ])
+
+      expect(parser.validate_article_count(result)).to be(false)
+      expect(parser.warnings).to contain_exactly(article_count_warning)
+    end
+  end
+
+  describe "#validate_payments_sum" do
+    it "passes when payments match within the one-cent monetary tolerance" do
+      result = envelope(receipt: { total_cents: 1_000 }, payments: [ { amount_cents: 601 }, { amount_cents: 400 } ])
+
+      expect(parser.validate_payments_sum(result)).to be(true)
+      expect(parser.warnings).to be_empty
+    end
+
+    it "adds a structured warning when payments differ by more than one cent" do
+      result = envelope(receipt: { total_cents: 1_000 }, payments: [ { amount_cents: 990 } ])
+
+      expect(parser.validate_payments_sum(result)).to be(false)
+      expect(parser.warnings).to contain_exactly(payment_warning)
+    end
+  end
+
+  describe "record compatibility" do
+    let(:receipt_record) { create_receipt(total_cents: 500, declared_article_count: 1) }
+    let(:line_record) { create_receipt_line(receipt: receipt_record, total_cents: 500) }
+    let(:payment_record) { create_receipt_payment(receipt: receipt_record, amount_cents: 500) }
+
+    it "can validate Active Record instances as well as parser attribute hashes" do
+      result = envelope(receipt: receipt_record, lines: [ line_record ], payments: [ payment_record ])
+
+      expect(parser.validate_totals_sum(result)).to be(true)
+      expect(parser.validate_article_count(result)).to be(true)
+      expect(parser.validate_payments_sum(result)).to be(true)
+    end
+  end
+
+  def envelope(receipt: {}, lines: [], promotions: [], payments: [], warnings: parser.warnings)
+    parser.result_envelope(
+      receipt: receipt,
+      lines: lines,
+      promotions: promotions,
+      payments: payments,
+      warnings: warnings
+    )
+  end
+
+  def receipt_attributes
+    { total_cents: 1_234 }
+  end
+
+  def result_input_attributes
+    {
+      receipt: receipt_attributes,
+      lines: line_attributes,
+      promotions: promotion_attributes,
+      payments: payment_attributes
+    }
+  end
+
+  def result_output_attributes
+    result_input_attributes.merge(warnings: [])
+  end
+
+  def line_attributes
+    [ { total_cents: 1_234 } ]
+  end
+
+  def promotion_attributes
+    [ { program: "loyalty" } ]
+  end
+
+  def payment_attributes
+    [ { amount_cents: 1_234 } ]
+  end
+
+  def piece_line(quantity:)
+    { kind: "item", unit_of_measure: "piece", quantity: quantity }
+  end
+
+  def kg_line
+    { kind: "item", unit_of_measure: "kg", quantity: 0.325 }
+  end
+
+  def counted_article_lines
+    [ piece_line(quantity: 3), kg_line, { kind: "fee", unit_of_measure: "piece", quantity: 1 } ]
+  end
+
+  def parser_exception_warning
+    {
+      code: "parser_exception",
+      validator: nil,
+      detail: "Parser failed",
+      value: nil
+    }
+  end
+
+  def totals_warning
+    {
+      code: "totals_sum_mismatch",
+      validator: "validate_totals_sum",
+      detail: "Line totals differ from receipt total by -3 cents",
+      value: -3
+    }
+  end
+
+  def article_count_warning
+    {
+      code: "article_count_mismatch",
+      validator: "validate_article_count",
+      detail: "Article count differs from declared count by -1",
+      value: -1
+    }
+  end
+
+  def payment_warning
+    {
+      code: "payments_sum_mismatch",
+      validator: "validate_payments_sum",
+      detail: "Payment sum differs from receipt total by -10 cents",
+      value: -10
+    }
+  end
+end

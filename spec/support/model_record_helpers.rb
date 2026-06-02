@@ -33,7 +33,11 @@ module ModelRecordHelpers
     store: create_store,
     source_document: create_source_document(store: store),
     text_extraction: create_text_extraction(source_document: source_document),
-    purchased_at: Time.current
+    purchased_at: Time.current,
+    total_cents: 1_234,
+    declared_article_count: 2,
+    parser_status: "needs_review",
+    parser_warnings: []
   )
     Receipt.create!(
       store: store,
@@ -41,25 +45,32 @@ module ModelRecordHelpers
       text_extraction: text_extraction,
       parser_format: "leclerc.paper.v1",
       purchased_at: purchased_at,
-      total_cents: 1_234,
-      declared_article_count: 2,
-      parser_status: "needs_review",
-      parser_warnings: []
+      total_cents: total_cents,
+      declared_article_count: declared_article_count,
+      parser_status: parser_status,
+      parser_warnings: parser_warnings
     )
   end
 
-  def create_receipt_line(receipt: create_receipt, position: 1)
+  def create_receipt_line(
+    receipt: create_receipt,
+    position: 1,
+    quantity: 1,
+    unit_of_measure: "piece",
+    total_cents: 1_234,
+    kind: "item"
+  )
     ReceiptLine.create!(
       receipt: receipt,
       position: position,
       raw_text: "ITEM  12.34",
       label: "ITEM",
       label_truncated: false,
-      quantity: 1,
-      unit_of_measure: "piece",
-      total_cents: 1_234,
+      quantity: quantity,
+      unit_of_measure: unit_of_measure,
+      total_cents: total_cents,
       tr_eligible: false,
-      kind: "item"
+      kind: kind
     )
   end
 
@@ -76,8 +87,8 @@ module ModelRecordHelpers
     )
   end
 
-  def create_receipt_payment(receipt: create_receipt, position: 1)
-    ReceiptPayment.create!(receipt: receipt, position: position, raw_label: "CARD", category: "bank_card", amount_cents: 1_234)
+  def create_receipt_payment(receipt: create_receipt, position: 1, amount_cents: 1_234)
+    ReceiptPayment.create!(receipt: receipt, position: position, raw_label: "CARD", category: "bank_card", amount_cents: amount_cents)
   end
 
   def execute_in_savepoint(sql)
