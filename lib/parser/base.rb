@@ -96,6 +96,21 @@ module Parser
       raise NotImplementedError, "#{self.class.name} must implement #payment_attributes"
     end
 
+    def payment_category(raw_label)
+      case raw_label
+      when /\ACB Web\b/i
+        "web"
+      when /\ACB TRD\b/i
+        "tickets_restaurant"
+      when /\A(?:CB|CARTE BANCAIRE)\b/i
+        "bank_card"
+      when /\A(?:ESPECES|ESP[EÈ]CES)\b/i
+        "cash"
+      else
+        "other"
+      end
+    end
+
     def after_parse(_result) = nil
 
     def parser_status(_result, validator_results)

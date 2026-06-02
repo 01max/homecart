@@ -130,10 +130,6 @@ module Parser
           end
         end
 
-        def payment_category(raw_label)
-          raw_label == "CB" ? "bank_card" : "other"
-        end
-
         def promotion_attributes
           bon_achat_card_promotions + ticket_cumul_promotions + vignette_promotions
         end

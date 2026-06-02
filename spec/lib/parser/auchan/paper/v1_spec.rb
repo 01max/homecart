@@ -23,7 +23,7 @@ RSpec.describe Parser::Auchan::Paper::V1 do
 
       expect(result.receipt).to include(selfscan_receipt_attributes)
       expect(result.lines).to include(selfscan_item_line, selfscan_discounted_item_line, selfscan_discount_line)
-      expect(result.payments).to include(selfscan_voucher_payment, selfscan_card_payment)
+      expect(result.payments).to include(selfscan_cash_payment, selfscan_card_payment)
       expect(result.warnings).to contain_exactly(selfscan_warning("Lecture partielle incorrecte"), selfscan_warning("Nouveau scan incorrect"))
     end
 
@@ -112,8 +112,8 @@ RSpec.describe Parser::Auchan::Paper::V1 do
     hash_including(label: "30% DE REMISE IM", total_cents: -150, kind: "discount")
   end
 
-  def selfscan_voucher_payment
-    hash_including(raw_label: "BON BRA", category: "other", amount_cents: 200)
+  def selfscan_cash_payment
+    hash_including(raw_label: "ESPECES", category: "cash", amount_cents: 200)
   end
 
   def selfscan_card_payment

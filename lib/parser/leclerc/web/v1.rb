@@ -70,7 +70,7 @@ module Parser
             {
               position: index,
               raw_label: match[:raw_label],
-              category: "web",
+              category: payment_category(match[:raw_label]),
               amount_cents: cents_from(match[:amount])
             }
           end

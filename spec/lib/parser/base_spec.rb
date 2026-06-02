@@ -11,7 +11,8 @@ RSpec.describe Parser::Base do
              :validate_payments_sum,
              :add_warning,
              :cents_from,
-             :french_month_number
+             :french_month_number,
+             :payment_category
     end
   end
 
@@ -160,6 +161,14 @@ RSpec.describe Parser::Base do
       expect(parser.french_month_number("janvier")).to eq(1)
       expect(parser.french_month_number("janv.")).to eq(1)
       expect(parser.french_month_number("déc.")).to eq(12)
+    end
+
+    it "maps raw payment labels to normalized categories" do
+      expect(parser.payment_category("CB SANS CONTACT VX")).to eq("bank_card")
+      expect(parser.payment_category("CB TRD 4COINS SANS CONTACT")).to eq("tickets_restaurant")
+      expect(parser.payment_category("CB Web C&C SUE")).to eq("web")
+      expect(parser.payment_category("ESPECES")).to eq("cash")
+      expect(parser.payment_category("Bon achat carte")).to eq("other")
     end
   end
 

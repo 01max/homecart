@@ -11,7 +11,7 @@ module Parser
         QUANTITY_LINE_PATTERN = /\A(?<quantity>\d+(?:[,.]\d+)?)\s+x\s+(?<unit_price>\d+,\d{2})\s€\s+(?<total>\d+,\d{2})\s€\s+(?<vat_code>\d+)\z/i
         WEIGHTED_QUANTITY_LINE_PATTERN = /\A(?<quantity>\d+(?:[,.]\d+)?)\s+(?<unit>kg|g|l|ml)\s+x\s+(?<unit_price>\d+,\d{2})\s€\/(?<unit_price_unit>kg|g|l|ml)\s+(?<total>\d+,\d{2})\s€\z/i
         TOTAL_PATTERN = /\ATOTAL\s+(?<count>\d+)\s+Article\(s\)\s+(?<amount>\d+,\d{2})\s€\z/
-        PAYMENT_PATTERN = /\A(?<raw_label>CB .+?)\s+EUR\s+(?<amount>\d+,\d{2})\s€\z/
+        PAYMENT_PATTERN = /\A(?<raw_label>CB .+?|ESP[EÈ]CES)\s+(?:EUR\s+)?(?<amount>\d+,\d{2})\s€\z/
         VAT_ROW_PATTERN = /\A(?<code>\d+)\s+(?:\/\s+)?(?<rate>\d+,\d{2})\s+[-\d,]+\s€\s+[-\d,]+\s€\s+[-\d,]+\s€\z/
 
         Parser::Registry.register(FORMAT, self)

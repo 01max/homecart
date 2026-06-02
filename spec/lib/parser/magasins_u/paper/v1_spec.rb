@@ -23,7 +23,7 @@ RSpec.describe Parser::MagasinsU::Paper::V1 do
       expect(result.receipt).to include(direct_receipt_attributes)
       expect(result.lines).to contain_exactly(soup_line, truncated_line, produce_line)
       expect(result.promotions).to contain_exactly(carte_u_promotion(35))
-      expect(result.payments).to contain_exactly(card_payment(amount_cents: 717))
+      expect(result.payments).to contain_exactly(cash_payment(amount_cents: 717))
       expect(result.warnings).to be_empty
     end
   end
@@ -116,5 +116,9 @@ RSpec.describe Parser::MagasinsU::Paper::V1 do
 
   def card_payment(amount_cents:)
     hash_including(raw_label: "CB SANS CONTACT VX", category: "bank_card", amount_cents: amount_cents)
+  end
+
+  def cash_payment(amount_cents:)
+    hash_including(raw_label: "ESPECES", category: "cash", amount_cents: amount_cents)
   end
 end

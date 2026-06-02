@@ -177,17 +177,6 @@ module Parser
           end
         end
 
-        def payment_category(raw_label)
-          case raw_label
-          when /CARTE BANCAIRE/
-            "bank_card"
-          when /ESPECES/
-            "cash"
-          else
-            "other"
-          end
-        end
-
         def add_scan_warnings
           scan_warning_lines.each do |line|
             add_warning(

@@ -35,13 +35,6 @@ module Parser
           end
         end
 
-        def payment_category(raw_label)
-          return "tickets_restaurant" if raw_label.start_with?("CB TRD")
-          return "bank_card" if raw_label.start_with?("CB")
-
-          "other"
-        end
-
         def promotion_attributes
           carte_u_balance_delta.filter_map do |delta|
             promotion_attributes_for(
