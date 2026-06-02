@@ -11,6 +11,7 @@ module Parser
         ITEM_LINE_PATTERN = /\A(?<tr_marker>\*)?(?<label>.+?)\s+(?:(?<quantity>\d+(?:[,.]\d+)?)\*(?<unit_price>\d+,\d{2})\s+)?(?<total>-?\d+,\d{2})\z/
         DATE_PATTERN = /\ALe (?<day>\d{2}) (?<month>\p{L}+) (?<year>\d{4}) à (?<hour>\d{2}):(?<minute>\d{2}):(?<second>\d{2})\z/
         REGISTER_PATTERN = /\ACaisse\s*:\s*(?<register>\d+)\s+Ticket\s*:\s*(?<ticket>\d+)\z/
+        WAAOH_CREDIT_PATTERN = /\A(?<label>.+?)\s+(?<amount>\d+,\d{2})\s*(?:€)?\z/
 
         Parser::Registry.register(FORMAT, self)
 
@@ -131,6 +132,35 @@ module Parser
 
         def quantity_total_cents(quantity, unit_price_cents)
           (quantity * unit_price_cents).round
+        end
+
+        def promotion_attributes
+          waaoh_credit_lines.map do |match|
+            label = match[:label].strip
+            promotion_attributes_for(
+              program: "auchan_waaoh",
+              unit: "euro_cents",
+              delta: cents_from(match[:amount]),
+              label: label,
+              kind: "loyalty_credit",
+              linked_line_position: linked_line_position_for(label)
+            )
+          end
+        end
+
+        def waaoh_credit_lines
+          in_waaoh_section = false
+          text_lines.filter_map do |line|
+            if line.match?(/\A(?:VOTRE COMPTE|CAGNOTTE).+WAAOH/i)
+              in_waaoh_section = true
+              next
+            end
+
+            in_waaoh_section = false if line.match?(/\A(?:Reçu|TOT\.|Merci|TVAS|Brut|\d+ Articles|Total)(?:\b|\s)/)
+            next unless in_waaoh_section
+
+            line.match(WAAOH_CREDIT_PATTERN)
+          end
         end
 
         def payment_attributes

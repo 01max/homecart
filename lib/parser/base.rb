@@ -81,7 +81,7 @@ module Parser
     end
 
     def line_attributes
-      parsed_lines.map.with_index(1) { |line, position| line.merge(position: position) }
+      @line_attributes ||= parsed_lines.map.with_index(1) { |line, position| line.merge(position: position) }
     end
 
     def parsed_lines
@@ -223,6 +223,34 @@ module Parser
 
     def label_truncated?(label)
       label.match?(/\s*\.\.\z/)
+    end
+
+    def promotion_attributes_for(program:, unit:, delta:, label:, kind:, linked_line_position: nil)
+      {
+        program: program,
+        unit: unit,
+        delta: delta,
+        label: normalize_label(label),
+        kind: kind,
+        linked_line_position: linked_line_position,
+        linking_method: linked_line_position ? "parser_inferred" : "unallocated"
+      }
+    end
+
+    def linked_line_position_for(label)
+      normalized_label = comparable_label(label)
+      return if normalized_label.blank?
+
+      line_attributes.find do |line|
+        line_label = comparable_label(line.fetch(:label))
+        next false if line_label.blank?
+
+        normalized_label.start_with?(line_label) || line_label.start_with?(normalized_label)
+      end&.fetch(:position)
+    end
+
+    def comparable_label(label)
+      normalize_label(label.to_s).upcase.gsub(/\s+/, " ").strip
     end
 
     def attribute_value(record, attribute)

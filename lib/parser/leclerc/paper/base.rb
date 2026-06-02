@@ -6,6 +6,9 @@ module Parser
         TICKET_PATTERN = /\A(?:Ticket )?\d{2}\/\d{2}\/\d{2}\s+\d+\s+(?<ticket>.+)\z/
         SECTION_PATTERN = /\A>>\s+(?<section>.+)\z/
         TOTAL_PATTERN = /\ATotal (?<count>\d+) articles?\s+(?<amount>\d+\.\d{2})\z/
+        BON_ACHAT_PATTERN = /\ABon achat carte\s+(?<amount>\d+\.\d{2})\z/
+        TICKET_CUMUL_PATTERN = /\ACUMUL DISPONIBLE\b/i
+        VIGNETTE_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s+(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
 
         private
 
@@ -129,6 +132,69 @@ module Parser
 
         def payment_category(raw_label)
           raw_label == "CB" ? "bank_card" : "other"
+        end
+
+        def promotion_attributes
+          bon_achat_card_promotions + ticket_cumul_promotions + vignette_promotions
+        end
+
+        def bon_achat_card_promotions
+          bon_achat_amounts.map do |amount_cents|
+            promotion_attributes_for(
+              program: "leclerc_bon_achat_carte",
+              unit: "euro_cents",
+              delta: -amount_cents,
+              label: "Bon achat carte",
+              kind: "coupon"
+            )
+          end
+        end
+
+        def ticket_cumul_promotions
+          return [] unless text_lines.any? { |line| line.match?(TICKET_CUMUL_PATTERN) }
+
+          bon_achat_amounts.map do |amount_cents|
+            promotion_attributes_for(
+              program: "leclerc_tickets",
+              unit: "euro_cents",
+              delta: -amount_cents,
+              label: "CUMUL DISPONIBLE",
+              kind: "coupon"
+            )
+          end
+        end
+
+        def vignette_promotions
+          text_lines.filter_map do |line|
+            match = line.match(VIGNETTE_PATTERN)
+            next unless match
+
+            promotion_attributes_for(
+              program: vignette_program(match[:campaign]),
+              unit: "vignette_count",
+              delta: match[:count].to_i,
+              label: match[:campaign].presence || "Vignette(s)",
+              kind: "points_accrual"
+            )
+          end
+        end
+
+        def bon_achat_amounts
+          @bon_achat_amounts ||= text_lines.filter_map do |line|
+            match = line.match(BON_ACHAT_PATTERN)
+            cents_from(match[:amount]) if match
+          end
+        end
+
+        def vignette_program(campaign)
+          case campaign.to_s
+          when /SMEG/i
+            "leclerc_vignettes_smeg"
+          when /ROYAL|VKB/i
+            "leclerc_vignettes_royal_vkb"
+          else
+            "leclerc_vignettes"
+          end
         end
 
         def purchased_at

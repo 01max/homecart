@@ -9,7 +9,7 @@ PARSER_FIXTURE_CONTRACTS = [
     line_count: 2,
     total_cents: 500,
     declared_article_count: 3,
-    promotion_count: 0,
+    promotion_count: 1,
     warning_count: 0
   },
   {
@@ -42,7 +42,7 @@ PARSER_FIXTURE_CONTRACTS = [
     line_count: 3,
     total_cents: 989,
     declared_article_count: 3,
-    promotion_count: 0,
+    promotion_count: 3,
     warning_count: 0
   },
   {
@@ -64,7 +64,7 @@ PARSER_FIXTURE_CONTRACTS = [
     line_count: 3,
     total_cents: 1_700,
     declared_article_count: 5,
-    promotion_count: 0,
+    promotion_count: 3,
     warning_count: 0
   },
   {
@@ -108,7 +108,7 @@ PARSER_FIXTURE_CONTRACTS = [
     line_count: 3,
     total_cents: 717,
     declared_article_count: 3,
-    promotion_count: 0,
+    promotion_count: 1,
     warning_count: 0
   },
   {
@@ -130,7 +130,7 @@ PARSER_FIXTURE_CONTRACTS = [
     line_count: 2,
     total_cents: 810,
     declared_article_count: 2,
-    promotion_count: 0,
+    promotion_count: 1,
     warning_count: 0
   }
 ]

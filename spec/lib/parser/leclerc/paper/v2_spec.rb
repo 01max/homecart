@@ -22,6 +22,7 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
 
       expect(result.receipt).to include(sectioned_receipt_attributes)
       expect(result.lines).to contain_exactly(low_vat_line, medium_vat_line, high_vat_quantity_line)
+      expect(result.promotions).to contain_exactly(bon_achat_promotion(100), tickets_promotion(100), smeg_promotion)
       expect(result.payments).to contain_exactly(immediate_discount_payment, voucher_payment, card_payment(amount_cents: 1_400))
       expect(result.warnings).to be_empty
     end
@@ -96,6 +97,42 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
 
   def immediate_discount_payment
     hash_including(raw_label: "Bon immediat", category: "other", amount_cents: 200)
+  end
+
+  def bon_achat_promotion(amount_cents)
+    {
+      program: "leclerc_bon_achat_carte",
+      unit: "euro_cents",
+      delta: -amount_cents,
+      label: "Bon achat carte",
+      kind: "coupon",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def tickets_promotion(amount_cents)
+    {
+      program: "leclerc_tickets",
+      unit: "euro_cents",
+      delta: -amount_cents,
+      label: "CUMUL DISPONIBLE",
+      kind: "coupon",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def smeg_promotion
+    {
+      program: "leclerc_vignettes_smeg",
+      unit: "vignette_count",
+      delta: 3,
+      label: "SMEG",
+      kind: "points_accrual",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
   end
 
   def card_payment(amount_cents:)

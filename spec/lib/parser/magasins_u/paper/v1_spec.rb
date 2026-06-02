@@ -22,6 +22,7 @@ RSpec.describe Parser::MagasinsU::Paper::V1 do
 
       expect(result.receipt).to include(direct_receipt_attributes)
       expect(result.lines).to contain_exactly(soup_line, truncated_line, produce_line)
+      expect(result.promotions).to contain_exactly(carte_u_promotion(35))
       expect(result.payments).to contain_exactly(card_payment(amount_cents: 717))
       expect(result.warnings).to be_empty
     end
@@ -99,6 +100,18 @@ RSpec.describe Parser::MagasinsU::Paper::V1 do
 
   def produce_line
     hash_including(position: 3, label: "CONCOMBRE", total_cents: 150, vat_rate_bp: 550, section_label: "FRUITS ET LEGUMES")
+  end
+
+  def carte_u_promotion(delta)
+    {
+      program: "u_carte_u",
+      unit: "euro_cents",
+      delta: delta,
+      label: "Carte U solde",
+      kind: "loyalty_credit",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
   end
 
   def card_payment(amount_cents:)

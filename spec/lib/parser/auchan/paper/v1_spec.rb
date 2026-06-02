@@ -13,6 +13,7 @@ RSpec.describe Parser::Auchan::Paper::V1 do
 
       expect(result.receipt).to include(cashier_receipt_attributes)
       expect(result.lines).to contain_exactly(cashier_tr_line, cashier_quantity_line)
+      expect(result.promotions).to contain_exactly(cashier_waaoh_promotion)
       expect(result.payments).to contain_exactly(cashier_payment)
       expect(result.warnings).to be_empty
     end
@@ -85,6 +86,18 @@ RSpec.describe Parser::Auchan::Paper::V1 do
 
   def cashier_payment
     hash_including(raw_label: "CARTE BANCAIRE", category: "bank_card", amount_cents: 500)
+  end
+
+  def cashier_waaoh_promotion
+    {
+      program: "auchan_waaoh",
+      unit: "euro_cents",
+      delta: 40,
+      label: "ARTICLE TRONQUE EXTRA",
+      kind: "loyalty_credit",
+      linked_line_position: 1,
+      linking_method: "parser_inferred"
+    }
   end
 
   def selfscan_item_line

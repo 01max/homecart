@@ -22,6 +22,7 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
 
       expect(result.receipt).to include(unsectioned_receipt_attributes)
       expect(result.lines).to contain_exactly(unsectioned_line("ITEM SINGLE", 284), unsectioned_line("ITEM SECOND", 305), unsectioned_line("ITEM THIRD", 400))
+      expect(result.promotions).to contain_exactly(bon_achat_promotion(193), tickets_promotion(193), royal_vkb_promotion)
       expect(result.payments).to contain_exactly(voucher_payment, card_payment(amount_cents: 796))
       expect(result.warnings).to be_empty
     end
@@ -85,6 +86,42 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
 
   def voucher_payment
     hash_including(raw_label: "Bon achat carte", category: "other", amount_cents: 193)
+  end
+
+  def bon_achat_promotion(amount_cents)
+    {
+      program: "leclerc_bon_achat_carte",
+      unit: "euro_cents",
+      delta: -amount_cents,
+      label: "Bon achat carte",
+      kind: "coupon",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def tickets_promotion(amount_cents)
+    {
+      program: "leclerc_tickets",
+      unit: "euro_cents",
+      delta: -amount_cents,
+      label: "CUMUL DISPONIBLE",
+      kind: "coupon",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def royal_vkb_promotion
+    {
+      program: "leclerc_vignettes_royal_vkb",
+      unit: "vignette_count",
+      delta: 2,
+      label: "Royal VKB",
+      kind: "points_accrual",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
   end
 
   def card_payment(amount_cents:)

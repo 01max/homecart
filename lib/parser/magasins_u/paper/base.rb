@@ -2,6 +2,9 @@ module Parser
   module MagasinsU
     module Paper
       class Base < Parser::Base
+        CARTE_U_BEFORE_PATTERN = /\ACarte U\s+solde\s+avant\b.*?(?<amount>\d+,\d{2})\s€?\z/i
+        CARTE_U_AFTER_PATTERN = /\ACarte U\s+solde\s+apr[eè]s\b.*?(?<amount>\d+,\d{2})\s€?\z/i
+
         private
 
         def receipt_attributes
@@ -37,6 +40,37 @@ module Parser
           return "bank_card" if raw_label.start_with?("CB")
 
           "other"
+        end
+
+        def promotion_attributes
+          carte_u_balance_delta.filter_map do |delta|
+            promotion_attributes_for(
+              program: "u_carte_u",
+              unit: "euro_cents",
+              delta: delta,
+              label: "Carte U solde",
+              kind: delta.positive? ? "loyalty_credit" : "coupon"
+            )
+          end
+        end
+
+        def carte_u_balance_delta
+          return [] unless carte_u_before_cents && carte_u_after_cents
+
+          delta = carte_u_after_cents - carte_u_before_cents
+          delta.zero? ? [] : [ delta ]
+        end
+
+        def carte_u_before_cents
+          @carte_u_before_cents ||= cents_from(carte_u_match(CARTE_U_BEFORE_PATTERN)&.[](:amount))
+        end
+
+        def carte_u_after_cents
+          @carte_u_after_cents ||= cents_from(carte_u_match(CARTE_U_AFTER_PATTERN)&.[](:amount))
+        end
+
+        def carte_u_match(pattern)
+          text_lines.lazy.filter_map { |line| line.match(pattern) }.first
         end
 
         def total_cents

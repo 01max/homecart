@@ -22,6 +22,7 @@ RSpec.describe Parser::MagasinsU::Paper::V2 do
 
       expect(result.receipt).to include(single_payment_receipt_attributes)
       expect(result.lines).to contain_exactly(water_line, toy_line)
+      expect(result.promotions).to contain_exactly(carte_u_promotion(52))
       expect(result.payments).to contain_exactly(card_payment(amount_cents: 810))
       expect(result.warnings).to be_empty
     end
@@ -86,6 +87,18 @@ RSpec.describe Parser::MagasinsU::Paper::V2 do
 
   def toy_line
     hash_including(position: 2, label: "SEAU GARNI + ARR LICORNE", total_cents: 758, vat_rate_bp: 2_000, section_label: "JOUETS")
+  end
+
+  def carte_u_promotion(delta)
+    {
+      program: "u_carte_u",
+      unit: "euro_cents",
+      delta: delta,
+      label: "Carte U solde",
+      kind: "loyalty_credit",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
   end
 
   def tickets_restaurant_payment
