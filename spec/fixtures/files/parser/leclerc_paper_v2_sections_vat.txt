@@ -1,0 +1,28 @@
+ANONYMIZED CITY
+TEL:00.00.00.00.00
+Caisse 105-1005 12 avril 2025 09:15
+Ticket 12/04/25 4 4A21 01B00
+
+TTC   TVA
+>> EPICERIE
+ITEM ALPHA BIO 250G           2.00 1
+ITEM BRAVO                    3.00 2
+>> HYGIENE
+ITEM CHARLIE ..
+3 X 4.00€                    12.00 3
+----------
+Total 5 articles             17.00
+
+Bon immediat                  2.00
+----------
+Reste à payer                15.00
+
+Bon achat carte               1.00
+CB                           14.00
+
+Code               HT       TVA           TTC
+1 5%50           1.90      0.10          2.00
+2 10%00          2.73      0.27          3.00
+3 20%00         10.00      2.00         12.00
+
+MERCI DE VOTRE VISITE

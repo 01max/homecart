@@ -6,19 +6,23 @@ RSpec.describe Parser::Registry do
   end
 
   it "registers and looks up a parser by dotted format" do
-    parser_class = stub_parser("Parser::Leclerc::Paper::V2")
+    with_empty_registry do
+      parser_class = stub_parser("Parser::Leclerc::Paper::V2")
 
-    described_class.register("leclerc.paper.v2", parser_class)
+      described_class.register("leclerc.paper.v2", parser_class)
 
-    expect(described_class.for("leclerc.paper.v2")).to eq(parser_class)
+      expect(described_class.for("leclerc.paper.v2")).to eq(parser_class)
+    end
   end
 
   it "uses MagasinsU as the Ruby namespace for U parser formats" do
-    parser_class = stub_parser("Parser::MagasinsU::Paper::V1")
+    with_empty_registry do
+      parser_class = stub_parser("Parser::MagasinsU::Paper::V1")
 
-    described_class.register("u.paper.v1", parser_class)
+      described_class.register("u.paper.v1", parser_class)
 
-    expect(described_class.for("u.paper.v1")).to eq(parser_class)
+      expect(described_class.for("u.paper.v1")).to eq(parser_class)
+    end
   end
 
   it "rejects formats outside the canonical registry list" do
