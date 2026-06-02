@@ -24,13 +24,14 @@ module ModelRecordHelpers
     )
   end
 
-  def create_text_extraction(source_document: create_source_document)
+  def create_text_extraction(source_document: create_source_document, success: true)
     TextExtraction.create!(
       source_document: source_document,
       engine: "pdftotext-layout",
-      text: "raw receipt text",
+      text: success ? "raw receipt text" : "",
       ran_at: Time.current,
-      success: true
+      success: success,
+      error_message: success ? nil : "extraction failed"
     )
   end
 
