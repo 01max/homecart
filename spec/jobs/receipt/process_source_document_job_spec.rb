@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe ProcessSourceDocumentJob do
+RSpec.describe Receipt::ProcessSourceDocumentJob do
   it "runs on the receipt handling queue" do
     expect(described_class.queue_name).to eq("receipt_handling")
   end
@@ -10,7 +10,7 @@ RSpec.describe ProcessSourceDocumentJob do
     text_extraction = create_text_extraction(source_document: source_document)
 
     allow(ReceiptIngestion::ExtractTextService).to receive(:call).and_return(text_extraction)
-    allow(ParseReceiptJob).to receive(:perform_later)
+    allow(Receipt::ParseJob).to receive(:perform_later)
 
     described_class.perform_now(source_document)
 
@@ -22,11 +22,11 @@ RSpec.describe ProcessSourceDocumentJob do
     text_extraction = create_text_extraction(source_document: source_document)
 
     allow(ReceiptIngestion::ExtractTextService).to receive(:call).and_return(text_extraction)
-    allow(ParseReceiptJob).to receive(:perform_later)
+    allow(Receipt::ParseJob).to receive(:perform_later)
 
     described_class.perform_now(source_document)
 
-    expect(ParseReceiptJob).to have_received(:perform_later).with(text_extraction.id)
+    expect(Receipt::ParseJob).to have_received(:perform_later).with(text_extraction.id)
   end
 
   it "does not enqueue parsing for a failed text extraction" do
@@ -34,10 +34,10 @@ RSpec.describe ProcessSourceDocumentJob do
     text_extraction = create_text_extraction(source_document: source_document, success: false)
 
     allow(ReceiptIngestion::ExtractTextService).to receive(:call).and_return(text_extraction)
-    allow(ParseReceiptJob).to receive(:perform_later)
+    allow(Receipt::ParseJob).to receive(:perform_later)
 
     described_class.perform_now(source_document)
 
-    expect(ParseReceiptJob).not_to have_received(:perform_later)
+    expect(Receipt::ParseJob).not_to have_received(:perform_later)
   end
 end

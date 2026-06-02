@@ -7,7 +7,7 @@ module ReceiptIngestion
     UnsupportedMimeTypeError = Class.new(StandardError)
     Result = Data.define(:source_document, :duplicate)
 
-    def initialize(file:, store:, parser_format:, job_class: ProcessSourceDocumentJob, clock: -> { Time.current })
+    def initialize(file:, store:, parser_format:, job_class: Receipt::ProcessSourceDocumentJob, clock: -> { Time.current })
       @file = file
       @store = store
       @parser_format = parser_format

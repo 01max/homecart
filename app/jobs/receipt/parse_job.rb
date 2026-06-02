@@ -1,4 +1,4 @@
-class ParseReceiptJob < ApplicationJob
+class Receipt::ParseJob < ApplicationJob
   queue_as :receipt_handling
 
   discard_on ActiveRecord::RecordNotFound

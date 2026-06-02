@@ -4,7 +4,7 @@ require "tempfile"
 
 RSpec.describe ReceiptIngestion::UploadService do
   let(:store) { create_store }
-  let(:job_class) { class_spy(ProcessSourceDocumentJob) }
+  let(:job_class) { class_spy(Receipt::ProcessSourceDocumentJob) }
 
   after do
     uploaded_files.each do |file|

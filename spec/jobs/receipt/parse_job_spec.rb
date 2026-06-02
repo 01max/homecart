@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe ParseReceiptJob do
+RSpec.describe Receipt::ParseJob do
   it "runs on the receipt handling queue" do
     expect(described_class.queue_name).to eq("receipt_handling")
   end
