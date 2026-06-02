@@ -227,26 +227,8 @@ module Parser
           [ label, truncated ]
         end
 
-        def cents_from(amount)
-          return unless amount
-
-          sign = amount.start_with?("-") ? -1 : 1
-          euros, cents = amount.delete_prefix("-").split(",")
-          sign * ((euros.to_i * 100) + cents.to_i)
-        end
-
-        def decimal_from(value)
-          return unless value
-
-          BigDecimal(value.tr(",", "."))
-        end
-
         def selfscan_receipt?
           text_lines.any? { |line| line.match?(/Début Selfscan/) }
-        end
-
-        def text_lines
-          @text_lines ||= text.lines.map(&:strip).reject(&:blank?)
         end
 
         class LineState

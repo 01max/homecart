@@ -3,20 +3,6 @@ require "bigdecimal"
 module Parser
   class Base
     MONETARY_TOLERANCE_CENTS = 1
-    FRENCH_MONTHS = {
-      "janvier" => 1,
-      "février" => 2,
-      "mars" => 3,
-      "avril" => 4,
-      "mai" => 5,
-      "juin" => 6,
-      "juillet" => 7,
-      "août" => 8,
-      "septembre" => 9,
-      "octobre" => 10,
-      "novembre" => 11,
-      "décembre" => 12
-    }.freeze
     VALIDATORS = {
       totals_sum: "validate_totals_sum",
       article_count: "validate_article_count",
@@ -165,8 +151,26 @@ module Parser
       BigDecimal(value.to_s)
     end
 
+    def cents_from(amount)
+      return unless amount
+
+      sign = amount.start_with?("-") ? -1 : 1
+      euros, cents = amount.delete_prefix("-").split(/[,.]/)
+      sign * ((euros.to_i * 100) + cents.to_i)
+    end
+
+    def decimal_from(value)
+      return unless value
+
+      BigDecimal(value.tr(",", "."))
+    end
+
     def french_month_number(month)
-      FRENCH_MONTHS.fetch(month.downcase)
+      Parser::FrenchDates.month_number(month)
+    end
+
+    def text_lines
+      @text_lines ||= text.lines.map(&:strip).reject(&:blank?)
     end
 
     def attribute_value(record, attribute)

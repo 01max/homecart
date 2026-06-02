@@ -9,7 +9,9 @@ RSpec.describe Parser::Base do
              :validate_totals_sum,
              :validate_article_count,
              :validate_payments_sum,
-             :add_warning
+             :add_warning,
+             :cents_from,
+             :french_month_number
     end
   end
 
@@ -121,6 +123,20 @@ RSpec.describe Parser::Base do
       expect(parser.validate_totals_sum(result)).to be(true)
       expect(parser.validate_article_count(result)).to be(true)
       expect(parser.validate_payments_sum(result)).to be(true)
+    end
+  end
+
+  describe "shared parser helpers" do
+    it "parses cents from comma or dot decimal separators" do
+      expect(parser.cents_from("12,34")).to eq(1_234)
+      expect(parser.cents_from("12.34")).to eq(1_234)
+      expect(parser.cents_from("-12,34")).to eq(-1_234)
+    end
+
+    it "resolves full and abbreviated French month names" do
+      expect(parser.french_month_number("janvier")).to eq(1)
+      expect(parser.french_month_number("janv.")).to eq(1)
+      expect(parser.french_month_number("déc.")).to eq(12)
     end
   end
 
