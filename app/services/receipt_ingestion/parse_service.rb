@@ -4,10 +4,16 @@ module ReceiptIngestion
 
     MissingPromotionLinkedLineError = Class.new(StandardError)
 
-    def initialize(text_extraction:, parser_format: text_extraction.source_document.parser_format, parser_registry: Parser::Registry)
+    def initialize(
+      text_extraction:,
+      parser_format: text_extraction.source_document.parser_format,
+      parser_registry: Parser::Registry,
+      validator: ValidateParseService
+    )
       @text_extraction = text_extraction
       @parser_format = parser_format
       @parser_registry = parser_registry
+      @validator = validator
     end
 
     def call
@@ -18,6 +24,7 @@ module ReceiptIngestion
         lines_by_position = create_lines(receipt, parser_result.lines)
         promotions = create_promotions(receipt, parser_result.promotions, lines_by_position)
         payments = create_payments(receipt, parser_result.payments)
+        validator.call(receipt: receipt)
 
         Result.new(receipt: receipt, lines: lines_by_position.values, promotions: promotions, payments: payments)
       end
@@ -25,7 +32,7 @@ module ReceiptIngestion
 
     private
 
-    attr_reader :text_extraction, :parser_format, :parser_registry
+    attr_reader :text_extraction, :parser_format, :parser_registry, :validator
 
     delegate :source_document, to: :text_extraction
 
