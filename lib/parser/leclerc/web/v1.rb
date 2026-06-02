@@ -11,19 +11,6 @@ module Parser
 
         Parser::Registry.register(FORMAT, self)
 
-        def call
-          result = result_envelope(
-            receipt: receipt_attributes,
-            lines: line_attributes,
-            promotions: [],
-            payments: payment_attributes
-          )
-          validator_results = [ validate_totals_sum(result), validate_article_count(result), validate_payments_sum(result) ]
-          result.receipt[:parser_status] = validator_results.all? ? "parsed" : "needs_review"
-
-          result
-        end
-
         private
 
         def receipt_attributes
@@ -40,21 +27,20 @@ module Parser
           }
         end
 
-        def line_attributes
-          item_lines.map.with_index(1) { |line, position| parse_line(line, position) }
+        def parsed_lines
+          item_lines.map { |line| parse_line(line) }
         end
 
         def item_lines
           @item_lines ||= text_lines.take_while { |line| !line.match?(TOTAL_PATTERN) }.select { |line| line.match?(LINE_PATTERN) }
         end
 
-        def parse_line(line, position)
+        def parse_line(line)
           match = line.match(LINE_PATTERN)
           label = match[:label].strip
           quantity, label = extract_quantity_and_label(label)
 
           {
-            position: position,
             raw_text: line,
             label: normalize_label(label),
             label_truncated: label_truncated?(label),
@@ -107,14 +93,6 @@ module Parser
 
         def total_match
           @total_match ||= text_lines.lazy.filter_map { |line| line.match(TOTAL_PATTERN) }.first
-        end
-
-        def normalize_label(label)
-          label.sub(/\s*\.\.\z/, "").strip
-        end
-
-        def label_truncated?(label)
-          label.match?(/\s*\.\.\z/)
         end
 
         def fee_line?(label)

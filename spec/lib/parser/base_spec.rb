@@ -16,8 +16,17 @@ RSpec.describe Parser::Base do
   end
 
   describe "#call" do
-    it "requires subclasses to implement parsing" do
-      expect { parser.call }.to raise_error(NotImplementedError, /must implement #call/)
+    it "requires subclasses to implement receipt attributes" do
+      expect { parser.call }.to raise_error(NotImplementedError, /must implement #receipt_attributes/)
+    end
+
+    it "builds a result envelope and runs validators through subclass hooks" do
+      result = callable_parser.new(text: "receipt text").call
+
+      expect(result.receipt).to include(total_cents: 500, declared_article_count: 2, parser_status: "parsed")
+      expect(result.lines).to contain_exactly(hash_including(position: 1, total_cents: 200), hash_including(position: 2, total_cents: 300))
+      expect(result.payments).to contain_exactly(hash_including(amount_cents: 500))
+      expect(result.warnings).to be_empty
     end
   end
 
@@ -177,6 +186,32 @@ RSpec.describe Parser::Base do
 
   def payment_attributes
     [ { amount_cents: 1_234 } ]
+  end
+
+  def callable_parser
+    Class.new(described_class) do
+      private
+
+      def receipt_attributes
+        {
+          total_cents: 500,
+          declared_article_count: 2,
+          parser_status: "parsed",
+          parser_warnings: warnings
+        }
+      end
+
+      def parsed_lines
+        [
+          { total_cents: 200, kind: "item", unit_of_measure: "piece", quantity: 1 },
+          { total_cents: 300, kind: "item", unit_of_measure: "piece", quantity: 1 }
+        ]
+      end
+
+      def payment_attributes
+        [ { amount_cents: 500 } ]
+      end
+    end
   end
 
   def piece_line(quantity:)

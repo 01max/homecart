@@ -14,21 +14,15 @@ module Parser
 
         Parser::Registry.register(FORMAT, self)
 
-        def call
-          result = result_envelope(
-            receipt: receipt_attributes,
-            lines: line_attributes,
-            promotions: [],
-            payments: payment_attributes
-          )
-          add_scan_warnings
-          validator_results = [ validate_totals_sum(result), validate_article_count(result), validate_payments_sum(result) ]
-          result.receipt[:parser_status] = parsed_status(validator_results)
+        private
 
-          result
+        def after_parse(_result)
+          add_scan_warnings
         end
 
-        private
+        def parser_status(_result, validator_results)
+          validator_results.all? && severe_scan_warning_lines.empty? ? "parsed" : "needs_review"
+        end
 
         def receipt_attributes
           {
@@ -42,10 +36,6 @@ module Parser
             parser_status: "parsed",
             parser_warnings: warnings
           }
-        end
-
-        def line_attributes
-          parsed_lines.map.with_index(1) { |line, position| line.merge(position: position) }
         end
 
         def parsed_lines
@@ -116,7 +106,8 @@ module Parser
         def line_details(match, state)
           total_cents = cents_from(match[:total])
           label = match[:label].strip
-          label, truncated = normalize_label(label)
+          truncated = label_truncated?(label)
+          label = normalize_label(label)
           quantity = decimal_from(match[:quantity]) || BigDecimal("1")
           unit_price_cents = cents_from(match[:unit_price])
           kind = total_cents.negative? ? "discount" : "item"
@@ -176,10 +167,6 @@ module Parser
           end
         end
 
-        def parsed_status(validator_results)
-          validator_results.all? && severe_scan_warning_lines.empty? ? "parsed" : "needs_review"
-        end
-
         def severe_scan_warning_lines
           scan_warning_lines.grep(/incorrect/i)
         end
@@ -218,13 +205,6 @@ module Parser
         def declared_article_count
           article_count_line = text_lines.find { |line| line.match?(/\A\d+ Articles\z/) }
           article_count_line.to_i if article_count_line
-        end
-
-        def normalize_label(label)
-          truncated = label.match?(/\s*\.\.\z/)
-          label = label.sub(/\s*\.\.\z/, "").strip
-
-          [ label, truncated ]
         end
 
         def selfscan_receipt?

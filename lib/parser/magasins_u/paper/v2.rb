@@ -1,7 +1,7 @@
 module Parser
   module MagasinsU
     module Paper
-      class V2 < Parser::Base
+      class V2 < Base
         FORMAT = Parser::Registry::FORMATS.fetch(:u_paper_v2)
 
         SALE_MARKER_PATTERN = /\A\*\*\* VENTE \*\*\*\z/
@@ -14,38 +14,7 @@ module Parser
 
         Parser::Registry.register(FORMAT, self)
 
-        def call
-          result = result_envelope(
-            receipt: receipt_attributes,
-            lines: line_attributes,
-            promotions: [],
-            payments: payment_attributes
-          )
-          validator_results = [ validate_totals_sum(result), validate_article_count(result), validate_payments_sum(result) ]
-          result.receipt[:parser_status] = validator_results.all? ? "parsed" : "needs_review"
-
-          result
-        end
-
         private
-
-        def receipt_attributes
-          {
-            parser_format: FORMAT,
-            purchased_at: purchased_at,
-            register_number: footer_match&.[](:register),
-            ticket_number: footer_match&.[](:ticket),
-            cashier_code: footer_match&.[](:cashier),
-            total_cents: total_cents,
-            declared_article_count: declared_article_count,
-            parser_status: "parsed",
-            parser_warnings: warnings
-          }
-        end
-
-        def line_attributes
-          parsed_lines.map.with_index(1) { |line, position| line.merge(position: position) }
-        end
 
         def parsed_lines
           @parsed_lines ||= parse_receipt_lines
@@ -80,7 +49,7 @@ module Parser
         def parse_receipt_line(line, state, parsed)
           if (quantity_match = line.match(QUANTITY_LINE_PATTERN))
             parsed << parse_quantity_line(quantity_match, state)
-            return clear_pending_item(state)
+            return state.pending_item = nil
           end
 
           if (item_match = line.match(ITEM_LINE_PATTERN))
@@ -117,24 +86,6 @@ module Parser
           )
         end
 
-        def payment_attributes
-          text_lines.filter_map.with_index(1) do |line, index|
-            match = line.match(PAYMENT_PATTERN)
-            next unless match
-
-            {
-              position: index,
-              raw_label: match[:raw_label],
-              category: payment_category(match[:raw_label]),
-              amount_cents: cents_from(match[:amount])
-            }
-          end
-        end
-
-        def payment_category(raw_label)
-          raw_label.start_with?("CB TRD") ? "tickets_restaurant" : "bank_card"
-        end
-
         def purchased_at
           return unless footer_match
 
@@ -148,52 +99,20 @@ module Parser
           )
         end
 
+        def register_number
+          footer_match&.[](:register)
+        end
+
+        def ticket_number
+          footer_match&.[](:ticket)
+        end
+
+        def cashier_code
+          footer_match&.[](:cashier)
+        end
+
         def footer_match
           @footer_match ||= text_lines.lazy.filter_map { |line| line.match(FOOTER_PATTERN) }.first
-        end
-
-        def total_cents
-          cents_from(total_match&.[](:amount))
-        end
-
-        def declared_article_count
-          total_match&.[](:count)&.to_i
-        end
-
-        def total_match
-          @total_match ||= text_lines.lazy.filter_map { |line| line.match(TOTAL_PATTERN) }.first
-        end
-
-        def vat_rate_bp_for(vat_code)
-          vat_rates_by_code.fetch(vat_code) do
-            add_warning(code: "missing_vat_code", detail: "No VAT table row found for code #{vat_code}")
-            nil
-          end
-        end
-
-        def vat_rates_by_code
-          @vat_rates_by_code ||= text_lines.filter_map do |line|
-            match = line.match(VAT_ROW_PATTERN)
-            next unless match
-
-            [ match[:code], (decimal_from(match[:rate]) * 100).to_i ]
-          end.to_h
-        end
-
-        def clear_pending_item(state)
-          state.pending_item = nil
-        end
-
-        def clean_label(label)
-          label.strip
-        end
-
-        def normalize_label(label)
-          label.sub(/\s*\.\.\z/, "").strip
-        end
-
-        def label_truncated?(label)
-          label.match?(/\s*\.\.\z/)
         end
 
         class LineState

@@ -57,10 +57,54 @@ module Parser
     end
 
     def call
-      raise NotImplementedError, "#{self.class.name} must implement #call"
+      result = result_envelope(
+        receipt: receipt_attributes,
+        lines: line_attributes,
+        promotions: promotion_attributes,
+        payments: payment_attributes
+      )
+      after_parse(result)
+      validator_results = [
+        validate_totals_sum(result),
+        validate_article_count(result),
+        validate_payments_sum(result)
+      ]
+      result.receipt[:parser_status] = parser_status(result, validator_results)
+
+      result
     end
 
     private
+
+    def receipt_attributes
+      raise NotImplementedError, "#{self.class.name} must implement #receipt_attributes"
+    end
+
+    def line_attributes
+      parsed_lines.map.with_index(1) { |line, position| line.merge(position: position) }
+    end
+
+    def parsed_lines
+      raise NotImplementedError, "#{self.class.name} must implement #parsed_lines or #line_attributes"
+    end
+
+    def promotion_attributes
+      []
+    end
+
+    def payment_attributes
+      raise NotImplementedError, "#{self.class.name} must implement #payment_attributes"
+    end
+
+    def after_parse(_result) = nil
+
+    def parser_status(_result, validator_results)
+      validator_results.all? && blocking_warnings.empty? ? "parsed" : "needs_review"
+    end
+
+    def blocking_warnings
+      warnings
+    end
 
     def result_envelope(receipt:, lines:, promotions: [], payments:, warnings: self.warnings)
       self.class.validate_warnings!(warnings)
@@ -171,6 +215,14 @@ module Parser
 
     def text_lines
       @text_lines ||= text.lines.map(&:strip).reject(&:blank?)
+    end
+
+    def normalize_label(label)
+      label.sub(/\s*\.\.\z/, "").strip
+    end
+
+    def label_truncated?(label)
+      label.match?(/\s*\.\.\z/)
     end
 
     def attribute_value(record, attribute)
