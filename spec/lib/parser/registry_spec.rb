@@ -36,11 +36,21 @@ RSpec.describe Parser::Registry do
   end
 
   it "raises a clear error for unregistered parser formats" do
-    expect { described_class.for("leclerc.paper.v1") }
-      .to raise_error(described_class::UnknownFormatError, "no parser registered for leclerc.paper.v1")
+    with_empty_registry do
+      expect { described_class.for("leclerc.paper.v1") }
+        .to raise_error(described_class::UnknownFormatError, "no parser registered for leclerc.paper.v1")
+    end
   end
 
   it "is the canonical source for model parser format values" do
     expect(SourceDocument::PARSER_FORMATS).to equal(described_class::FORMATS)
+  end
+
+  def with_empty_registry
+    existing_registry = described_class.instance_variable_get(:@registry)
+    described_class.instance_variable_set(:@registry, {})
+    yield
+  ensure
+    described_class.instance_variable_set(:@registry, existing_registry)
   end
 end
