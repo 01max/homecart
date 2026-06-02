@@ -9,12 +9,17 @@ module ModelRecordHelpers
     Store.create!(retail_brand: retail_brand, location_name: location_name, channel: channel, identifiers: {})
   end
 
-  def create_source_document(store: create_store, content_hash: SecureRandom.hex(32), mime_type: "application/pdf")
+  def create_source_document(
+    store: create_store,
+    content_hash: SecureRandom.hex(32),
+    mime_type: "application/pdf",
+    parser_format: "leclerc.paper.v1"
+  )
     SourceDocument.create!(
       store: store,
       content_hash: content_hash,
       mime_type: mime_type,
-      parser_format: "leclerc.paper.v1",
+      parser_format: parser_format,
       ingested_at: Time.current
     )
   end

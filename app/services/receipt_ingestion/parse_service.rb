@@ -6,12 +6,12 @@ module ReceiptIngestion
 
     def initialize(
       text_extraction:,
-      parser_format: text_extraction.source_document.parser_format,
+      parser_format: nil,
       parser_registry: Parser::Registry,
       validator: ValidateParseService
     )
       @text_extraction = text_extraction
-      @parser_format = parser_format
+      @parser_format = parser_format || source_document_parser_format
       @parser_registry = parser_registry
       @validator = validator
     end
@@ -38,6 +38,10 @@ module ReceiptIngestion
 
     def parse_text
       parser_registry.for(parser_format).new(text: text_extraction.text).call
+    end
+
+    def source_document_parser_format
+      SourceDocument::PARSER_FORMATS.fetch(source_document.parser_format.to_sym)
     end
 
     def create_receipt(parser_result)

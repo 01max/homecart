@@ -34,14 +34,15 @@ RSpec.describe ReceiptIngestion::ParseService do
     end
   end
 
-  def parse_context(parser_result: build_parser_result, text_extraction: create_text_extraction)
+  def parse_context(parser_result: build_parser_result, text_extraction: create_text_extraction, parser_format: "leclerc.paper.v1")
     parser_class = parser_class_for(parser_result)
     parser_registry = parser_registry_for(parser_class)
-    result = described_class.call(
+    service_arguments = {
       text_extraction: text_extraction,
-      parser_format: "leclerc.paper.v1",
       parser_registry: parser_registry
-    )
+    }
+    service_arguments[:parser_format] = parser_format if parser_format
+    result = described_class.call(**service_arguments)
 
     { parser_class: parser_class, parser_registry: parser_registry, result: result, text_extraction: text_extraction }
   end
@@ -156,6 +157,18 @@ RSpec.describe ReceiptIngestion::ParseService do
     expect(context.fetch(:parser_class).calls).to contain_exactly(context.fetch(:text_extraction).text)
     expect_persisted_receipt(context.fetch(:result).receipt, context.fetch(:text_extraction))
     expect_persisted_children(context.fetch(:result))
+  end
+
+  it "copies store and parser format from the source document instead of trusting parser attributes" do
+    source_document = create_source_document(store: create_store, parser_format: "u.paper.v2")
+    text_extraction = create_text_extraction(source_document: source_document)
+    parser_receipt = receipt_attributes.merge(store: create_store, parser_format: "auchan.paper.v1")
+
+    context = parse_context(parser_result: build_parser_result(receipt: parser_receipt), text_extraction: text_extraction, parser_format: nil)
+
+    expect(context.fetch(:parser_registry).requested_format).to eq("u.paper.v2")
+    expect(context.fetch(:result).receipt.store).to eq(source_document.store)
+    expect(context.fetch(:result).receipt).to be_parser_format_u_paper_v2
   end
 
   it "persists parser warnings onto the receipt" do
