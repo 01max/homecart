@@ -1,0 +1,24 @@
+          ANONYMIZED STORE
+        TEL:00.00.00.00.00
+  Caisse 001-0102 05 octobre 2024 16:45
+  05/10/24 0 01A9 0DT00
+
+
+
+
+          ANONYMIZED BARCODE
+
+  >> EPICERIE
+  ITEM ALPHA BIO 250G
+           3 X 3.54€                    10.62
+* ITEM BRAVO                            1.79
+  ITEM CHARLIE                           3.21
+  >> CHARCUTERIE LS
+  ITEM DELTA                             2.11
+                                   ----------
+  Total 6 articles                     17.73
+
+  CB                                    17.73
+
+  ----------------------------------------
+          Avec la carte E.Leclerc

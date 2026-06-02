@@ -1,0 +1,20 @@
+ANONYMIZED CITY
+Telephone: 00.00.00.00.00
+www. example.invalid
+Vous avez ete accueilli par CAISSE
+Le 05 mai 2026 à 13:45:10
+Caisse : 101 Ticket : 12345
+Hôte(sse) : 9999
+*ARTICLE TRONQUE.. 2,00
+PRODUIT QUANTITE 2*1,50 3,00
+Total 5,00 €
+TVAS TVA Net Brut
+5,50 0,26 4,74 5,00
+Brut 0,26 4,74 5,00
+Reçu CARTE BANCAIRE 5,00
+VOTRE COMPTE WAAOH
+ARTICLE TRONQUE EXTRA.. 0,40
+TOT. ARTICLES ELIGIBLES TR 2,00
+TOT. PAIEMENTS PAR TR 0,00
+3 Articles
+Merci de votre visite. A bientôt

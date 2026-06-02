@@ -1,0 +1,30 @@
+ANONYMIZED U STORE
+ANONYMIZED ADDRESS
+00000 ANONYMIZED
+Telephone : 00 00 00 00 00
+SIRET 000000000 - NAF 0000A
+TVA FR00000000000
+
+Opérateur          Date        Heure      TPV        Ticket
+101    MT         19/02/25      11:51        2         405251
+
+>>>> EPICERIE
+DELICE POTIRON/CHATA.LIEBIG 1L                     3,77 €   11
+PRINCE MULTI.CEREALE.LU PQ293G..                   1,90 €   11
+>>>> FRUITS ET LEGUMES
+CONCOMBRE                                          1,50 €   11
+
+===========
+TOTAL           3 Article(s)           7,17 €
+ESPECES                                        7,17 €
+11 /   5,50         6,80 €       0,37 €        7,17 €
+------------------------------------------------------
+TOTAL TVA           6,80 €       0,37 €        7,17 €
+Carte U solde avant ticket                         1,00 €
+Carte U solde après ticket                         1,35 €
+
+Opérateur         Date      Heure      TPV     Ticket
+101    MT       19/02/25     11:52        2      405251
+Hash: BRpl     V. 3.5.4.2        N° vente: 90
+Nbre de lignes de vente ticket: 3
+MERCI DE VOTRE FIDELITE
