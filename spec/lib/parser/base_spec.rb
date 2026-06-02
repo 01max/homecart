@@ -28,6 +28,20 @@ RSpec.describe Parser::Base do
       expect(result.payments).to contain_exactly(hash_including(amount_cents: 500))
       expect(result.warnings).to be_empty
     end
+
+    it "keeps parsed status when the article-count validator is skipped for nil declared count" do
+      result = callable_parser(declared_article_count: nil, line_quantities: [ 999 ]).new(text: "receipt text").call
+
+      expect(result.receipt[:parser_status]).to eq("parsed")
+      expect(result.warnings).to be_empty
+    end
+
+    it "keeps parsed status within the one-cent monetary validator tolerance" do
+      result = callable_parser(total_cents: 500, declared_article_count: 1, line_totals: [ 499 ], payment_amounts: [ 501 ]).new(text: "receipt text").call
+
+      expect(result.receipt[:parser_status]).to eq("parsed")
+      expect(result.warnings).to be_empty
+    end
   end
 
   describe "#result_envelope" do
@@ -188,28 +202,33 @@ RSpec.describe Parser::Base do
     [ { amount_cents: 1_234 } ]
   end
 
-  def callable_parser
+  def callable_parser(total_cents: 500, declared_article_count: 2, line_totals: [ 200, 300 ], line_quantities: [ 1, 1 ], payment_amounts: [ 500 ])
     Class.new(described_class) do
+      define_method(:receipt_total_cents) { total_cents }
+      define_method(:receipt_declared_article_count) { declared_article_count }
+      define_method(:parser_line_totals) { line_totals }
+      define_method(:parser_line_quantities) { line_quantities }
+      define_method(:parser_payment_amounts) { payment_amounts }
+
       private
 
       def receipt_attributes
         {
-          total_cents: 500,
-          declared_article_count: 2,
+          total_cents: receipt_total_cents,
+          declared_article_count: receipt_declared_article_count,
           parser_status: "parsed",
           parser_warnings: warnings
         }
       end
 
       def parsed_lines
-        [
-          { total_cents: 200, kind: "item", unit_of_measure: "piece", quantity: 1 },
-          { total_cents: 300, kind: "item", unit_of_measure: "piece", quantity: 1 }
-        ]
+        parser_line_totals.zip(parser_line_quantities).map do |total_cents, quantity|
+          { total_cents: total_cents, kind: "item", unit_of_measure: "piece", quantity: quantity }
+        end
       end
 
       def payment_attributes
-        [ { amount_cents: 500 } ]
+        parser_payment_amounts.map { |amount_cents| { amount_cents: amount_cents } }
       end
     end
   end
