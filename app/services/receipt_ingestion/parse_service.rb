@@ -8,11 +8,13 @@ module ReceiptIngestion
       text_extraction:,
       parser_format: nil,
       parser_registry: Parser::Registry,
+      duplicate_detector: DetectDuplicateService,
       validator: ValidateParseService
     )
       @text_extraction = text_extraction
       @parser_format = parser_format || source_document_parser_format
       @parser_registry = parser_registry
+      @duplicate_detector = duplicate_detector
       @validator = validator
     end
 
@@ -32,7 +34,7 @@ module ReceiptIngestion
 
     private
 
-    attr_reader :text_extraction, :parser_format, :parser_registry, :validator
+    attr_reader :text_extraction, :parser_format, :parser_registry, :duplicate_detector, :validator
 
     delegate :source_document, to: :text_extraction
 
@@ -45,7 +47,7 @@ module ReceiptIngestion
     end
 
     def create_receipt(parser_result)
-      Receipt.create!(
+      Receipt.new(
         parser_result.receipt.to_h.merge(
           store: source_document.store,
           source_document: source_document,
@@ -53,7 +55,10 @@ module ReceiptIngestion
           parser_format: parser_format,
           parser_warnings: parser_result.warnings
         )
-      )
+      ).tap do |receipt|
+        duplicate_detector.call(receipt: receipt)
+        receipt.save!
+      end
     end
 
     def create_lines(receipt, line_attributes)

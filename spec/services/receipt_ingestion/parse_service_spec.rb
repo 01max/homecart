@@ -81,6 +81,13 @@ RSpec.describe ReceiptIngestion::ParseService do
     expect(ReceiptPayment.count).to eq(0)
   end
 
+  def expect_only_existing_receipt_graph
+    expect(Receipt.count).to eq(1)
+    expect(ReceiptLine.count).to eq(0)
+    expect(ReceiptPromotion.count).to eq(0)
+    expect(ReceiptPayment.count).to eq(0)
+  end
+
   def receipt_attributes
     {
       purchased_at: Time.zone.local(2026, 6, 1, 12, 30, 0),
@@ -150,6 +157,47 @@ RSpec.describe ReceiptIngestion::ParseService do
     }
   end
 
+  def create_existing_receipt_for_duplicate(store:, purchased_at:, register_number: nil, ticket_number: nil)
+    create_receipt(
+      store: store,
+      purchased_at: purchased_at,
+      total_cents: 500,
+      parser_status: "parsed"
+    ).tap do |receipt|
+      receipt.update!(register_number: register_number, ticket_number: ticket_number)
+    end
+  end
+
+  def text_extraction_for_store(store)
+    source_document = create_source_document(store: store)
+    create_text_extraction(source_document: source_document)
+  end
+
+  def text_extraction_with_existing_exact_duplicate(store:, purchased_at:)
+    create_existing_receipt_for_duplicate(
+      store: store,
+      purchased_at: purchased_at,
+      register_number: "101",
+      ticket_number: "12345"
+    )
+    text_extraction_for_store(store)
+  end
+
+  def expect_suspected_duplicate_warning(receipt, duplicate)
+    expect(receipt.parser_warnings).to contain_exactly(
+      a_hash_including(
+        "code" => "suspected_duplicate",
+        "detail" => "Possible duplicate of receipt #{duplicate.id}"
+      )
+    )
+  end
+
+  def expect_duplicate_parse_rejected(text_extraction)
+    expect do
+      parse_context(text_extraction: text_extraction)
+    end.to raise_error(ReceiptIngestion::DetectDuplicateService::DuplicateReceiptError)
+  end
+
   it "looks up the parser, runs it, and persists the parsed receipt graph" do
     context = parse_context
 
@@ -177,6 +225,29 @@ RSpec.describe ReceiptIngestion::ParseService do
     expect(result.receipt.parser_warnings).to contain_exactly(
       a_hash_including("code" => "parser_notice", "detail" => "Parser noticed something")
     )
+  end
+
+  it "flags suspected duplicate receipts for review after persistence" do
+    store = create_store
+    duplicate = create_existing_receipt_for_duplicate(store: store, purchased_at: Time.zone.local(2026, 6, 1, 9, 15, 0))
+    text_extraction = text_extraction_for_store(store)
+
+    result = parse_context(text_extraction: text_extraction).fetch(:result)
+
+    expect(result.receipt).to be_needs_review
+    expect_suspected_duplicate_warning(result.receipt, duplicate)
+  end
+
+  it "rejects an exact composite duplicate before persisting a new receipt graph" do
+    store = create_store
+    text_extraction = text_extraction_with_existing_exact_duplicate(
+      store: store,
+      purchased_at: Time.zone.local(2026, 6, 1, 12, 30, 0)
+    )
+
+    expect_duplicate_parse_rejected(text_extraction)
+
+    expect_only_existing_receipt_graph
   end
 
   it "rolls back the whole parse when one child record cannot be persisted" do

@@ -1,5 +1,11 @@
 en:
   receipt_ingestion:
+    detect_duplicate:
+      errors:
+        duplicate_receipt: "receipt duplicates existing receipt %{receipt_id}"
+      warnings:
+        suspected_duplicate:
+          detail: "Possible duplicate of receipt %{receipt_id}"
     extract_image_with_tesseract:
       errors:
         empty_text: "tesseract returned empty text"
