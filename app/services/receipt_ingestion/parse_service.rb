@@ -23,6 +23,8 @@ module ReceiptIngestion
 
       ActiveRecord::Base.transaction do
         receipt = create_receipt(parser_result)
+        return Result.new(receipt: receipt, lines: [], promotions: [], payments: []) if parser_exception_result?(parser_result)
+
         lines_by_position = create_lines(receipt, parser_result.lines)
         promotions = create_promotions(receipt, parser_result.promotions, lines_by_position)
         payments = create_payments(receipt, parser_result.payments)
@@ -39,7 +41,32 @@ module ReceiptIngestion
     delegate :source_document, to: :text_extraction
 
     def parse_text
-      parser_registry.for(parser_format).new(text: text_extraction.text).call
+      parser = parser_registry.for(parser_format).new(text: text_extraction.text)
+      parser.call
+    rescue StandardError => e
+      failed_parse_result(e)
+    end
+
+    def failed_parse_result(error)
+      warning = {
+        code: "parser_exception",
+        validator: nil,
+        detail: I18n.t("receipt_ingestion.parser_warnings.parser_exception.detail", detail: error.message),
+        value: nil
+      }
+      Parser::Base.validate_warning!(warning)
+
+      Parser::Base::Result.new(
+        receipt: { parser_status: "needs_review" },
+        lines: [],
+        promotions: [],
+        payments: [],
+        warnings: [ warning ]
+      )
+    end
+
+    def parser_exception_result?(parser_result)
+      parser_result.warnings.any? { |warning| warning[:code] == "parser_exception" }
     end
 
     def source_document_parser_format

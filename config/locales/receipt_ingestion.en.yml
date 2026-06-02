@@ -26,6 +26,8 @@ en:
       errors:
         missing_promotion_linked_line: "promotion linked_line_position %{position} did not match a persisted line"
     parser_warnings:
+      parser_exception:
+        detail: "Parser failed: %{detail}"
       missing_vat_code:
         detail: "No VAT table row found for code %{vat_code}"
       totals_sum_mismatch:

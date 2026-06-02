@@ -34,8 +34,32 @@ RSpec.describe ReceiptIngestion::ParseService do
     end
   end
 
+  def parser_class_raising(error)
+    Class.new do
+      class << self
+        attr_accessor :calls, :error
+      end
+
+      self.calls = []
+      self.error = error
+
+      def initialize(text:)
+        @text = text
+      end
+
+      def call
+        self.class.calls << @text
+        raise self.class.error
+      end
+    end
+  end
+
   def parse_context(parser_result: build_parser_result, text_extraction: create_text_extraction, parser_format: "leclerc.paper.v1")
     parser_class = parser_class_for(parser_result)
+    parse_context_for_parser_class(parser_class, text_extraction: text_extraction, parser_format: parser_format)
+  end
+
+  def parse_context_for_parser_class(parser_class, text_extraction: create_text_extraction, parser_format: "leclerc.paper.v1")
     parser_registry = parser_registry_for(parser_class)
     service_arguments = {
       text_extraction: text_extraction,
@@ -198,6 +222,15 @@ RSpec.describe ReceiptIngestion::ParseService do
     end.to raise_error(ReceiptIngestion::DetectDuplicateService::DuplicateReceiptError)
   end
 
+  def expect_parser_exception_warning(receipt)
+    expect(receipt.parser_warnings).to contain_exactly(
+      a_hash_including(
+        "code" => "parser_exception",
+        "detail" => "Parser failed: unexpected parser bug"
+      )
+    )
+  end
+
   it "looks up the parser, runs it, and persists the parsed receipt graph" do
     context = parse_context
 
@@ -227,6 +260,18 @@ RSpec.describe ReceiptIngestion::ParseService do
     )
   end
 
+  it "routes validator failures to review after persistence" do
+    parser_result = build_parser_result(receipt: receipt_attributes.merge(declared_article_count: 3))
+
+    result = parse_context(parser_result: parser_result).fetch(:result)
+
+    expect(result.receipt).to be_needs_review
+    expect(result.receipt.parser_warnings).to contain_exactly(
+      a_hash_including("code" => "article_count_mismatch", "validator" => "validate_article_count", "value" => -1)
+    )
+    expect(result.lines.size).to eq(2)
+  end
+
   it "flags suspected duplicate receipts for review after persistence" do
     store = create_store
     duplicate = create_existing_receipt_for_duplicate(store: store, purchased_at: Time.zone.local(2026, 6, 1, 9, 15, 0))
@@ -248,6 +293,18 @@ RSpec.describe ReceiptIngestion::ParseService do
     expect_duplicate_parse_rejected(text_extraction)
 
     expect_only_existing_receipt_graph
+  end
+
+  it "routes parser exceptions to review without persisting child records" do
+    parser_class = parser_class_raising(StandardError.new("unexpected parser bug"))
+
+    context = parse_context_for_parser_class(parser_class)
+    receipt = context.fetch(:result).receipt
+
+    expect(receipt).to be_persisted
+    expect(receipt).to be_needs_review
+    expect_parser_exception_warning(receipt)
+    expect(context.fetch(:result)).to have_attributes(lines: [], promotions: [], payments: [])
   end
 
   it "rolls back the whole parse when one child record cannot be persisted" do
