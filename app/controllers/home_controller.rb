@@ -7,7 +7,7 @@ class HomeController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream
-      format.html { redirect_to root_path, notice: "Hotwire is ready." }
+      format.html { redirect_to root_path, notice: I18n.t("home.ping.ready") }
     end
   end
 end

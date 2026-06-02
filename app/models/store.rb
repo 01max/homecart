@@ -17,6 +17,6 @@ class Store < ApplicationRecord
   private
 
   def identifiers_are_an_object
-    errors.add(:identifiers, "must be an object") unless identifiers.is_a?(Hash)
+    errors.add(:identifiers, :not_an_object) unless identifiers.is_a?(Hash)
   end
 end

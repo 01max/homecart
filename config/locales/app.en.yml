@@ -1,0 +1,8 @@
+en:
+  app:
+    title: "Homecart"
+    nav:
+      home: "Homecart"
+      receipts: "Receipts"
+    pwa:
+      description: "Homecart."

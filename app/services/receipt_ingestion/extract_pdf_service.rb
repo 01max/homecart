@@ -17,7 +17,7 @@ module ReceiptIngestion
       raise ExtractionError, error_message(stderr) unless status.success?
 
       text = stdout.to_s
-      raise ExtractionError, "pdftotext returned empty text" if text.blank?
+      raise ExtractionError, I18n.t("receipt_ingestion.extract_pdf.errors.empty_text") if text.blank?
 
       Result.new(text: text, engine: ENGINE)
     end
@@ -28,9 +28,9 @@ module ReceiptIngestion
 
     def error_message(stderr)
       detail = stderr.to_s.strip
-      return "pdftotext failed" if detail.blank?
+      return I18n.t("receipt_ingestion.extract_pdf.errors.failed") if detail.blank?
 
-      "pdftotext failed: #{detail}"
+      I18n.t("receipt_ingestion.extract_pdf.errors.failed_with_detail", detail: detail)
     end
   end
 end

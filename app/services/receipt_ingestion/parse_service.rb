@@ -75,7 +75,8 @@ module ReceiptIngestion
 
     def linked_line_for(position, lines_by_position)
       lines_by_position.fetch(position) do
-        raise MissingPromotionLinkedLineError, "promotion linked_line_position #{position} did not match a persisted line"
+        raise MissingPromotionLinkedLineError,
+              I18n.t("receipt_ingestion.parse.errors.missing_promotion_linked_line", position: position)
       end
     end
 

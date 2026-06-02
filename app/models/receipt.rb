@@ -25,6 +25,6 @@ class Receipt < ApplicationRecord
   private
 
   def parser_warnings_are_an_array
-    errors.add(:parser_warnings, "must be an array") unless parser_warnings.is_a?(Array)
+    errors.add(:parser_warnings, :not_an_array) unless parser_warnings.is_a?(Array)
   end
 end

@@ -1,0 +1,23 @@
+en:
+  activerecord:
+    errors:
+      models:
+        receipt_promotion:
+          attributes:
+            linking_method:
+              cannot_be_unallocated_with_linked_line: "cannot be unallocated when linked_line is present"
+              must_be_unallocated_without_linked_line: "must be unallocated when linked_line is blank"
+        receipt:
+          attributes:
+            parser_warnings:
+              not_an_array: "must be an array"
+        retail_brand:
+          attributes:
+            aliases:
+              not_an_array: "must be an array"
+        store:
+          attributes:
+            identifiers:
+              not_an_object: "must be an object"
+      messages:
+        immutable: "is immutable"

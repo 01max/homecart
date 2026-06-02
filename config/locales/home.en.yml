@@ -1,0 +1,14 @@
+en:
+  home:
+    index:
+      eyebrow: "Homecart"
+      title: "Receipt ingestion starts here."
+      turbo_stream: "Turbo Stream"
+      waiting_for_stream: "Waiting for the first server-rendered update."
+      ping_stream: "Ping stream"
+      stimulus: "Stimulus"
+      waiting_for_stimulus: "Waiting for Stimulus."
+      stimulus_connected: "Stimulus connected."
+    ping:
+      ready: "Hotwire is ready."
+      rendered_at: "Turbo Stream rendered at %{time}."

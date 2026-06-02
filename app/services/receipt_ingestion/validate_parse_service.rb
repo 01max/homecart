@@ -35,7 +35,7 @@ module ReceiptIngestion
       failed_result(
         :totals_sum,
         code: "totals_sum_mismatch",
-        detail: "Line totals differ from receipt total by #{discrepancy} cents",
+        detail: warning_detail(:totals_sum_mismatch, discrepancy),
         value: discrepancy
       )
     end
@@ -49,7 +49,7 @@ module ReceiptIngestion
       failed_result(
         :article_count,
         code: "article_count_mismatch",
-        detail: "Article count differs from declared count by #{discrepancy}",
+        detail: warning_detail(:article_count_mismatch, discrepancy),
         value: discrepancy
       )
     end
@@ -61,7 +61,7 @@ module ReceiptIngestion
       failed_result(
         :payments_sum,
         code: "payments_sum_mismatch",
-        detail: "Payment sum differs from receipt total by #{discrepancy} cents",
+        detail: warning_detail(:payments_sum_mismatch, discrepancy),
         value: discrepancy
       )
     end
@@ -89,6 +89,14 @@ module ReceiptIngestion
       Parser::Base.validate_warning!(warning)
 
       ValidatorResult.new(validator: VALIDATORS.fetch(validator), passed: false, warning: warning)
+    end
+
+    def warning_detail(key, discrepancy)
+      I18n.t(
+        "receipt_ingestion.parser_warnings.#{key}.detail",
+        count: discrepancy.abs,
+        discrepancy: discrepancy
+      )
     end
 
     def non_validator_warnings

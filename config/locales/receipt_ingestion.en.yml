@@ -1,0 +1,37 @@
+en:
+  receipt_ingestion:
+    extract_image_with_tesseract:
+      errors:
+        empty_text: "tesseract returned empty text"
+        missing_preprocessor: "image preprocessing requested but no preprocessor was provided"
+        missing_version: "could not detect tesseract version"
+        failed: "tesseract failed"
+        failed_with_detail: "tesseract failed: %{detail}"
+    extract_pdf:
+      errors:
+        empty_text: "pdftotext returned empty text"
+        failed: "pdftotext failed"
+        failed_with_detail: "pdftotext failed: %{detail}"
+    extract_text:
+      errors:
+        missing_original_file: "source document has no original file"
+        unsupported_mime_type: "unsupported MIME type: %{mime_type}"
+    parse:
+      errors:
+        missing_promotion_linked_line: "promotion linked_line_position %{position} did not match a persisted line"
+    parser_warnings:
+      missing_vat_code:
+        detail: "No VAT table row found for code %{vat_code}"
+      totals_sum_mismatch:
+        detail:
+          one: "Line totals differ from receipt total by %{discrepancy} cent"
+          other: "Line totals differ from receipt total by %{discrepancy} cents"
+      article_count_mismatch:
+        detail: "Article count differs from declared count by %{discrepancy}"
+      payments_sum_mismatch:
+        detail:
+          one: "Payment sum differs from receipt total by %{discrepancy} cent"
+          other: "Payment sum differs from receipt total by %{discrepancy} cents"
+    upload:
+      errors:
+        unsupported_mime_type: "unsupported MIME type: %{mime_type}; supported types: %{supported_types}"
