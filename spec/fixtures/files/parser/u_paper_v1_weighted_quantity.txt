@@ -1,0 +1,31 @@
+ANONYMIZED U STORE
+ANONYMIZED ADDRESS
+00000 ANONYMIZED
+Telephone : 00 00 00 00 00
+SIRET 000000000 - NAF 0000A
+TVA FR00000000000
+
+Opérateur          Date        Heure      TPV        Ticket
+106    LV         15/06/25      08:58        1         450250
+
+>>>> CHARC.TRAIT.SAUC.SECS L
+TORTELLINI RICOTT.EPINA.U 300G
+2 x     2,41 €                                 4,82 €   11
+>>>> FRUITS ET LEGUMES
+COURGETTE                                                   11
+2,056 kg x      1,29 €/kg                2,65 €
+>>>> PAT INDUSTRIELLE
+BRIOC.TRANC.NATURE HARRYS 485G                     2,80 €   11
+
+===========
+TOTAL           4 Article(s)          10,27 €
+CB SANS CONTACT VX                   EUR      10,27 €
+11 /   5,50        9,73 €        0,54 €       10,27 €
+------------------------------------------------------
+TOTAL TVA          9,73 €        0,54 €       10,27 €
+
+Opérateur         Date      Heure      TPV     Ticket
+106    LV       15/06/25     08:59        1      450250
+Hash: tBje     V. 3.5.4.2        N° vente: 12
+Nbre de lignes de vente ticket: 3
+MERCI DE VOTRE FIDELITE
