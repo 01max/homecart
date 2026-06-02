@@ -7,14 +7,7 @@ class SourceDocument < ApplicationRecord
     jpeg: "image/jpeg"
   }.freeze
 
-  PARSER_FORMATS = {
-    auchan_paper_v1: "auchan.paper.v1",
-    leclerc_paper_v1: "leclerc.paper.v1",
-    leclerc_paper_v2: "leclerc.paper.v2",
-    leclerc_web_v1: "leclerc.web.v1",
-    u_paper_v1: "u.paper.v1",
-    u_paper_v2: "u.paper.v2"
-  }.freeze
+  PARSER_FORMATS = Parser::Registry::FORMATS
 
   enum :mime_type, MIME_TYPES, prefix: true, validate: true
   enum :parser_format, PARSER_FORMATS, prefix: true, validate: true
