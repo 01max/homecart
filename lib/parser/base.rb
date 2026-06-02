@@ -3,6 +3,20 @@ require "bigdecimal"
 module Parser
   class Base
     MONETARY_TOLERANCE_CENTS = 1
+    FRENCH_MONTHS = {
+      "janvier" => 1,
+      "février" => 2,
+      "mars" => 3,
+      "avril" => 4,
+      "mai" => 5,
+      "juin" => 6,
+      "juillet" => 7,
+      "août" => 8,
+      "septembre" => 9,
+      "octobre" => 10,
+      "novembre" => 11,
+      "décembre" => 12
+    }.freeze
     VALIDATORS = {
       totals_sum: "validate_totals_sum",
       article_count: "validate_article_count",
@@ -149,6 +163,10 @@ module Parser
       return if value.nil?
 
       BigDecimal(value.to_s)
+    end
+
+    def french_month_number(month)
+      FRENCH_MONTHS.fetch(month.downcase)
     end
 
     def attribute_value(record, attribute)

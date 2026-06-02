@@ -1,0 +1,30 @@
+ANONYMIZED CITY
+Telephone: 00.00.00.00.00
+www. example.invalid
+Vous avez ete accueilli par SCO
+Le 14 mars 2026 à 10:49:09
+Caisse : 136 Ticket : 31495
+Hôte(sse) : 1451
+========== Début Selfscan ==========
+*ARTICLE SIMPLE.. 4,00
+ARTICLE NORMAL 6,00
+(Erreur de balisage)
+> Garantie légale 24 mois
+SRSESSSSES Fin Selfscan SRSESSSSES
+Articles avec Remise
+*ARTICLE REMISE.. 1*5,00 3,50
+30% DE REMISE IM.. -1,50
+TOTAL REMISES -1,50
+Total 13,50 €
+TVAS TVA Net Brut
+5,50 0,70 12,80 13,50
+Brut 0,70 12,80 13,50
+Montant total des remises 1,50
+Reçu BON BRA 2,00
+Reçu CARTE BANCAIRE 11,50
+TOT. ARTICLES ELIGIBLES TR 7,50
+TOT. PAIEMENTS PAR TR 0,00
+3 Articles
+Lecture partielle incorrecte
+Nouveau scan incorrect
+Merci de votre visite. A bientôt
