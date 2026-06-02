@@ -1,0 +1,12 @@
+#!/usr/bin/env zsh
+
+set -e
+
+project_root="$(cd "$(dirname "$0")/.." && pwd)"
+
+docker compose \
+  --project-directory "$project_root" \
+  run --rm --no-deps \
+  -e RAILS_ENV=test \
+  -v "$project_root:/rails" \
+  app bundle exec rspec "$@"
