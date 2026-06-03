@@ -6,7 +6,11 @@
     <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950"><%= t(".title") %></h1>
   </div>
 
-  <%= form_with url: source_documents_path, scope: :source_document, local: true, html: { multipart: true }, class: "space-y-5 rounded border border-slate-200 bg-white p-5 shadow-sm" do |form| %>
+  <%= form_with url: source_documents_path,
+                scope: :source_document,
+                local: true,
+                html: { multipart: true, data: { controller: "parser-format-suggestion" } },
+                class: "space-y-5 rounded border border-slate-200 bg-white p-5 shadow-sm" do |form| %>
     <div>
       <%= form.label :file, t(".file_label"), class: "block text-sm font-medium text-slate-700" %>
       <%= form.file_field :file, accept: @accepted_mime_types, class: "mt-2 block w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 file:mr-4 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200" %>
@@ -15,9 +19,13 @@
     <div>
       <%= form.label :store_id, t(".store_label"), class: "block text-sm font-medium text-slate-700" %>
       <%= form.select :store_id,
-                      @stores.map { |store| [ store_option_label(store), store.id ] },
+                      store_options_for_select,
                       { prompt: t(".store_prompt"), selected: @selected_store_id },
-                      class: "mt-2 block w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900" %>
+                      class: "mt-2 block w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900",
+                      data: {
+                        parser_format_suggestion_target: "store",
+                        action: "parser-format-suggestion#suggest"
+                      } %>
     </div>
 
     <div>
@@ -25,7 +33,11 @@
       <%= form.select :parser_format,
                       @parser_formats,
                       { prompt: t(".parser_format_prompt"), selected: @selected_parser_format },
-                      class: "mt-2 block w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900" %>
+                      class: "mt-2 block w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900",
+                      data: {
+                        parser_format_suggestion_target: "parserFormat",
+                        action: "parser-format-suggestion#markManualSelection"
+                      } %>
     </div>
 
     <div class="pt-2">

@@ -5,8 +5,13 @@ module ModelRecordHelpers
     RetailBrand.create!(name: "Retailer", slug: slug, aliases: [])
   end
 
-  def create_store(retail_brand: create_retail_brand, location_name: "Location #{SecureRandom.hex(2)}", channel: "physical")
-    Store.create!(retail_brand: retail_brand, location_name: location_name, channel: channel, identifiers: {})
+  def create_store(
+    retail_brand: create_retail_brand,
+    location_name: "Location #{SecureRandom.hex(2)}",
+    channel: "physical",
+    identifiers: {}
+  )
+    Store.create!(retail_brand: retail_brand, location_name: location_name, channel: channel, identifiers: identifiers)
   end
 
   def create_source_document(
