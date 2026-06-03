@@ -16,12 +16,21 @@ module ReceiptIngestion
     # @param store [Store] user-selected store for the source document
     # @param parser_format [String] dotted parser format selected at upload time
     # @param job_class [Class] job class used to continue source-document processing
+    # @param broadcaster [Class] service that broadcasts UI pipeline state
     # @param clock [#call] clock dependency returning the ingestion timestamp
-    def initialize(file:, store:, parser_format:, job_class: Receipt::ProcessSourceDocumentJob, clock: -> { Time.current })
+    def initialize(
+      file:,
+      store:,
+      parser_format:,
+      job_class: Receipt::ProcessSourceDocumentJob,
+      broadcaster: BroadcastProcessingStatusService,
+      clock: -> { Time.current }
+    )
       @file = file
       @store = store
       @parser_format = parser_format
       @job_class = job_class
+      @broadcaster = broadcaster
       @clock = clock
     end
 
@@ -37,13 +46,14 @@ module ReceiptIngestion
 
       source_document = create_source_document(content_hash)
       job_class.perform_later(source_document)
+      broadcaster.call(source_document: source_document, extraction_state: "queued", parsing_state: "waiting")
 
       Result.new(source_document: source_document, duplicate: false)
     end
 
     private
 
-    attr_reader :file, :store, :parser_format, :job_class, :clock
+    attr_reader :file, :store, :parser_format, :job_class, :broadcaster, :clock
 
     def validate_mime_type!
       return if SUPPORTED_MIME_TYPES.include?(file.content_type)

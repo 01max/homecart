@@ -1,0 +1,22 @@
+<tr id="<%= dom_id(receipt) %>">
+  <td class="whitespace-nowrap px-4 py-3 text-slate-950">
+    <%= receipt.purchased_at ? l(receipt.purchased_at, format: :short) : t("receipts.index.empty_value") %>
+  </td>
+  <td class="px-4 py-3 text-slate-700">
+    <%= t(
+          "receipts.store_label",
+          brand: receipt.store.retail_brand.name,
+          location: receipt.store.location_name,
+          channel: receipt.store.channel
+        ) %>
+  </td>
+  <td class="whitespace-nowrap px-4 py-3">
+    <span class="rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+      <%= t("receipts.parser_statuses.#{receipt.parser_status}") %>
+    </span>
+  </td>
+  <td class="whitespace-nowrap px-4 py-3 text-slate-700">
+    <%= receipt.total_cents ? number_to_currency(receipt.total_cents / 100.0, unit: "€", separator: ",", delimiter: " ", format: "%n %u") : t("receipts.index.empty_value") %>
+  </td>
+  <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-700"><%= receipt.parser_format_before_type_cast %></td>
+</tr>

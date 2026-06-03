@@ -21,6 +21,17 @@ en:
     show:
       eyebrow: "Receipt source"
       title: "Source document"
+      processing:
+        heading: "Processing"
+        extraction: "Text extraction"
+        parsing: "Parsing"
+        states:
+          queued: "Queued"
+          running: "Running"
+          complete: "Complete"
+          failed: "Failed"
+          blocked: "Blocked"
+          waiting: "Waiting"
       preview:
         heading: "Original file"
         image_alt: "Uploaded receipt image"

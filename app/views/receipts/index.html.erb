@@ -1,4 +1,5 @@
 <% content_for :title, t(".title") %>
+<%= turbo_stream_from receipts_stream_name(@selected_parser_status) %>
 
 <section>
   <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -17,42 +18,5 @@
     <% end %>
   </div>
 
-  <% if @receipts.any? %>
-    <div class="overflow-x-auto rounded border border-slate-200 bg-white shadow-sm">
-      <table class="min-w-full divide-y divide-slate-200 text-sm">
-        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
-          <tr>
-            <th class="px-4 py-3"><%= t(".table.purchased_at") %></th>
-            <th class="px-4 py-3"><%= t(".table.store") %></th>
-            <th class="px-4 py-3"><%= t(".table.parser_status") %></th>
-            <th class="px-4 py-3"><%= t(".table.total") %></th>
-            <th class="px-4 py-3"><%= t(".table.parser_format") %></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          <% @receipts.each do |receipt| %>
-            <tr id="<%= dom_id(receipt) %>">
-              <td class="whitespace-nowrap px-4 py-3 text-slate-950">
-                <%= receipt.purchased_at ? l(receipt.purchased_at, format: :short) : t(".empty_value") %>
-              </td>
-              <td class="px-4 py-3 text-slate-700"><%= store_label(receipt.store) %></td>
-              <td class="whitespace-nowrap px-4 py-3">
-                <span class="rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-                  <%= parser_status_label(receipt.parser_status) %>
-                </span>
-              </td>
-              <td class="whitespace-nowrap px-4 py-3 text-slate-700">
-                <%= receipt.total_cents ? number_to_currency(receipt.total_cents / 100.0, unit: "€", separator: ",", delimiter: " ", format: "%n %u") : t(".empty_value") %>
-              </td>
-              <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-700"><%= receipt.parser_format_before_type_cast %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  <% else %>
-    <div class="rounded border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
-      <%= t(".empty") %>
-    </div>
-  <% end %>
+  <%= render "receipts/list", receipts: @receipts, selected_parser_status: @selected_parser_status %>
 </section>

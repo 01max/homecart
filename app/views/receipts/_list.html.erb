@@ -1,0 +1,24 @@
+<div id="<%= ReceiptIngestion::BroadcastProcessingStatusService.receipts_list_dom_id(selected_parser_status) %>">
+  <% if receipts.any? %>
+    <div class="overflow-x-auto rounded border border-slate-200 bg-white shadow-sm">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
+          <tr>
+            <th class="px-4 py-3"><%= t("receipts.index.table.purchased_at") %></th>
+            <th class="px-4 py-3"><%= t("receipts.index.table.store") %></th>
+            <th class="px-4 py-3"><%= t("receipts.index.table.parser_status") %></th>
+            <th class="px-4 py-3"><%= t("receipts.index.table.total") %></th>
+            <th class="px-4 py-3"><%= t("receipts.index.table.parser_format") %></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <%= render partial: "receipts/receipt", collection: receipts, as: :receipt %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="rounded border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
+      <%= t("receipts.index.empty") %>
+    </div>
+  <% end %>
+</div>

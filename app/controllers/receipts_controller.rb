@@ -4,7 +4,7 @@
 # the request carries one of the known enum values, then renders receipts newest
 # first by purchase time.
 class ReceiptsController < ApplicationController
-  helper_method :parser_status_label, :store_label
+  helper_method :parser_status_label, :receipts_stream_name, :store_label
 
   def index
     @parser_statuses = Receipt.parser_statuses.keys
@@ -28,6 +28,10 @@ class ReceiptsController < ApplicationController
 
   def parser_status_label(parser_status)
     t("receipts.parser_statuses.#{parser_status}")
+  end
+
+  def receipts_stream_name(parser_status)
+    ReceiptIngestion::BroadcastProcessingStatusService.receipts_stream_name(parser_status)
   end
 
   def store_label(store)
