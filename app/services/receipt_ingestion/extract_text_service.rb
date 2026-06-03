@@ -19,7 +19,9 @@ module ReceiptIngestion
     end
 
     def call
-      raise MissingOriginalFileError, "source document has no original file" unless source_document.original_file.attached?
+      unless source_document.original_file.attached?
+        raise MissingOriginalFileError, I18n.t("receipt_ingestion.extract_text.errors.missing_original_file")
+      end
 
       source_document.original_file.open do |file|
         result = extract(file.path)
@@ -39,7 +41,8 @@ module ReceiptIngestion
       elsif source_document.mime_type_png? || source_document.mime_type_jpeg?
         image_extractor.call(image_path: path)
       else
-        raise UnsupportedMimeTypeError, "unsupported MIME type: #{source_document.mime_type}"
+        raise UnsupportedMimeTypeError,
+              I18n.t("receipt_ingestion.extract_text.errors.unsupported_mime_type", mime_type: source_document.mime_type)
       end
     end
 

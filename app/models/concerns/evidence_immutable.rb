@@ -17,7 +17,7 @@ module EvidenceImmutable
 
   def immutable_evidence_attributes_are_unchanged
     immutable_evidence_attribute_names.each do |attribute_name|
-      errors.add(attribute_name, "is immutable") if will_save_change_to_attribute?(attribute_name)
+      errors.add(attribute_name, :immutable) if will_save_change_to_attribute?(attribute_name)
     end
   end
 end

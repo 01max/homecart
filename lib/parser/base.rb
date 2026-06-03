@@ -142,7 +142,7 @@ module Parser
       add_warning(
         code: "totals_sum_mismatch",
         validator: VALIDATORS.fetch(:totals_sum),
-        detail: "Line totals differ from receipt total by #{discrepancy} cents",
+        detail: validator_warning_detail(:totals_sum_mismatch, discrepancy),
         value: discrepancy
       )
 
@@ -160,7 +160,7 @@ module Parser
       add_warning(
         code: "article_count_mismatch",
         validator: VALIDATORS.fetch(:article_count),
-        detail: "Article count differs from declared count by #{discrepancy}",
+        detail: validator_warning_detail(:article_count_mismatch, discrepancy),
         value: discrepancy
       )
 
@@ -176,7 +176,7 @@ module Parser
       add_warning(
         code: "payments_sum_mismatch",
         validator: VALIDATORS.fetch(:payments_sum),
-        detail: "Payment sum differs from receipt total by #{discrepancy} cents",
+        detail: validator_warning_detail(:payments_sum_mismatch, discrepancy),
         value: discrepancy
       )
 
@@ -194,6 +194,14 @@ module Parser
 
       warnings << warning
       warning
+    end
+
+    def validator_warning_detail(key, discrepancy)
+      I18n.t(
+        "receipt_ingestion.parser_warnings.#{key}.detail",
+        count: discrepancy.abs,
+        discrepancy: discrepancy
+      )
     end
 
     def integer_attribute(record, attribute)

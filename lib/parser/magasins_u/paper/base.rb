@@ -80,7 +80,10 @@ module Parser
 
         def vat_rate_bp_for(vat_code)
           vat_rates_by_code.fetch(vat_code) do
-            add_warning(code: "missing_vat_code", detail: "No VAT table row found for code #{vat_code}")
+            add_warning(
+              code: "missing_vat_code",
+              detail: I18n.t("receipt_ingestion.parser_warnings.missing_vat_code.detail", vat_code: vat_code)
+            )
             nil
           end
         end

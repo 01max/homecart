@@ -84,6 +84,15 @@ Run one spec file:
 docker compose run --rm --no-deps -e RAILS_ENV=test -v /Users/maxime/Dev/homecart:/rails app bundle exec rspec spec/models/receipt_line_spec.rb
 ```
 
+Project-local shortcut:
+
+```sh
+bin/dcspec
+bin/dcspec spec/models/receipt_line_spec.rb
+```
+
+`bin/dcspec` runs the same Docker-enclosed RSpec command and forwards any arguments to RSpec. It is a repository-local executable, not a shell alias, so it does not require changes to `~/.zshrc` and does not auto-load as bare `dcspec` in new terminal tabs.
+
 Run RuboCop in Docker:
 
 ```sh

@@ -8,6 +8,6 @@ class RetailBrand < ApplicationRecord
   private
 
   def aliases_are_an_array
-    errors.add(:aliases, "must be an array") unless aliases.is_a?(Array)
+    errors.add(:aliases, :not_an_array) unless aliases.is_a?(Array)
   end
 end

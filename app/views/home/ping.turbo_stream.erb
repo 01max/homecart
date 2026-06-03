@@ -1,5 +1,5 @@
 <%= turbo_stream.replace "hotwire_smoke_status" do %>
   <%= turbo_frame_tag "hotwire_smoke_status", class: "mt-4 block rounded border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900" do %>
-    Turbo Stream rendered at <%= l(@pinged_at, format: :long) %>.
+    <%= t(".rendered_at", time: l(@pinged_at, format: :long)) %>
   <% end %>
 <% end %>

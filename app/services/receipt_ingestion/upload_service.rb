@@ -7,7 +7,7 @@ module ReceiptIngestion
     UnsupportedMimeTypeError = Class.new(StandardError)
     Result = Data.define(:source_document, :duplicate)
 
-    def initialize(file:, store:, parser_format:, job_class: ExtractTextJob, clock: -> { Time.current })
+    def initialize(file:, store:, parser_format:, job_class: Receipt::ProcessSourceDocumentJob, clock: -> { Time.current })
       @file = file
       @store = store
       @parser_format = parser_format
@@ -36,7 +36,12 @@ module ReceiptIngestion
     def validate_mime_type!
       return if SUPPORTED_MIME_TYPES.include?(file.content_type)
 
-      raise UnsupportedMimeTypeError, "unsupported MIME type: #{file.content_type}; supported types: #{SUPPORTED_MIME_TYPES.join(', ')}"
+      raise UnsupportedMimeTypeError,
+            I18n.t(
+              "receipt_ingestion.upload.errors.unsupported_mime_type",
+              mime_type: file.content_type,
+              supported_types: SUPPORTED_MIME_TYPES.join(", ")
+            )
     end
 
     def calculate_content_hash

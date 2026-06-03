@@ -28,9 +28,9 @@ class ReceiptPromotion < ApplicationRecord
 
   def linking_method_matches_linked_line
     if linked_line_id.nil? && linking_method != "unallocated"
-      errors.add(:linking_method, "must be unallocated when linked_line is blank")
+      errors.add(:linking_method, :must_be_unallocated_without_linked_line)
     elsif linked_line_id.present? && linking_method == "unallocated"
-      errors.add(:linking_method, "cannot be unallocated when linked_line is present")
+      errors.add(:linking_method, :cannot_be_unallocated_with_linked_line)
     end
   end
 end

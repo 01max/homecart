@@ -4,7 +4,7 @@ require "tempfile"
 
 RSpec.describe ReceiptIngestion::UploadService do
   let(:store) { create_store }
-  let(:job_class) { class_spy(ExtractTextJob) }
+  let(:job_class) { class_spy(Receipt::ProcessSourceDocumentJob) }
 
   after do
     uploaded_files.each do |file|
@@ -35,7 +35,7 @@ RSpec.describe ReceiptIngestion::UploadService do
     expect(source_document.original_file).to be_attached
   end
 
-  it "creates a source document, stores the original file, and enqueues extraction" do
+  it "creates a source document, stores the original file, and enqueues source document processing" do
     content = "new receipt"
     file = uploaded_file(content: content)
 
@@ -47,7 +47,7 @@ RSpec.describe ReceiptIngestion::UploadService do
     expect(job_class).to have_received(:perform_later).with(source_document)
   end
 
-  it "returns an existing source document for duplicate content without enqueueing extraction" do
+  it "returns an existing source document for duplicate content without enqueueing processing" do
     existing_source_document = create_source_document(content_hash: Digest::SHA256.hexdigest("same receipt"))
     file = uploaded_file(content: "same receipt")
 

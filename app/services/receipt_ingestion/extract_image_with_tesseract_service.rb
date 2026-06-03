@@ -25,7 +25,7 @@ module ReceiptIngestion
 
     def call
       text = ocr_client_class.new(ocr_path.to_s, lang: LANG, psm: PSM).to_s
-      raise ExtractionError, "tesseract returned empty text" if text.blank?
+      raise ExtractionError, I18n.t("receipt_ingestion.extract_image_with_tesseract.errors.empty_text") if text.blank?
 
       ExtractionResult.new(text: text, engine: engine_identifier)
     rescue RTesseract::Error => e
@@ -38,7 +38,9 @@ module ReceiptIngestion
 
     def ocr_path
       return image_path unless preprocess
-      raise ExtractionError, "image preprocessing requested but no preprocessor was provided" unless preprocessor
+      unless preprocessor
+        raise ExtractionError, I18n.t("receipt_ingestion.extract_image_with_tesseract.errors.missing_preprocessor")
+      end
 
       preprocessor.call(image_path)
     end
@@ -48,16 +50,16 @@ module ReceiptIngestion
       raise ExtractionError, error_message(stderr) unless status.success?
 
       version = stdout.to_s.lines.first.to_s[/\d+(?:\.\d+)+/]
-      raise ExtractionError, "could not detect tesseract version" if version.blank?
+      raise ExtractionError, I18n.t("receipt_ingestion.extract_image_with_tesseract.errors.missing_version") if version.blank?
 
       "tesseract-#{version}-#{LANG}-psm#{PSM}"
     end
 
     def error_message(detail)
       detail = detail.to_s.strip
-      return "tesseract failed" if detail.blank?
+      return I18n.t("receipt_ingestion.extract_image_with_tesseract.errors.failed") if detail.blank?
 
-      "tesseract failed: #{detail}"
+      I18n.t("receipt_ingestion.extract_image_with_tesseract.errors.failed_with_detail", detail: detail)
     end
   end
 end
