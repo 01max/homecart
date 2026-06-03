@@ -1,0 +1,24 @@
+en:
+  source_documents:
+    form:
+      store_option: "%{brand} — %{location} (%{channel})"
+    new:
+      eyebrow: "Receipts"
+      title: "Upload receipt"
+      file_label: "Receipt file"
+      store_label: "Store"
+      store_prompt: "Choose a store"
+      parser_format_label: "Parser format"
+      parser_format_prompt: "Choose a parser format"
+      submit: "Upload receipt"
+    create:
+      success: "Receipt upload started."
+      duplicate: "This receipt file was already uploaded."
+      errors:
+        missing_file: "Choose a receipt file."
+        missing_store: "Choose a store."
+        missing_parser_format: "Choose a parser format."
+    show:
+      eyebrow: "Receipt source"
+      title: "Source document"
+      content_hash: "Content hash"
