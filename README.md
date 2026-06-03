@@ -11,7 +11,7 @@ Single-user, self-hosted, no authentication.
 Implemented:
 
 - Rails app with PostgreSQL, Hotwire, Tailwind, Active Storage, Solid Queue, RSpec, SimpleCov, RuboCop, Brakeman, and bundler-audit.
-- Production-oriented Docker image and compose stack with Rails, PostgreSQL, and a Solid Queue worker.
+- Development Docker compose stack with Rails, PostgreSQL, and a Solid Queue worker, plus a separate production-shaped compose file for self-hosted runs.
 - Receipt evidence models: `RetailBrand`, `Store`, `SourceDocument`, `TextExtraction`, `Receipt`, `ReceiptLine`, `ReceiptPromotion`, and `ReceiptPayment`.
 - Immutable evidence guards for source documents and extraction records.
 - Upload and extraction services for PDFs and images.
@@ -64,24 +64,30 @@ Parser warnings are structured hashes with `code`, `validator`, `detail`, and `v
 
 ## Docker
 
-Start the app stack:
+Start the development app stack:
 
 ```sh
 docker compose up
 ```
 
-The Docker image and `app` service are production-shaped. They set `RAILS_ENV=production`, precompile assets, expose port 80 in the container, and run Rails through Thruster. That is useful for deployment-like runs, but it means ad hoc commands inherit production unless you override the environment.
+The default compose file is development-shaped. It bind-mounts the repository into `/rails`, sets `RAILS_ENV=development`, and exposes Rails on <http://localhost:3000>. Code, route, and view changes are visible to `docker compose exec app ...` without rebuilding the image.
+
+Open a development console:
+
+```sh
+docker compose exec app bundle exec rails console
+```
 
 Run the full test suite in Docker:
 
 ```sh
-docker compose run --rm --no-deps -e RAILS_ENV=test -v /Users/maxime/Dev/homecart:/rails app bundle exec rspec
+docker compose run --rm -e RAILS_ENV=test app bundle exec rspec
 ```
 
 Run one spec file:
 
 ```sh
-docker compose run --rm --no-deps -e RAILS_ENV=test -v /Users/maxime/Dev/homecart:/rails app bundle exec rspec spec/models/receipt_line_spec.rb
+docker compose run --rm -e RAILS_ENV=test app bundle exec rspec spec/models/receipt_line_spec.rb
 ```
 
 Project-local shortcut:
@@ -96,16 +102,24 @@ bin/dcspec spec/models/receipt_line_spec.rb
 Run RuboCop in Docker:
 
 ```sh
-docker compose run --rm --no-deps -e RAILS_ENV=test -v /Users/maxime/Dev/homecart:/rails app bundle exec rubocop
+docker compose run --rm --no-deps -e RAILS_ENV=test app bundle exec rubocop
 ```
 
 Run Zeitwerk check in Docker:
 
 ```sh
-docker compose run --rm --no-deps -e RAILS_ENV=test -v /Users/maxime/Dev/homecart:/rails app bundle exec rails zeitwerk:check
+docker compose run --rm --no-deps -e RAILS_ENV=test app bundle exec rails zeitwerk:check
 ```
 
 Docker may print orphan-container warnings during test runs. They are harmless unless you intentionally changed compose service names and want to clean old containers.
+
+For a production-shaped self-hosted run, use the standalone production compose file:
+
+```sh
+docker compose -f docker-compose.prod.yml up --build
+```
+
+That file uses the baked production image, sets `RAILS_ENV=production`, exposes port 80 inside the container through Thruster, and does not bind-mount the source tree.
 
 ## Local Development
 
@@ -142,7 +156,7 @@ bundle exec bundler-audit
 bin/importmap audit
 ```
 
-The generated `rails_helper` defaults `RAILS_ENV` to `test` only when the environment is unset. If you run specs through the production Docker service, pass `-e RAILS_ENV=test`.
+The generated `rails_helper` defaults `RAILS_ENV` to `test` only when the environment is unset. Docker commands above pass `-e RAILS_ENV=test` explicitly so they never inherit development or production.
 
 ## Seed Data
 

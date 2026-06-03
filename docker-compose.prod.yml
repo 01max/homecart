@@ -2,10 +2,9 @@ services:
   app:
     build:
       context: .
-      target: development
       args:
         RUBY_VERSION: 4.0.5
-    image: homecart-dev:latest
+    image: homecart:latest
     depends_on:
       db:
         condition: service_healthy
@@ -13,38 +12,35 @@ services:
       POSTGRES_HOST: db
       POSTGRES_USER: homecart
       POSTGRES_PASSWORD: homecart
-      RAILS_ENV: development
+      RAILS_ENV: production
       RAILS_LOG_LEVEL: debug
     ports:
-      - "3000:3000"
+      - "3000:80"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/up >/dev/null"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost/up >/dev/null"]
       interval: 5s
       timeout: 5s
       retries: 12
     volumes:
-      - .:/rails
+      - ./config/master.key:/rails/config/master.key:ro
       - rails_storage:/rails/storage
-    command: ["bash", "-lc", "./bin/rails db:prepare && ./bin/rails server -b 0.0.0.0 -p 3000"]
+    command: ["./bin/thrust", "./bin/rails", "server", "-b", "0.0.0.0"]
 
   worker:
-    build:
-      context: .
-      target: development
-      args:
-        RUBY_VERSION: 4.0.5
-    image: homecart-dev:latest
+    image: homecart:latest
     depends_on:
+      app:
+        condition: service_healthy
       db:
         condition: service_healthy
     environment:
       POSTGRES_HOST: db
       POSTGRES_USER: homecart
       POSTGRES_PASSWORD: homecart
-      RAILS_ENV: development
+      RAILS_ENV: production
       RAILS_LOG_LEVEL: debug
     volumes:
-      - .:/rails
+      - ./config/master.key:/rails/config/master.key:ro
       - rails_storage:/rails/storage
     command: ["bash", "-lc", "./bin/rails db:prepare && ./bin/jobs"]
 
@@ -53,9 +49,9 @@ services:
     environment:
       POSTGRES_USER: homecart
       POSTGRES_PASSWORD: homecart
-      POSTGRES_DB: homecart_development
+      POSTGRES_DB: homecart_production
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U homecart -d homecart_development"]
+      test: ["CMD-SHELL", "pg_isready -U homecart -d homecart_production"]
       interval: 5s
       timeout: 5s
       retries: 5
