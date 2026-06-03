@@ -1,6 +1,11 @@
 require "bigdecimal"
 
 module Parser
+  # Base contract for all receipt parsers.
+  #
+  # Concrete parser classes provide receipt attributes, parsed lines, and
+  # payments. Base assembles the result envelope, runs shared validators, and
+  # enforces structured parser warnings.
   class Base
     MONETARY_TOLERANCE_CENTS = 1
     VALIDATORS = {
@@ -14,12 +19,22 @@ module Parser
     WarningShapeError = Class.new(ArgumentError)
 
     class << self
+      # Validate a parser warning array before it is persisted.
+      #
+      # @param warnings [Array<Hash>] warning hashes shaped for `Receipt#parser_warnings`
+      # @return [Array<Hash>] the validated warnings
+      # @raise [WarningShapeError] when any warning is malformed
       def validate_warnings!(warnings)
         raise WarningShapeError, "warnings must be an array" unless warnings.is_a?(Array)
 
         warnings.each { |warning| validate_warning!(warning) }
       end
 
+      # Validate one structured parser warning.
+      #
+      # @param warning [Hash] warning with `:code`, `:validator`, `:detail`, and `:value`
+      # @return [void]
+      # @raise [WarningShapeError] when required keys or value types are invalid
       def validate_warning!(warning)
         unless warning.is_a?(Hash)
           raise WarningShapeError, "warning must be a hash with code, validator, detail, and value"
@@ -51,11 +66,15 @@ module Parser
 
     attr_reader :text, :warnings
 
+    # @param text [String] extracted receipt text to parse
     def initialize(text:)
       @text = text
       @warnings = []
     end
 
+    # Build a parser result and run shared validators.
+    #
+    # @return [Result] parser result envelope for persistence
     def call
       result = result_envelope(
         receipt: receipt_attributes,
@@ -76,22 +95,35 @@ module Parser
 
     private
 
+    # @!method receipt_attributes
+    #   Receipt-level attributes returned by the concrete parser.
+    #   @return [Hash]
     def receipt_attributes
       raise NotImplementedError, "#{self.class.name} must implement #receipt_attributes"
     end
 
+    # Assign receipt-order positions to parsed line attributes.
+    #
+    # @return [Array<Hash>] line attributes with `:position` populated
     def line_attributes
       @line_attributes ||= parsed_lines.map.with_index(1) { |line, position| line.merge(position: position) }
     end
 
+    # @!method parsed_lines
+    #   Parsed line attributes before Base assigns positions.
+    #   @return [Array<Hash>]
     def parsed_lines
       raise NotImplementedError, "#{self.class.name} must implement #parsed_lines or #line_attributes"
     end
 
+    # @return [Array<Hash>] parsed promotion attributes, if any
     def promotion_attributes
       []
     end
 
+    # @!method payment_attributes
+    #   Parsed payment attributes for the receipt.
+    #   @return [Array<Hash>]
     def payment_attributes
       raise NotImplementedError, "#{self.class.name} must implement #payment_attributes"
     end
@@ -121,6 +153,14 @@ module Parser
       warnings
     end
 
+    # Build the immutable parser result envelope consumed by ParseService.
+    #
+    # @param receipt [Hash] receipt attributes
+    # @param lines [Array<Hash>] line attributes
+    # @param promotions [Array<Hash>] promotion attributes
+    # @param payments [Array<Hash>] payment attributes
+    # @param warnings [Array<Hash>] structured parser warnings
+    # @return [Result]
     def result_envelope(receipt:, lines:, promotions: [], payments:, warnings: self.warnings)
       self.class.validate_warnings!(warnings)
 
@@ -133,6 +173,10 @@ module Parser
       )
     end
 
+    # Validate that line totals reconcile with the receipt total.
+    #
+    # @param result [Result] parser result envelope
+    # @return [Boolean] true when the validator passes within the monetary tolerance
     def validate_totals_sum(result)
       declared_total_cents = integer_attribute(result.receipt, :total_cents)
       computed_total_cents = result.lines.sum { |line| integer_attribute(line, :total_cents) || 0 }
@@ -149,6 +193,10 @@ module Parser
       false
     end
 
+    # Validate declared article count when the source provides one.
+    #
+    # @param result [Result] parser result envelope
+    # @return [Boolean] true when skipped or when item quantities reconcile
     def validate_article_count(result)
       declared_article_count = integer_attribute(result.receipt, :declared_article_count)
       return true if declared_article_count.nil?
@@ -167,6 +215,10 @@ module Parser
       false
     end
 
+    # Validate that payment rows reconcile with the receipt total.
+    #
+    # @param result [Result] parser result envelope
+    # @return [Boolean] true when the validator passes within the monetary tolerance
     def validate_payments_sum(result)
       declared_total_cents = integer_attribute(result.receipt, :total_cents)
       computed_payment_cents = result.payments.sum { |payment| integer_attribute(payment, :amount_cents) || 0 }
@@ -183,6 +235,13 @@ module Parser
       false
     end
 
+    # Append a structured parser warning.
+    #
+    # @param code [String] stable machine-readable warning code
+    # @param detail [String] translated human-readable review detail
+    # @param validator [String, nil] validator method name, or nil for non-validator warnings
+    # @param value [Numeric, nil] discrepancy or other numeric value
+    # @return [Hash] appended warning
     def add_warning(code:, detail:, validator: nil, value: nil)
       warning = {
         code: code,

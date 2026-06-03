@@ -1,12 +1,22 @@
 require "digest"
 
 module ReceiptIngestion
+  # Creates immutable source documents from uploaded receipt files.
+  #
+  # The service owns MIME validation, SHA-256 content hashing, exact-file
+  # deduplication, Active Storage attachment, and enqueueing the first
+  # background job in the receipt pipeline.
   class UploadService < ApplicationService
     SUPPORTED_MIME_TYPES = SourceDocument::MIME_TYPES.values.freeze
 
     UnsupportedMimeTypeError = Class.new(StandardError)
     Result = Data.define(:source_document, :duplicate)
 
+    # @param file [#path, #content_type, #original_filename] uploaded file-like object
+    # @param store [Store] user-selected store for the source document
+    # @param parser_format [String] dotted parser format selected at upload time
+    # @param job_class [Class] job class used to continue source-document processing
+    # @param clock [#call] clock dependency returning the ingestion timestamp
     def initialize(file:, store:, parser_format:, job_class: Receipt::ProcessSourceDocumentJob, clock: -> { Time.current })
       @file = file
       @store = store
@@ -15,6 +25,8 @@ module ReceiptIngestion
       @clock = clock
     end
 
+    # @return [Result] source document plus whether it was an exact duplicate
+    # @raise [UnsupportedMimeTypeError] when the uploaded file type is unsupported
     def call
       validate_mime_type!
 

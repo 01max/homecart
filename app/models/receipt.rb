@@ -1,3 +1,7 @@
+# Structured parser output for one source document and text extraction.
+#
+# Receipts own parsed lines, promotions, payments, parser status, and structured
+# parser warnings. They are editable during review, unlike source evidence.
 class Receipt < ApplicationRecord
   PARSER_FORMATS = SourceDocument::PARSER_FORMATS
 

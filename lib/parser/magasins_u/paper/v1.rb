@@ -1,6 +1,7 @@
 module Parser
   module MagasinsU
     module Paper
+      # Parser for pre-OmniPOS Magasins U paper receipts with chevron sections.
       class V1 < Base
         FORMAT = Parser::Registry::FORMATS.fetch(:u_paper_v1)
 

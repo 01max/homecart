@@ -1,3 +1,7 @@
+# Parsed payment line showing how a receipt total was settled.
+#
+# Multiple rows may exist for a receipt when payment is split, for example
+# Tickets Restaurant plus a bank card payment.
 class ReceiptPayment < ApplicationRecord
   enum :category, {
     bank_card: "bank_card",

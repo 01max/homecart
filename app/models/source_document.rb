@@ -1,3 +1,8 @@
+# Immutable source receipt file selected by the user for ingestion.
+#
+# A source document owns the original Active Storage attachment, its content
+# hash, MIME type, selected store, and parser format. Re-upload deduplication is
+# based on `content_hash`.
 class SourceDocument < ApplicationRecord
   include EvidenceImmutable
 

@@ -1,6 +1,7 @@
 module Parser
   module Leclerc
     module Paper
+      # Shared grammar and loyalty handling for Leclerc paper receipt parsers.
       class Base < Parser::Base
         HEADER_PATTERN = /\ACaisse (?<register>\S+) (?<day>\d{2}) (?<month>\p{L}+) (?<year>\d{4}) (?<hour>\d{2}):(?<minute>\d{2})\z/
         TICKET_PATTERN = /\A(?:Ticket )?\d{2}\/\d{2}\/\d{2}\s+\d+\s+(?<ticket>.+)\z/

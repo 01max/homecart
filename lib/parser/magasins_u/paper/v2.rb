@@ -1,6 +1,7 @@
 module Parser
   module MagasinsU
     module Paper
+      # Parser for OmniPOS Magasins U paper receipts with mandatory quantity lines.
       class V2 < Base
         FORMAT = Parser::Registry::FORMATS.fetch(:u_paper_v2)
 

@@ -1,4 +1,8 @@
 module Parser
+  # Registry mapping dotted parser format ids to parser classes.
+  #
+  # Format ids use the `brand.channel.version` convention and Ruby constants
+  # mirror that hierarchy under the singular `Parser` namespace.
   module Registry
     FORMATS = {
       auchan_paper_v1: "auchan.paper.v1",
@@ -19,6 +23,14 @@ module Parser
     UnknownFormatError = Class.new(KeyError)
 
     class << self
+      # Register a parser class for a known format id.
+      #
+      # @param format [String, Symbol] dotted parser format id
+      # @param klass [Class] parser class whose name matches the expected namespace
+      # @return [Class] registered parser class
+      # @raise [FormatError] when the format id is not supported
+      # @raise [NamespaceError] when class name does not mirror the format id
+      # @raise [RegistrationError] when another parser is already registered
       def register(format, klass)
         format = normalize_format(format)
         validate_format!(format)
@@ -31,6 +43,11 @@ module Parser
         registry[format] = klass
       end
 
+      # Look up the parser class registered for a format id.
+      #
+      # @param format [String, Symbol] dotted parser format id
+      # @return [Class] parser class
+      # @raise [UnknownFormatError] when no parser has registered the format
       def for(format)
         format = normalize_format(format)
 
@@ -39,6 +56,7 @@ module Parser
         end
       end
 
+      # @return [Array<String>] supported dotted parser format ids
       def formats
         FORMATS.values
       end

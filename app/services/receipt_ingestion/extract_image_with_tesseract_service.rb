@@ -2,6 +2,10 @@ require "open3"
 require "rtesseract"
 
 module ReceiptIngestion
+  # Extracts text from a receipt image using Tesseract OCR.
+  #
+  # Image preprocessing is deliberately opt-in because the OCR spike found that
+  # the tested preprocessing pipeline regressed numeric accuracy on this corpus.
   class ExtractImageWithTesseractService < ApplicationService
     LANG = "fra"
     PSM = 6
@@ -9,6 +13,11 @@ module ReceiptIngestion
     ExtractionError = Class.new(StandardError)
     ExtractionResult = Data.define(:text, :engine)
 
+    # @param image_path [String, Pathname] path to the image file to OCR
+    # @param preprocess [Boolean] whether to run the configured preprocessor
+    # @param preprocessor [#call, nil] callable that returns a preprocessed path
+    # @param ocr_client_class [Class] OCR client class compatible with RTesseract
+    # @param version_runner [#call] runner compatible with `Open3.capture3`
     def initialize(
       image_path:,
       preprocess: false,
@@ -23,6 +32,8 @@ module ReceiptIngestion
       @version_runner = version_runner
     end
 
+    # @return [ExtractionResult] extracted text and engine identifier
+    # @raise [ExtractionError] when OCR fails, returns blank text, or cannot be identified
     def call
       text = ocr_client_class.new(ocr_path.to_s, lang: LANG, psm: PSM).to_s
       raise ExtractionError, I18n.t("receipt_ingestion.extract_image_with_tesseract.errors.empty_text") if text.blank?

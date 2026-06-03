@@ -1,3 +1,7 @@
+# Parsed loyalty, coupon, or promotion event associated with a receipt.
+#
+# Promotion links to receipt lines are best-effort parser observations until the
+# review workflow confirms or clears them.
 class ReceiptPromotion < ApplicationRecord
   enum :unit, {
     euro_cents: "euro_cents",

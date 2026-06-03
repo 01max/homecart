@@ -1,4 +1,5 @@
 module Parser
+  # French month-name normalization used by receipt date parsers.
   module FrenchDates
     MONTH_ALIASES_BY_NUMBER = {
       1 => %w[ janvier janv ],
@@ -20,6 +21,9 @@ module Parser
     end.to_h.freeze
 
     class << self
+      # @param month [String] French month name or known abbreviation
+      # @return [Integer] month number from 1 to 12
+      # @raise [KeyError] when the month name is unknown or ambiguous
       def month_number(month)
         MONTH_NUMBERS.fetch(normalize_month(month))
       end

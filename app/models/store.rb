@@ -1,3 +1,7 @@
+# User-curated retail location or channel selected at upload time.
+#
+# Parsers never infer stores from receipt headers; receipts copy their store from
+# the selected source document.
 class Store < ApplicationRecord
   enum :channel, {
     physical: "physical",

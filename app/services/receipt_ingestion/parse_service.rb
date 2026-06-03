@@ -1,9 +1,19 @@
 module ReceiptIngestion
+  # Persists parser output into the receipt graph.
+  #
+  # The service is the parsing pipeline's persistence boundary: it selects the
+  # parser, copies store/format from the {SourceDocument}, creates receipt child
+  # records transactionally, runs duplicate detection, and applies validators.
   class ParseService < ApplicationService
     Result = Data.define(:receipt, :lines, :promotions, :payments)
 
     MissingPromotionLinkedLineError = Class.new(StandardError)
 
+    # @param text_extraction [TextExtraction] successful extraction to parse
+    # @param parser_format [String, nil] optional registry key; defaults to source document format
+    # @param parser_registry [Module] registry object responding to `.for(format)`
+    # @param duplicate_detector [Class] duplicate-detection service
+    # @param validator [Class] post-persistence validation service
     def initialize(
       text_extraction:,
       parser_format: nil,
@@ -18,6 +28,10 @@ module ReceiptIngestion
       @validator = validator
     end
 
+    # @return [Result] persisted receipt and child records
+    # @raise [MissingPromotionLinkedLineError] when parser promotion references an unknown line
+    # @raise [ReceiptIngestion::DetectDuplicateService::DuplicateReceiptError] on strict duplicates
+    # @raise [ActiveRecord::RecordInvalid] when parser output cannot be persisted
     def call
       parser_result = parse_text
 

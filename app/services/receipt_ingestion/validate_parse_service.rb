@@ -1,4 +1,9 @@
 module ReceiptIngestion
+  # Recomputes parser validators from persisted receipt records.
+  #
+  # Validator warnings are replaced with the current result while non-validator
+  # warnings, such as parser exceptions and suspected duplicates, remain review
+  # blockers.
   class ValidateParseService < ApplicationService
     MONETARY_TOLERANCE_CENTS = Parser::Base::MONETARY_TOLERANCE_CENTS
     VALIDATORS = Parser::Base::VALIDATORS
@@ -6,10 +11,12 @@ module ReceiptIngestion
     Result = Data.define(:receipt, :validator_results)
     ValidatorResult = Data.define(:validator, :passed, :warning)
 
+    # @param receipt [Receipt] persisted receipt whose child records should be checked
     def initialize(receipt:)
       @receipt = receipt
     end
 
+    # @return [Result] receipt plus individual validator results
     def call
       validator_results = [
         validate_totals_sum,

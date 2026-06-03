@@ -3,6 +3,7 @@ require "bigdecimal"
 module Parser
   module Auchan
     module Paper
+      # Parser for Auchan paper PNG receipts, including cashier and Selfscan variants.
       class V1 < Parser::Base
         FORMAT = Parser::Registry::FORMATS.fetch(:auchan_paper_v1)
         SECTION_SELFS_CAN = "Selfscan"

@@ -1,3 +1,8 @@
+# Append-only record of one text extraction attempt for a source document.
+#
+# Successful records preserve the raw extracted text. Failed records preserve the
+# engine identifier and error message so parsing can be skipped without losing
+# evidence of the attempted extraction.
 class TextExtraction < ApplicationRecord
   include EvidenceImmutable
 

@@ -1,4 +1,8 @@
 module ReceiptIngestion
+  # Routes a source document to the appropriate text extractor.
+  #
+  # Every call persists a {TextExtraction}. Handled extraction failures are
+  # recorded as failed extraction evidence instead of crashing the job.
   class ExtractTextService < ApplicationService
     IMAGE_FAILURE_ENGINE = "tesseract-fra-psm6"
     UNSUPPORTED_MIME_TYPE_ENGINE = "unsupported"
@@ -6,6 +10,10 @@ module ReceiptIngestion
     MissingOriginalFileError = Class.new(StandardError)
     UnsupportedMimeTypeError = Class.new(StandardError)
 
+    # @param source_document [SourceDocument] immutable source document to extract
+    # @param pdf_extractor [Class] PDF extraction service
+    # @param image_extractor [Class] image OCR extraction service
+    # @param clock [#call] clock dependency returning the extraction timestamp
     def initialize(
       source_document:,
       pdf_extractor: ExtractPdfService,
@@ -18,6 +26,8 @@ module ReceiptIngestion
       @clock = clock
     end
 
+    # @return [TextExtraction] persisted extraction attempt
+    # @raise [MissingOriginalFileError] when the source has no attached file
     def call
       unless source_document.original_file.attached?
         raise MissingOriginalFileError, I18n.t("receipt_ingestion.extract_text.errors.missing_original_file")

@@ -1,3 +1,8 @@
+# Application-level guard for append-only receipt evidence.
+#
+# Including models declare immutable attributes with
+# {.immutable_evidence_attributes}. Updates that would change those attributes
+# fail validation; database triggers provide the corresponding SQL-level guard.
 module EvidenceImmutable
   extend ActiveSupport::Concern
 
@@ -8,6 +13,10 @@ module EvidenceImmutable
   end
 
   class_methods do
+    # Declare attributes that cannot change after initial persistence.
+    #
+    # @param attribute_names [Array<Symbol, String>] model attributes to protect
+    # @return [Array<String>] normalized protected attribute names
     def immutable_evidence_attributes(*attribute_names)
       self.immutable_evidence_attribute_names = attribute_names.map(&:to_s)
     end

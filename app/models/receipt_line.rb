@@ -1,3 +1,7 @@
+# Parsed receipt line preserving one observed item, fee, or discount row.
+#
+# Lines intentionally remain receipt observations, not product identities; v2
+# matching layers can later map them to products without rewriting v1 evidence.
 class ReceiptLine < ApplicationRecord
   enum :unit_of_measure, {
     piece: "piece",

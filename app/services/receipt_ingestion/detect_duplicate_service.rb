@@ -1,4 +1,8 @@
 module ReceiptIngestion
+  # Checks a parsed receipt candidate against existing persisted receipts.
+  #
+  # Exact composite duplicates are rejected. Softer same-store/same-day/same-total
+  # matches are preserved as structured parser warnings so review can decide.
   class DetectDuplicateService < ApplicationService
     Result = Data.define(:receipt, :suspected_duplicate)
 
@@ -6,10 +10,13 @@ module ReceiptIngestion
 
     SUSPECTED_DUPLICATE_CODE = "suspected_duplicate"
 
+    # @param receipt [Receipt] unsaved or persisted receipt candidate
     def initialize(receipt:)
       @receipt = receipt
     end
 
+    # @return [Result] receipt plus the suspected duplicate, when present
+    # @raise [DuplicateReceiptError] when a strict composite duplicate exists
     def call
       raise DuplicateReceiptError, duplicate_error_detail(strict_duplicate) if strict_duplicate
 

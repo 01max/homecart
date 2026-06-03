@@ -1,6 +1,7 @@
 module Parser
   module Leclerc
     module Web
+      # Parser for Leclerc Drive and Click & Collect web receipt PDFs.
       class V1 < Parser::Base
         FORMAT = Parser::Registry::FORMATS.fetch(:leclerc_web_v1)
 

@@ -1,6 +1,7 @@
 module Parser
   module Leclerc
     module Paper
+      # Parser for old Leclerc paper POS receipts without per-line VAT codes.
       class V1 < Base
         FORMAT = Parser::Registry::FORMATS.fetch(:leclerc_paper_v1)
 

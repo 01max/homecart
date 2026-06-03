@@ -1,6 +1,7 @@
 module Parser
   module MagasinsU
     module Paper
+      # Shared Magasins U parser helpers, including Carte U balance promotions.
       class Base < Parser::Base
         CARTE_U_BEFORE_PATTERN = /\ACarte U\s+solde\s+avant\b.*?(?<amount>\d+,\d{2})\s€?\z/i
         CARTE_U_AFTER_PATTERN = /\ACarte U\s+solde\s+apr[eè]s\b.*?(?<amount>\d+,\d{2})\s€?\z/i
