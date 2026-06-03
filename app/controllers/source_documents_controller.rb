@@ -30,7 +30,9 @@ class SourceDocumentsController < ApplicationController
   end
 
   def show
-    @source_document = SourceDocument.find(params[:id])
+    @source_document = SourceDocument.includes(:receipts, text_extractions: :receipt).find(params[:id])
+    @latest_text_extraction = @source_document.text_extractions.order(ran_at: :desc, created_at: :desc).first
+    @receipt = @source_document.receipts.order(created_at: :desc).first
   end
 
   private

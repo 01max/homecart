@@ -14,7 +14,7 @@ RSpec.describe "Receipts", type: :request do
   end
 
   def receipt_rows
-    response.body.scan(%r{<tr>.*?</tr>}m)
+    response.body.scan(%r{<tr(?:\s[^>]*)?>.*?</tr>}m)
   end
 
   def create_filterable_receipts

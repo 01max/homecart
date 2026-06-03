@@ -31,7 +31,7 @@
         </thead>
         <tbody class="divide-y divide-slate-100">
           <% @receipts.each do |receipt| %>
-            <tr>
+            <tr id="<%= dom_id(receipt) %>">
               <td class="whitespace-nowrap px-4 py-3 text-slate-950">
                 <%= receipt.purchased_at ? l(receipt.purchased_at, format: :short) : t(".empty_value") %>
               </td>
