@@ -48,6 +48,19 @@ services:
       - rails_storage:/rails/storage
     command: ["bash", "-lc", "./bin/rails db:prepare && ./bin/jobs"]
 
+  css:
+    build:
+      context: .
+      target: development
+      args:
+        RUBY_VERSION: 4.0.5
+    image: homecart-dev:latest
+    environment:
+      RAILS_ENV: development
+    volumes:
+      - .:/rails
+    command: ["bash", "-lc", "./bin/rails tailwindcss:watch[always]"]
+
   db:
     image: postgres:16
     environment:
