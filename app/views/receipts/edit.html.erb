@@ -33,7 +33,7 @@
     </section>
 
     <%= turbo_frame_tag dom_id(@receipt, :review_form), class: "min-w-0" do %>
-      <%= render "form", receipt: @receipt %>
+      <%= render "form", receipt: @receipt, notice: @review_form_notice %>
     <% end %>
   </div>
 </section>

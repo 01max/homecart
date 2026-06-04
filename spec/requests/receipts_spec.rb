@@ -17,6 +17,10 @@ RSpec.describe "Receipts", type: :request do
     response.body.scan(%r{<tr(?:\s[^>]*)?>.*?</tr>}m)
   end
 
+  def dom_id(record, prefix)
+    ActionView::RecordIdentifier.dom_id(record, prefix)
+  end
+
   def create_filterable_receipts
     create_listed_receipt(parser_status: "parsed", purchased_at: 2.days.ago, total_cents: 1111)
     create_listed_receipt(parser_status: "needs_review", purchased_at: 1.day.ago, total_cents: 2_222)
@@ -151,6 +155,13 @@ RSpec.describe "Receipts", type: :request do
     )
   end
 
+  def expect_turbo_frame_receipt_notice(receipt)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(%(id="#{dom_id(receipt, :review_form)}"))
+    expect(response.body).to include(I18n.t("receipts.update.success"))
+    expect(response.body).to include(%(aria-live="polite"))
+  end
+
   def expect_receipt_lines_to_be_updated(receipt, replacement_store)
     receipt.reload
     edited_line = receipt.receipt_lines.find_by!(position: 1)
@@ -218,6 +229,15 @@ RSpec.describe "Receipts", type: :request do
     patch receipt_path(receipt), params: review_receipt_params
 
     expect_receipt_to_be_updated(receipt)
+  end
+
+  it "renders visible save feedback for Turbo Frame receipt updates" do
+    receipt = create_review_receipt
+    headers = { "Turbo-Frame" => dom_id(receipt, :review_form) }
+
+    patch receipt_path(receipt), params: review_receipt_params, headers: headers
+
+    expect_turbo_frame_receipt_notice(receipt)
   end
 
   it "updates store and receipt lines through nested attributes" do

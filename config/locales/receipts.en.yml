@@ -51,6 +51,7 @@ en:
         parser_status: "Parser status"
         parser_format: "Parser format"
         submit: "Save receipt"
+        saving: "Saving..."
         errors:
           heading: "Receipt could not be saved."
       lines:

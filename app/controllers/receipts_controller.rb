@@ -20,7 +20,7 @@ class ReceiptsController < ApplicationController
 
   def update
     if @receipt.update(receipt_params)
-      redirect_to edit_receipt_path(@receipt), notice: t(".success")
+      render_successful_update
     else
       prepare_review_form
       render :edit, status: :unprocessable_entity
@@ -42,6 +42,14 @@ class ReceiptsController < ApplicationController
 
   def next_receipt_line_position
     @receipt.receipt_lines.reject(&:marked_for_destruction?).filter_map(&:position).max.to_i + 1
+  end
+
+  def render_successful_update
+    return redirect_to edit_receipt_path(@receipt), notice: t(".success") unless turbo_frame_request?
+
+    prepare_review_form
+    @review_form_notice = t(".success")
+    render :edit
   end
 
   def filtered_receipts
