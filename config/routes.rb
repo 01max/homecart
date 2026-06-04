@@ -1,7 +1,9 @@
 Rails.application.routes.draw do
   root "home#index"
 
-  resources :source_documents, only: %i[new create show]
+  resources :source_documents, only: %i[new create show] do
+    get :status, on: :member
+  end
   resources :receipts, only: %i[index edit update]
 
   post "hotwire/ping", to: "home#ping", as: :hotwire_ping

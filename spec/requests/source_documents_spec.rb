@@ -112,6 +112,19 @@ RSpec.describe "Source documents", type: :request do
     expect(response.body).to include(%(href="/receipts#receipt_#{receipt.id}"))
   end
 
+  def dom_id(record, prefix)
+    ActionView::RecordIdentifier.dom_id(record, prefix)
+  end
+
+  def expect_status_streams_for(source_document)
+    expect(response.body).to include(
+      %(target="#{dom_id(source_document, :processing_status)}"),
+      %(target="#{dom_id(source_document, :latest_text_extraction)}"),
+      %(target="#{dom_id(source_document, :receipt_summary)}"),
+      %(data-processing-complete="false")
+    )
+  end
+
   it "renders a single upload form with store and parser format dropdowns" do
     store
 
@@ -200,5 +213,15 @@ RSpec.describe "Source documents", type: :request do
     expect(response.body).to include(I18n.t("source_documents.show.preview.missing_file"))
     expect(response.body).to include(I18n.t("source_documents.show.latest_extraction.empty"))
     expect(response.body).to include(I18n.t("source_documents.show.receipt.empty"))
+  end
+
+  it "renders turbo stream status replacements for source document polling" do
+    source_document = create(:source_document, store: store)
+
+    get status_source_document_path(source_document, format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    expect_status_streams_for(source_document)
   end
 end

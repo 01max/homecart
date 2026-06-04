@@ -5,6 +5,16 @@ en:
       parsed: "Parsed"
       needs_review: "Needs review"
       reviewed: "Reviewed"
+    receipt_line_kinds:
+      item: "Item"
+      fee: "Fee"
+      discount: "Discount"
+    unit_of_measures:
+      piece: "Piece"
+      kg: "kg"
+      g: "g"
+      l: "L"
+      ml: "mL"
     index:
       eyebrow: "Receipts"
       title: "Receipts"
@@ -31,6 +41,7 @@ en:
         failure: "Failed"
       form:
         heading: "Receipt"
+        store: "Store"
         purchased_at: "Purchased at"
         register_number: "Register number"
         ticket_number: "Ticket number"
@@ -42,5 +53,20 @@ en:
         submit: "Save receipt"
         errors:
           heading: "Receipt could not be saved."
+      lines:
+        heading: "Receipt lines"
+        add_hint: "Use the blank row at the bottom to add one line. Select remove to delete an existing line on save."
+        position: "#"
+        label: "Label"
+        raw_text: "Raw text"
+        quantity: "Qty"
+        unit_of_measure: "Unit"
+        unit_price_cents: "Unit cents"
+        total_cents: "Total cents"
+        kind: "Kind"
+        tr_eligible: "TR"
+        section_label: "Section"
+        remove: "Remove"
+        new_line: "New"
     update:
       success: "Receipt updated."

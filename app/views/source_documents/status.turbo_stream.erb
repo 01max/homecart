@@ -1,0 +1,18 @@
+<%= turbo_stream.replace dom_id(@source_document, :processing_status) do %>
+  <%= render "source_documents/processing_status",
+             source_document: @source_document,
+             latest_text_extraction: @latest_text_extraction,
+             receipt: @receipt %>
+<% end %>
+
+<%= turbo_stream.replace dom_id(@source_document, :latest_text_extraction) do %>
+  <%= render "source_documents/latest_extraction",
+             source_document: @source_document,
+             latest_text_extraction: @latest_text_extraction %>
+<% end %>
+
+<%= turbo_stream.replace dom_id(@source_document, :receipt_summary) do %>
+  <%= render "source_documents/receipt_summary",
+             source_document: @source_document,
+             receipt: @receipt %>
+<% end %>

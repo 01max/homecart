@@ -15,6 +15,16 @@
   <%= form_with model: receipt, class: "mt-5 space-y-5" do |form| %>
     <div class="grid gap-4 sm:grid-cols-2">
       <div class="sm:col-span-2">
+        <%= form.label :store_id, t("receipts.edit.form.store"), class: "block text-sm font-medium text-slate-700" %>
+        <%= form.collection_select :store_id,
+                                   @stores,
+                                   :id,
+                                   ->(store) { store_label(store) },
+                                   {},
+                                   class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+      </div>
+
+      <div class="sm:col-span-2">
         <%= form.label :purchased_at, t("receipts.edit.form.purchased_at"), class: "block text-sm font-medium text-slate-700" %>
         <%= form.datetime_field :purchased_at,
                                 value: receipt.purchased_at&.strftime("%Y-%m-%dT%H:%M"),
@@ -46,6 +56,8 @@
         <%= form.number_field :declared_article_count, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
       </div>
     </div>
+
+    <%= render "receipt_lines_fields", form: form, receipt: receipt %>
 
     <dl class="grid gap-4 border-t border-slate-200 pt-5 text-sm sm:grid-cols-2">
       <div>

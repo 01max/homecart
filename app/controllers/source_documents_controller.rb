@@ -8,6 +8,7 @@ class SourceDocumentsController < ApplicationController
   helper_method :store_option_label, :store_options_for_select
 
   before_action :load_form_options, only: %i[new create]
+  before_action :load_source_document, only: %i[show status]
 
   def new; end
 
@@ -29,11 +30,9 @@ class SourceDocumentsController < ApplicationController
     render_new_with_alert(e.record.errors.full_messages)
   end
 
-  def show
-    @source_document = SourceDocument.includes(:receipts, text_extractions: :receipt).find(params[:id])
-    @latest_text_extraction = @source_document.text_extractions.order(ran_at: :desc, created_at: :desc).first
-    @receipt = @source_document.receipts.order(created_at: :desc).first
-  end
+  def show; end
+
+  def status; end
 
   private
 
@@ -89,6 +88,12 @@ class SourceDocumentsController < ApplicationController
 
   def selected_parser_format
     upload_params[:parser_format]
+  end
+
+  def load_source_document
+    @source_document = SourceDocument.includes(:receipts, text_extractions: :receipt).find(params[:id])
+    @latest_text_extraction = @source_document.text_extractions.order(ran_at: :desc, created_at: :desc).first
+    @receipt = @source_document.receipts.order(created_at: :desc).first
   end
 
   def store_option_label(store)

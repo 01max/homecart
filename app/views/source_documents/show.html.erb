@@ -1,7 +1,8 @@
 <% content_for :title, t(".title") %>
 <%= turbo_stream_from @source_document %>
 
-<section>
+<section data-controller="source-document-processing"
+         data-source-document-processing-url-value="<%= status_source_document_path(@source_document, format: :turbo_stream) %>">
   <div class="mb-6">
     <p class="text-sm font-medium text-slate-500"><%= t(".eyebrow") %></p>
     <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950"><%= t(".title") %></h1>
