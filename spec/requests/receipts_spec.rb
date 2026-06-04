@@ -1,11 +1,11 @@
 require "rails_helper"
 
 RSpec.describe "Receipts", type: :request do
-  let(:retail_brand) { create_retail_brand(slug: "leclerc").tap { |brand| brand.update!(name: "E.Leclerc") } }
-  let(:store) { create_store(retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
+  let(:retail_brand) { create(:retail_brand, slug: "leclerc").tap { |brand| brand.update!(name: "E.Leclerc") } }
+  let(:store) { create(:store, retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
 
   def create_listed_receipt(parser_status:, purchased_at:, total_cents: 1_234)
-    create_receipt(
+    create(:receipt,
       store: store,
       parser_status: parser_status,
       purchased_at: purchased_at,

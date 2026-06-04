@@ -137,9 +137,9 @@ RSpec.describe Parser::Base do
   end
 
   describe "record compatibility" do
-    let(:receipt_record) { create_receipt(total_cents: 500, declared_article_count: 1) }
-    let(:line_record) { create_receipt_line(receipt: receipt_record, total_cents: 500) }
-    let(:payment_record) { create_receipt_payment(receipt: receipt_record, amount_cents: 500) }
+    let(:receipt_record) { create(:receipt, total_cents: 500, declared_article_count: 1) }
+    let(:line_record) { create(:receipt_line, receipt: receipt_record, total_cents: 500) }
+    let(:payment_record) { create(:receipt_payment, receipt: receipt_record, amount_cents: 500) }
 
     it "can validate Active Record instances as well as parser attribute hashes" do
       result = envelope(receipt: receipt_record, lines: [ line_record ], payments: [ payment_record ])

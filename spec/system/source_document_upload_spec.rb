@@ -1,8 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Source document upload", type: :system do
-  let(:retail_brand) { create_retail_brand(slug: "auchan").tap { |brand| brand.update!(name: "Auchan") } }
-  let(:store) { create_store(retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
+  let(:retail_brand) { create(:retail_brand, slug: "auchan").tap { |brand| brand.update!(name: "Auchan") } }
+  let(:store) { create(:store, retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
   let(:fixture_path) { Rails.root.join("spec/fixtures/files/receipt_image.png") }
   let(:extracted_text) { Rails.root.join("spec/fixtures/files/parser/auchan_paper_v1_cashier.txt").read }
 

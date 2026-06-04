@@ -4,7 +4,7 @@ RSpec.describe Receipt::ParseJob do
   let(:broadcaster) { class_spy(ReceiptIngestion::BroadcastProcessingStatusService) }
 
   def stub_successful_parse(text_extraction)
-    receipt = create_receipt(
+    receipt = create(:receipt,
       store: text_extraction.source_document.store,
       source_document: text_extraction.source_document,
       text_extraction: text_extraction
@@ -35,7 +35,7 @@ RSpec.describe Receipt::ParseJob do
   end
 
   it "loads the text extraction and delegates parsing to the service" do
-    text_extraction = create_text_extraction
+    text_extraction = create(:text_extraction)
     receipt = stub_successful_parse(text_extraction)
 
     perform_job(text_extraction)
@@ -46,7 +46,7 @@ RSpec.describe Receipt::ParseJob do
   end
 
   it "does not parse failed text extractions" do
-    text_extraction = create_text_extraction(success: false)
+    text_extraction = create(:text_extraction, :failed)
 
     allow(ReceiptIngestion::ParseService).to receive(:call)
 

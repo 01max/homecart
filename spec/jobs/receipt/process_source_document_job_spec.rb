@@ -4,7 +4,9 @@ RSpec.describe Receipt::ProcessSourceDocumentJob do
   let(:broadcaster) { class_spy(ReceiptIngestion::BroadcastProcessingStatusService) }
 
   def stub_extraction(source_document, success: true)
-    create_text_extraction(source_document: source_document, success: success).tap do |text_extraction|
+    factory_arguments = success ? [ :text_extraction ] : [ :text_extraction, :failed ]
+
+    create(*factory_arguments, source_document: source_document).tap do |text_extraction|
       allow(ReceiptIngestion::ExtractTextService).to receive(:call).and_return(text_extraction)
     end
   end
@@ -35,7 +37,7 @@ RSpec.describe Receipt::ProcessSourceDocumentJob do
   end
 
   it "delegates extraction to the service" do
-    source_document = create_source_document
+    source_document = create(:source_document)
     stub_extraction(source_document)
 
     allow(Receipt::ParseJob).to receive(:perform_later)
@@ -46,7 +48,7 @@ RSpec.describe Receipt::ProcessSourceDocumentJob do
   end
 
   it "enqueues parsing for a successful text extraction" do
-    source_document = create_source_document
+    source_document = create(:source_document)
     text_extraction = stub_extraction(source_document)
 
     allow(Receipt::ParseJob).to receive(:perform_later)
@@ -58,7 +60,7 @@ RSpec.describe Receipt::ProcessSourceDocumentJob do
   end
 
   it "does not enqueue parsing for a failed text extraction" do
-    source_document = create_source_document
+    source_document = create(:source_document)
     text_extraction = stub_extraction(source_document, success: false)
 
     allow(Receipt::ParseJob).to receive(:perform_later)
@@ -70,7 +72,7 @@ RSpec.describe Receipt::ProcessSourceDocumentJob do
   end
 
   it "broadcasts extraction running before delegating to the service" do
-    source_document = create_source_document
+    source_document = create(:source_document)
     stub_extraction(source_document)
 
     allow(Receipt::ParseJob).to receive(:perform_later)

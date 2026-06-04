@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe SourceDocument do
-  let(:source_document) { create_source_document(content_hash: "a" * 64) }
+  let(:source_document) { create(:source_document, content_hash: "a" * 64) }
 
   it "belongs to a store" do
     expect(source_document.store.source_documents).to contain_exactly(source_document)

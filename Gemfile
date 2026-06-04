@@ -69,6 +69,8 @@ end
 
 group :test do
   gem "capybara", require: false
+  gem "factory_bot_rails", require: false
+  gem "faker", require: false
   gem "simplecov", require: false
 end
 

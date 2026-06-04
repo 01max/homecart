@@ -2,10 +2,10 @@ require "rails_helper"
 require "digest"
 
 RSpec.describe "Source documents", type: :request do
-  let(:retail_brand) { create_retail_brand(slug: "leclerc").tap { |brand| brand.update!(name: "E.Leclerc") } }
-  let(:store) { create_store(retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
-  let(:auchan_brand) { create_retail_brand(slug: "auchan").tap { |brand| brand.update!(name: "Auchan") } }
-  let(:u_brand) { create_retail_brand(slug: "magasins-u").tap { |brand| brand.update!(name: "Magasins U") } }
+  let(:retail_brand) { create(:retail_brand, slug: "leclerc").tap { |brand| brand.update!(name: "E.Leclerc") } }
+  let(:store) { create(:store, retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
+  let(:auchan_brand) { create(:retail_brand, slug: "auchan").tap { |brand| brand.update!(name: "Auchan") } }
+  let(:u_brand) { create(:retail_brand, slug: "magasins-u").tap { |brand| brand.update!(name: "Magasins U") } }
   let(:fixture_path) { Rails.root.join("spec/fixtures/files/receipt_text.pdf") }
 
   before do
@@ -42,10 +42,10 @@ RSpec.describe "Source documents", type: :request do
 
   def create_parser_hint_stores
     store
-    create_store(retail_brand: auchan_brand, location_name: "Villeneuve sur Lot", channel: "physical")
-    create_store(retail_brand: retail_brand, location_name: "PARISDIF", channel: "drive")
-    create_store(retail_brand: u_brand, location_name: "Pujols", channel: "physical")
-    create_store(
+    create(:store, retail_brand: auchan_brand, location_name: "Villeneuve sur Lot", channel: "physical")
+    create(:store, retail_brand: retail_brand, location_name: "PARISDIF", channel: "drive")
+    create(:store, retail_brand: u_brand, location_name: "Pujols", channel: "physical")
+    create(:store,
       retail_brand: retail_brand,
       location_name: "Legacy override",
       channel: "physical",
@@ -96,9 +96,9 @@ RSpec.describe "Source documents", type: :request do
   end
 
   def create_extraction(source_document:, text:, ran_at:, success: true, error_message: nil)
-    TextExtraction.create!(
+    create(
+      :text_extraction,
       source_document: source_document,
-      engine: "pdftotext-layout",
       text: success ? text : "",
       ran_at: ran_at,
       success: success,
@@ -145,7 +145,7 @@ RSpec.describe "Source documents", type: :request do
   end
 
   it "redirects duplicate uploads to the existing source document without enqueueing processing" do
-    existing_source_document = create_source_document(content_hash: Digest::SHA256.file(fixture_path).hexdigest)
+    existing_source_document = create(:source_document, content_hash: Digest::SHA256.file(fixture_path).hexdigest)
 
     expect do
       post_upload(file: upload_file, store_id: store.id, parser_format: "leclerc.paper.v1")
@@ -179,11 +179,11 @@ RSpec.describe "Source documents", type: :request do
   end
 
   it "shows the original file preview, latest extraction, and associated receipt link" do
-    source_document = create_source_document(store: store)
+    source_document = create(:source_document, store: store)
     attach_original_file(source_document)
     create_extraction(source_document: source_document, text: "older extraction", ran_at: 2.hours.ago)
     latest_extraction = create_extraction(source_document: source_document, text: "latest extraction", ran_at: 1.hour.ago)
-    receipt = create_receipt(store: store, source_document: source_document, text_extraction: latest_extraction)
+    receipt = create(:receipt, store: store, source_document: source_document, text_extraction: latest_extraction)
 
     get source_document_path(source_document)
 
@@ -192,7 +192,7 @@ RSpec.describe "Source documents", type: :request do
   end
 
   it "shows empty states before extraction and parsing complete" do
-    source_document = create_source_document(store: store)
+    source_document = create(:source_document, store: store)
 
     get source_document_path(source_document)
 

@@ -2,8 +2,8 @@ require "rails_helper"
 
 RSpec.describe RetailBrand do
   it "owns stores" do
-    brand = create_retail_brand
-    store = create_store(retail_brand: brand)
+    brand = create(:retail_brand)
+    store = create(:store, retail_brand: brand)
 
     expect(brand.stores).to contain_exactly(store)
   end
@@ -15,7 +15,7 @@ RSpec.describe RetailBrand do
   end
 
   it "requires a unique slug" do
-    create_retail_brand(slug: "retailer")
+    create(:retail_brand, slug: "retailer")
     duplicate = described_class.new(name: "Duplicate", slug: "retailer", aliases: [])
 
     expect(duplicate).not_to be_valid

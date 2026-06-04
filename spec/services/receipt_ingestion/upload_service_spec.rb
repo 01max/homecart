@@ -3,7 +3,7 @@ require "digest"
 require "tempfile"
 
 RSpec.describe ReceiptIngestion::UploadService do
-  let(:store) { create_store }
+  let(:store) { create(:store) }
   let(:job_class) { class_spy(Receipt::ProcessSourceDocumentJob) }
   let(:broadcaster) { class_spy(ReceiptIngestion::BroadcastProcessingStatusService) }
 
@@ -68,7 +68,7 @@ RSpec.describe ReceiptIngestion::UploadService do
   end
 
   it "returns an existing source document for duplicate content without enqueueing processing" do
-    existing_source_document = create_source_document(content_hash: Digest::SHA256.hexdigest("same receipt"))
+    existing_source_document = create(:source_document, content_hash: Digest::SHA256.hexdigest("same receipt"))
     file = uploaded_file(content: "same receipt")
 
     result = call_service(file)

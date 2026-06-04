@@ -77,8 +77,8 @@ RSpec.describe ReceiptIngestion::BroadcastProcessingStatusService do
   end
 
   it "broadcasts replace updates for source document status sections" do
-    source_document = create_source_document
-    text_extraction = create_text_extraction(source_document: source_document)
+    source_document = create(:source_document)
+    text_extraction = create(:text_extraction, source_document: source_document)
 
     broadcast_source_document(source_document, text_extraction)
 
@@ -88,7 +88,7 @@ RSpec.describe ReceiptIngestion::BroadcastProcessingStatusService do
   end
 
   it "broadcasts receipt list replacements for unfiltered and status-filtered indexes" do
-    receipt = create_receipt(parser_status: "parsed")
+    receipt = create(:receipt, parser_status: "parsed")
 
     broadcast_receipt(receipt)
 

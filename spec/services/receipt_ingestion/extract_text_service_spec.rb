@@ -41,7 +41,7 @@ RSpec.describe ReceiptIngestion::ExtractTextService do
   end
 
   it "routes PDF source documents and persists a successful text extraction" do
-    source_document = create_source_document(mime_type: "application/pdf")
+    source_document = create(:source_document, mime_type: "application/pdf")
     attach_original_file(source_document)
     pdf_extractor, calls = recording_extractor(extraction_result_class.new("PDF text", "pdftotext-layout"))
 
@@ -52,7 +52,7 @@ RSpec.describe ReceiptIngestion::ExtractTextService do
   end
 
   it "routes image source documents and persists a successful text extraction" do
-    source_document = create_source_document(mime_type: "image/png")
+    source_document = create(:source_document, mime_type: "image/png")
     attach_original_file(source_document)
     image_extractor, calls = recording_extractor(extraction_result_class.new("Image text", "tesseract-5.5.1-fra-psm6"))
 
@@ -63,7 +63,7 @@ RSpec.describe ReceiptIngestion::ExtractTextService do
   end
 
   it "records the extraction timestamp from the injected clock" do
-    source_document = create_source_document
+    source_document = create(:source_document)
     attach_original_file(source_document)
     pdf_extractor, = recording_extractor(extraction_result_class.new("PDF text", "pdftotext-layout"))
     ran_at = Time.zone.local(2026, 6, 1, 12, 0, 0)
@@ -74,7 +74,7 @@ RSpec.describe ReceiptIngestion::ExtractTextService do
   end
 
   it "persists a failed text extraction when PDF extraction fails" do
-    source_document = create_source_document(mime_type: "application/pdf")
+    source_document = create(:source_document, mime_type: "application/pdf")
     attach_original_file(source_document)
     pdf_extractor = failing_extractor(ReceiptIngestion::ExtractPdfService::ExtractionError, "pdftotext failed")
 
@@ -84,7 +84,7 @@ RSpec.describe ReceiptIngestion::ExtractTextService do
   end
 
   it "persists a failed text extraction when image extraction fails" do
-    source_document = create_source_document(mime_type: "image/png")
+    source_document = create(:source_document, mime_type: "image/png")
     attach_original_file(source_document)
     image_extractor = failing_extractor(
       ReceiptIngestion::ExtractImageWithTesseractService::ExtractionError,
@@ -97,7 +97,7 @@ RSpec.describe ReceiptIngestion::ExtractTextService do
   end
 
   it "persists a failed text extraction when the original file is missing" do
-    source_document = create_source_document
+    source_document = create(:source_document)
 
     extraction = described_class.call(source_document: source_document)
 
