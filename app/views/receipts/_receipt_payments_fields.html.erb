@@ -17,7 +17,8 @@
       </thead>
       <tbody class="divide-y divide-slate-200 bg-white">
         <%= form.fields_for :receipt_payments, receipt.receipt_payments.sort_by { |payment| [ payment.position || Float::INFINITY, payment.id || "" ] }, include_id: false do |payment_form| %>
-          <tr class="<%= payment_form.object.new_record? ? "bg-slate-50" : "" %>">
+          <tr class="<%= payment_form.object.new_record? ? "bg-slate-50" : "" %>"
+              data-receipt-validators-target="payment">
             <td class="px-2 py-2 align-top">
               <%= payment_form.hidden_field :id if payment_form.object.persisted? %>
               <%= payment_form.label :position, t("receipts.edit.payments.position"), class: "sr-only" %>
@@ -25,7 +26,9 @@
             </td>
             <td class="px-2 py-2 align-top">
               <%= payment_form.label :raw_label, t("receipts.edit.payments.raw_label"), class: "sr-only" %>
-              <%= payment_form.text_field :raw_label, class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+              <%= payment_form.text_field :raw_label,
+                                          data: { receipt_validators_target: "paymentRawLabel" },
+                                          class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
             </td>
             <td class="px-2 py-2 align-top">
               <%= payment_form.label :category, t("receipts.edit.payments.category"), class: "sr-only" %>
@@ -36,12 +39,16 @@
             </td>
             <td class="px-2 py-2 align-top">
               <%= payment_form.label :amount_cents, t("receipts.edit.payments.amount_cents"), class: "sr-only" %>
-              <%= payment_form.number_field :amount_cents, class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+              <%= payment_form.number_field :amount_cents,
+                                            data: { receipt_validators_target: "paymentAmount" },
+                                            class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
             </td>
             <td class="px-2 py-2 align-top text-center">
               <% if payment_form.object.persisted? %>
                 <%= payment_form.label :_destroy, class: "inline-flex items-center gap-2 text-xs text-rose-700" do %>
-                  <%= payment_form.check_box :_destroy, class: "h-4 w-4 rounded border-slate-300 text-rose-700" %>
+                  <%= payment_form.check_box :_destroy,
+                                             data: { receipt_validators_target: "paymentDestroy" },
+                                             class: "h-4 w-4 rounded border-slate-300 text-rose-700" %>
                   <span><%= t("receipts.edit.payments.remove") %></span>
                 <% end %>
               <% else %>

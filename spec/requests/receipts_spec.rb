@@ -216,6 +216,7 @@ RSpec.describe "Receipts", type: :request do
   def expect_review_page
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("RAW LINE\nTOTAL 12,34")
+    expect_review_form_validator_panel
     expect(response.body).to include(I18n.t("receipts.edit.form.heading"))
     expect(response.body).to include(I18n.t("receipts.edit.form.store"))
     expect(response.body).to include(I18n.t("receipts.edit.form.total_cents"))
@@ -231,6 +232,21 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include(%q(name="receipt[receipt_promotions_attributes]))
     expect(response.body).to include(%q(name="receipt[receipt_payments_attributes]))
     expect(response.body).not_to include(%(name="text_extraction[text]"))
+  end
+
+  def expect_review_form_validator_panel
+    expect(response.body).to include(%(data-controller="receipt-validators"))
+    expect(response.body).to include(%(data-receipt-validators-target="receiptTotal"))
+    expect(response.body).to include(%(data-receipt-validators-target="declaredArticleCount"))
+    expect(response.body).to include(%(data-receipt-validators-target="line"))
+    expect(response.body).to include(%(data-receipt-validators-target="payment"))
+    expect(response.body).to include(%(data-receipt-validators-target="totalsSumCard"))
+    expect(response.body).to include(%(data-receipt-validators-target="articleCountCard"))
+    expect(response.body).to include(%(data-receipt-validators-target="paymentsSumCard"))
+    expect(response.body).to include(I18n.t("receipts.edit.validators.heading"))
+    expect(response.body).to include(I18n.t("receipts.edit.validators.totals_sum.label"))
+    expect(response.body).to include(I18n.t("receipts.edit.validators.article_count.label"))
+    expect(response.body).to include(I18n.t("receipts.edit.validators.payments_sum.label"))
   end
 
   def expect_receipt_to_be_updated(receipt)

@@ -1,4 +1,19 @@
-<%= form_with model: receipt, class: "space-y-6" do |form| %>
+<%= form_with model: receipt,
+              class: "space-y-6",
+              data: {
+                controller: "receipt-validators",
+                action: "input->receipt-validators#recompute change->receipt-validators#recompute",
+                receipt_validators_pass_label_value: t("receipts.edit.validators.pass"),
+                receipt_validators_fail_label_value: t("receipts.edit.validators.fail"),
+                receipt_validators_skipped_label_value: t("receipts.edit.validators.skipped"),
+                receipt_validators_totals_pass_detail_value: t("receipts.edit.validators.totals_sum.pass_detail"),
+                receipt_validators_totals_fail_detail_template_value: t("receipts.edit.validators.totals_sum.fail_detail"),
+                receipt_validators_article_pass_detail_value: t("receipts.edit.validators.article_count.pass_detail"),
+                receipt_validators_article_fail_detail_template_value: t("receipts.edit.validators.article_count.fail_detail"),
+                receipt_validators_article_skipped_detail_value: t("receipts.edit.validators.article_count.skipped_detail"),
+                receipt_validators_payments_pass_detail_value: t("receipts.edit.validators.payments_sum.pass_detail"),
+                receipt_validators_payments_fail_detail_template_value: t("receipts.edit.validators.payments_sum.fail_detail")
+              } do |form| %>
   <% if receipt.errors.any? %>
     <div class="rounded border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
       <p class="font-medium"><%= t("receipts.edit.form.errors.heading") %></p>
@@ -67,12 +82,16 @@
 
         <div>
           <%= form.label :total_cents, t("receipts.edit.form.total_cents"), class: "block text-sm font-medium text-slate-700" %>
-          <%= form.number_field :total_cents, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+          <%= form.number_field :total_cents,
+                                data: { receipt_validators_target: "receiptTotal" },
+                                class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
         </div>
 
         <div>
           <%= form.label :declared_article_count, t("receipts.edit.form.declared_article_count"), class: "block text-sm font-medium text-slate-700" %>
-          <%= form.number_field :declared_article_count, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+          <%= form.number_field :declared_article_count,
+                                data: { receipt_validators_target: "declaredArticleCount" },
+                                class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
         </div>
       </div>
 
@@ -92,6 +111,7 @@
   <%= render "receipt_lines_fields", form: form, receipt: receipt %>
   <%= render "receipt_promotions_fields", form: form, receipt: receipt %>
   <%= render "receipt_payments_fields", form: form, receipt: receipt %>
+  <%= render "validators_panel" %>
 
   <div class="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
     <p class="min-h-5 text-sm font-medium text-emerald-800" aria-live="polite">

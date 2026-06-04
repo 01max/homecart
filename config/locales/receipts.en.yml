@@ -110,5 +110,25 @@ en:
         amount_cents: "Amount cents"
         remove: "Remove"
         new_payment: "New"
+      validators:
+        heading: "Validators"
+        pending: "Pending"
+        pending_detail: "Edit receipt fields to recompute this validator."
+        pass: "Pass"
+        fail: "Fail"
+        skipped: "Skipped"
+        totals_sum:
+          label: "Line totals"
+          pass_detail: "Line totals match the receipt total within +/- 1 cent."
+          fail_detail: "Line totals differ by %{discrepancy} cents (%{computed} vs %{declared})."
+        article_count:
+          label: "Article count"
+          pass_detail: "Article count matches the declared count."
+          fail_detail: "Article count differs by %{discrepancy} (%{computed} vs %{declared})."
+          skipped_detail: "No declared article count."
+        payments_sum:
+          label: "Payments"
+          pass_detail: "Payments match the receipt total within +/- 1 cent."
+          fail_detail: "Payments differ by %{discrepancy} cents (%{computed} vs %{declared})."
     update:
       success: "Receipt updated."

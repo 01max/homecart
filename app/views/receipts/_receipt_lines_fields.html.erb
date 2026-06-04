@@ -23,7 +23,8 @@
       </thead>
       <tbody class="divide-y divide-slate-200 bg-white">
         <%= form.fields_for :receipt_lines, receipt.receipt_lines.sort_by { |line| [ line.position || Float::INFINITY, line.id || "" ] }, include_id: false do |line_form| %>
-          <tr class="<%= line_form.object.new_record? ? "bg-slate-50" : "" %>">
+          <tr class="<%= line_form.object.new_record? ? "bg-slate-50" : "" %>"
+              data-receipt-validators-target="line">
             <td class="px-2 py-2 align-top">
               <%= line_form.hidden_field :id if line_form.object.persisted? %>
               <%= line_form.label :position, t("receipts.edit.lines.position"), class: "sr-only" %>
@@ -31,36 +32,50 @@
             </td>
             <td class="px-2 py-2 align-top">
               <%= line_form.label :label, t("receipts.edit.lines.label"), class: "sr-only" %>
-              <%= line_form.text_field :label, class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+              <%= line_form.text_field :label,
+                                       data: { receipt_validators_target: "lineLabel" },
+                                       class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
             </td>
             <td class="px-2 py-2 align-top">
               <%= line_form.label :raw_text, t("receipts.edit.lines.raw_text"), class: "sr-only" %>
-              <%= line_form.text_area :raw_text, rows: 2, class: "w-full rounded border border-slate-300 px-2 py-1 font-mono text-xs" %>
+              <%= line_form.text_area :raw_text,
+                                      rows: 2,
+                                      data: { receipt_validators_target: "lineRawText" },
+                                      class: "w-full rounded border border-slate-300 px-2 py-1 font-mono text-xs" %>
             </td>
             <td class="px-2 py-2 align-top">
               <%= line_form.label :quantity, t("receipts.edit.lines.quantity"), class: "sr-only" %>
-              <%= line_form.number_field :quantity, step: "0.001", class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+              <%= line_form.number_field :quantity,
+                                         step: "0.001",
+                                         data: { receipt_validators_target: "lineQuantity" },
+                                         class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
             </td>
             <td class="px-2 py-2 align-top">
               <%= line_form.label :unit_of_measure, t("receipts.edit.lines.unit_of_measure"), class: "sr-only" %>
               <%= line_form.select :unit_of_measure,
                                    ReceiptLine.unit_of_measures.keys.map { |unit| [ unit_of_measure_label(unit), unit ] },
                                    {},
+                                   data: { receipt_validators_target: "lineUnit" },
                                    class: "w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm" %>
             </td>
             <td class="px-2 py-2 align-top">
               <%= line_form.label :unit_price_cents, t("receipts.edit.lines.unit_price_cents"), class: "sr-only" %>
-              <%= line_form.number_field :unit_price_cents, class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+              <%= line_form.number_field :unit_price_cents,
+                                         data: { receipt_validators_target: "lineUnitPrice" },
+                                         class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
             </td>
             <td class="px-2 py-2 align-top">
               <%= line_form.label :total_cents, t("receipts.edit.lines.total_cents"), class: "sr-only" %>
-              <%= line_form.number_field :total_cents, class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+              <%= line_form.number_field :total_cents,
+                                         data: { receipt_validators_target: "lineTotal" },
+                                         class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
             </td>
             <td class="px-2 py-2 align-top">
               <%= line_form.label :kind, t("receipts.edit.lines.kind"), class: "sr-only" %>
               <%= line_form.select :kind,
                                    ReceiptLine.kinds.keys.map { |kind| [ receipt_line_kind_label(kind), kind ] },
                                    {},
+                                   data: { receipt_validators_target: "lineKind" },
                                    class: "w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm" %>
             </td>
             <td class="px-2 py-2 align-top text-center">
@@ -69,12 +84,16 @@
             </td>
             <td class="px-2 py-2 align-top">
               <%= line_form.label :section_label, t("receipts.edit.lines.section_label"), class: "sr-only" %>
-              <%= line_form.text_field :section_label, class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+              <%= line_form.text_field :section_label,
+                                       data: { receipt_validators_target: "lineSectionLabel" },
+                                       class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
             </td>
             <td class="px-2 py-2 align-top text-center">
               <% if line_form.object.persisted? %>
                 <%= line_form.label :_destroy, class: "inline-flex items-center gap-2 text-xs text-rose-700" do %>
-                  <%= line_form.check_box :_destroy, class: "h-4 w-4 rounded border-slate-300 text-rose-700" %>
+                  <%= line_form.check_box :_destroy,
+                                          data: { receipt_validators_target: "lineDestroy" },
+                                          class: "h-4 w-4 rounded border-slate-300 text-rose-700" %>
                   <span><%= t("receipts.edit.lines.remove") %></span>
                 <% end %>
               <% else %>
