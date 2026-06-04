@@ -97,6 +97,63 @@ RSpec.describe "Receipts", type: :request do
     }
   end
 
+  def review_receipt_promotion_and_payment_params(receipt:)
+    edited_promotion, removed_promotion = receipt.receipt_promotions.order(:created_at)
+    edited_payment, removed_payment = receipt.receipt_payments.order(:position)
+    linked_line = receipt.receipt_lines.order(:position).first
+
+    {
+      receipt: {
+        receipt_promotions_attributes: promotion_update_params(edited_promotion, removed_promotion, linked_line),
+        receipt_payments_attributes: payment_update_params(edited_payment, removed_payment)
+      }
+    }
+  end
+
+  def promotion_update_params(edited_promotion, removed_promotion, linked_line)
+    {
+      "0" => {
+        id: edited_promotion.id,
+        program: "updated_program",
+        unit: "vignette_count",
+        delta: "3",
+        label: "Updated promotion",
+        linked_line_id: linked_line.id,
+        kind: "points_accrual",
+        linking_method: "user_confirmed"
+      },
+      "1" => { id: removed_promotion.id, _destroy: "1" },
+      "2" => {
+        program: "new_program",
+        unit: "euro_cents",
+        delta: "-150",
+        label: "New promotion",
+        linked_line_id: "",
+        kind: "coupon",
+        linking_method: "unallocated"
+      }
+    }
+  end
+
+  def payment_update_params(edited_payment, removed_payment)
+    {
+      "0" => {
+        id: edited_payment.id,
+        position: "1",
+        raw_label: "UPDATED CARD",
+        category: "bank_card",
+        amount_cents: "700"
+      },
+      "1" => { id: removed_payment.id, _destroy: "1" },
+      "2" => {
+        position: "3",
+        raw_label: "TR CARD",
+        category: "tickets_restaurant",
+        amount_cents: "534"
+      }
+    }
+  end
+
   def review_receipt_line_params_with_blank_row(receipt)
     line = receipt.receipt_lines.sole
     {
@@ -130,6 +187,32 @@ RSpec.describe "Receipts", type: :request do
     }
   end
 
+  def review_receipt_promotion_and_payment_params_with_blank_rows(receipt)
+    {
+      receipt: {
+        receipt_promotions_attributes: {
+          "0" => {
+            program: "",
+            unit: "euro_cents",
+            delta: "",
+            label: "",
+            linked_line_id: "",
+            kind: "loyalty_credit",
+            linking_method: "unallocated"
+          }
+        },
+        receipt_payments_attributes: {
+          "0" => {
+            position: "1",
+            raw_label: "",
+            category: "bank_card",
+            amount_cents: ""
+          }
+        }
+      }
+    }
+  end
+
   def expect_review_page
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("RAW LINE\nTOTAL 12,34")
@@ -143,6 +226,10 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include("min-w-[72rem]")
     expect(response.body).to include("overflow-x-auto")
     expect(response.body).to include(I18n.t("receipts.edit.lines.tr_eligible"))
+    expect(response.body).to include(I18n.t("receipts.edit.promotions.heading"))
+    expect(response.body).to include(I18n.t("receipts.edit.payments.heading"))
+    expect(response.body).to include(%q(name="receipt[receipt_promotions_attributes]))
+    expect(response.body).to include(%q(name="receipt[receipt_payments_attributes]))
     expect(response.body).not_to include(%(name="text_extraction[text]"))
   end
 
@@ -176,6 +263,23 @@ RSpec.describe "Receipts", type: :request do
     expect(edited_line).to have_attributes(label: "Updated label", raw_text: "UPDATED RAW", total_cents: 500)
     expect(edited_line).to be_tr_eligible
     expect(new_line).to have_attributes(label: "New label", unit_of_measure: "kg", kind: "fee", total_cents: 345)
+  end
+
+  def expect_promotions_and_payments_to_be_updated(receipt)
+    receipt.reload
+    edited_promotion = receipt.receipt_promotions.find_by!(program: "updated_program")
+    new_promotion = receipt.receipt_promotions.find_by!(program: "new_program")
+    edited_payment = receipt.receipt_payments.find_by!(position: 1)
+    new_payment = receipt.receipt_payments.find_by!(position: 3)
+
+    expect(receipt.receipt_promotions.count).to eq(2)
+    expect(edited_promotion).to have_attributes(unit: "vignette_count", delta: 3, kind: "points_accrual", linking_method: "user_confirmed")
+    expect(edited_promotion.linked_line).to eq(receipt.receipt_lines.order(:position).first)
+    expect(new_promotion).to have_attributes(unit: "euro_cents", delta: -150, kind: "coupon", linking_method: "unallocated")
+    expect(new_promotion.linked_line).to be_nil
+    expect(receipt.receipt_payments.count).to eq(2)
+    expect(edited_payment).to have_attributes(raw_label: "UPDATED CARD", category: "bank_card", amount_cents: 700)
+    expect(new_payment).to have_attributes(raw_label: "TR CARD", category: "tickets_restaurant", amount_cents: 534)
   end
 
   it "lists receipts newest first" do
@@ -254,6 +358,19 @@ RSpec.describe "Receipts", type: :request do
     expect_receipt_lines_to_be_updated(receipt, replacement_store)
   end
 
+  it "updates receipt promotions and payments through nested attributes" do
+    receipt = create_review_receipt
+    line = receipt.receipt_lines.order(:position).first
+    create(:receipt_promotion, receipt: receipt, linked_line: line, linking_method: "parser_inferred")
+    create(:receipt_promotion, receipt: receipt)
+    create(:receipt_payment, receipt: receipt, position: 1, amount_cents: 900)
+    create(:receipt_payment, receipt: receipt, position: 2, amount_cents: 334)
+
+    patch receipt_path(receipt), params: review_receipt_promotion_and_payment_params(receipt: receipt)
+
+    expect_promotions_and_payments_to_be_updated(receipt)
+  end
+
   it "ignores the blank add-row when default controls submit values" do
     receipt = create_review_receipt
 
@@ -261,6 +378,16 @@ RSpec.describe "Receipts", type: :request do
 
     expect(response).to redirect_to(edit_receipt_path(receipt))
     expect(receipt.reload.receipt_lines.count).to eq(1)
+  end
+
+  it "ignores blank promotion and payment add-rows when default controls submit values" do
+    receipt = create_review_receipt
+
+    patch receipt_path(receipt), params: review_receipt_promotion_and_payment_params_with_blank_rows(receipt)
+
+    expect(response).to redirect_to(edit_receipt_path(receipt))
+    expect(receipt.reload.receipt_promotions.count).to eq(0)
+    expect(receipt.receipt_payments.count).to eq(0)
   end
 
   def formatted_total(receipt)

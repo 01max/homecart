@@ -9,6 +9,24 @@ en:
       item: "Item"
       fee: "Fee"
       discount: "Discount"
+    receipt_promotion_units:
+      euro_cents: "Euro cents"
+      vignette_count: "Vignette count"
+    receipt_promotion_kinds:
+      loyalty_credit: "Loyalty credit"
+      immediate_discount: "Immediate discount"
+      coupon: "Coupon"
+      points_accrual: "Points accrual"
+    receipt_promotion_linking_methods:
+      parser_inferred: "Parser inferred"
+      user_confirmed: "User confirmed"
+      unallocated: "Unallocated"
+    receipt_payment_categories:
+      bank_card: "Bank card"
+      tickets_restaurant: "Tickets Restaurant"
+      cash: "Cash"
+      web: "Web"
+      other: "Other"
     unit_of_measures:
       piece: "Piece"
       kg: "kg"
@@ -69,5 +87,28 @@ en:
         section_label: "Section"
         remove: "Remove"
         new_line: "New"
+      promotions:
+        heading: "Receipt promotions"
+        add_hint: "Use the blank row at the bottom to add one promotion. Select remove to delete an existing promotion on save."
+        program: "Program"
+        unit: "Unit"
+        delta: "Delta"
+        label: "Label"
+        linked_line: "Linked line"
+        linked_line_option: "#%{position} — %{label}"
+        unallocated_link: "Unallocated"
+        kind: "Kind"
+        linking_method: "Linking"
+        remove: "Remove"
+        new_promotion: "New"
+      payments:
+        heading: "Receipt payments"
+        add_hint: "Use the blank row at the bottom to add one payment. Select remove to delete an existing payment on save."
+        position: "#"
+        raw_label: "Raw label"
+        category: "Category"
+        amount_cents: "Amount cents"
+        remove: "Remove"
+        new_payment: "New"
     update:
       success: "Receipt updated."

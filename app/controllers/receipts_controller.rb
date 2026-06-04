@@ -4,7 +4,9 @@
 # the request carries one of the known enum values, then renders receipts newest
 # first by purchase time.
 class ReceiptsController < ApplicationController
-  helper_method :parser_status_label, :receipt_line_kind_label, :receipts_stream_name, :store_label, :unit_of_measure_label
+  helper_method :parser_status_label, :receipt_line_kind_label, :receipt_line_option_label,
+    :receipt_payment_category_label, :receipt_promotion_kind_label, :receipt_promotion_linking_method_label,
+    :receipt_promotion_unit_label, :receipts_stream_name, :store_label, :unit_of_measure_label
 
   before_action :load_receipt, only: %i[edit update]
 
@@ -31,17 +33,23 @@ class ReceiptsController < ApplicationController
 
   def load_receipt
     @receipt = Receipt
-               .includes(:text_extraction, :receipt_lines, store: :retail_brand)
+               .includes(:text_extraction, :receipt_lines, :receipt_promotions, :receipt_payments, store: :retail_brand)
                .find(params[:id])
   end
 
   def prepare_review_form
     @stores = Store.includes(:retail_brand).sort_by { |store| [ store.retail_brand.name, store.location_name, store.channel ] }
     @receipt.receipt_lines.build(position: next_receipt_line_position) unless @receipt.receipt_lines.any?(&:new_record?)
+    @receipt.receipt_promotions.build unless @receipt.receipt_promotions.any?(&:new_record?)
+    @receipt.receipt_payments.build(position: next_receipt_payment_position) unless @receipt.receipt_payments.any?(&:new_record?)
   end
 
   def next_receipt_line_position
     @receipt.receipt_lines.reject(&:marked_for_destruction?).filter_map(&:position).max.to_i + 1
+  end
+
+  def next_receipt_payment_position
+    @receipt.receipt_payments.reject(&:marked_for_destruction?).filter_map(&:position).max.to_i + 1
   end
 
   def render_successful_update
@@ -70,6 +78,26 @@ class ReceiptsController < ApplicationController
 
   def receipt_line_kind_label(kind)
     t("receipts.receipt_line_kinds.#{kind}")
+  end
+
+  def receipt_line_option_label(line)
+    t("receipts.edit.promotions.linked_line_option", position: line.position, label: line.label)
+  end
+
+  def receipt_payment_category_label(category)
+    t("receipts.receipt_payment_categories.#{category}")
+  end
+
+  def receipt_promotion_kind_label(kind)
+    t("receipts.receipt_promotion_kinds.#{kind}")
+  end
+
+  def receipt_promotion_linking_method_label(linking_method)
+    t("receipts.receipt_promotion_linking_methods.#{linking_method}")
+  end
+
+  def receipt_promotion_unit_label(unit)
+    t("receipts.receipt_promotion_units.#{unit}")
   end
 
   def receipts_stream_name(parser_status)
@@ -110,6 +138,25 @@ class ReceiptsController < ApplicationController
         :kind,
         :tr_eligible,
         :section_label,
+        :_destroy
+      ],
+      receipt_promotions_attributes: [
+        :id,
+        :program,
+        :unit,
+        :delta,
+        :label,
+        :linked_line_id,
+        :kind,
+        :linking_method,
+        :_destroy
+      ],
+      receipt_payments_attributes: [
+        :id,
+        :position,
+        :raw_label,
+        :category,
+        :amount_cents,
         :_destroy
       ]
     )

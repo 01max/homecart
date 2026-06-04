@@ -90,6 +90,8 @@
   </div>
 
   <%= render "receipt_lines_fields", form: form, receipt: receipt %>
+  <%= render "receipt_promotions_fields", form: form, receipt: receipt %>
+  <%= render "receipt_payments_fields", form: form, receipt: receipt %>
 
   <div class="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
     <p class="min-h-5 text-sm font-medium text-emerald-800" aria-live="polite">

@@ -20,6 +20,8 @@ class Receipt < ApplicationRecord
   has_many :receipt_payments, inverse_of: :receipt, dependent: :destroy
 
   accepts_nested_attributes_for :receipt_lines, allow_destroy: true, reject_if: :blank_receipt_line_attributes?
+  accepts_nested_attributes_for :receipt_promotions, allow_destroy: true, reject_if: :blank_receipt_promotion_attributes?
+  accepts_nested_attributes_for :receipt_payments, allow_destroy: true, reject_if: :blank_receipt_payment_attributes?
 
   validates :parser_format, :parser_status, presence: true
   validates :total_cents, numericality: { only_integer: true }, allow_nil: true
@@ -40,6 +42,26 @@ class Receipt < ApplicationRecord
       "kind",
       "tr_eligible",
       "label_truncated"
+    ).values.all?(&:blank?)
+  end
+
+  def blank_receipt_promotion_attributes?(attributes)
+    attributes.except(
+      "id",
+      "_destroy",
+      "unit",
+      "kind",
+      "linking_method",
+      "linked_line_id"
+    ).values.all?(&:blank?)
+  end
+
+  def blank_receipt_payment_attributes?(attributes)
+    attributes.except(
+      "id",
+      "_destroy",
+      "position",
+      "category"
     ).values.all?(&:blank?)
   end
 
