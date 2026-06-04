@@ -70,6 +70,8 @@ en:
         parser_format: "Parser format"
         submit: "Save receipt"
         saving: "Saving..."
+        mark_reviewed: "Mark reviewed"
+        marking_reviewed: "Marking reviewed..."
         errors:
           heading: "Receipt could not be saved."
       lines:
@@ -132,3 +134,7 @@ en:
           fail_detail: "Payments differ by %{discrepancy} cents (%{computed} vs %{declared})."
     update:
       success: "Receipt updated."
+    mark_reviewed:
+      success: "Receipt marked reviewed."
+      errors:
+        validators_failed: "Validators must pass before marking reviewed: %{validators}."

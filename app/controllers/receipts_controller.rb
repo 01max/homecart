@@ -4,11 +4,17 @@
 # the request carries one of the known enum values, then renders receipts newest
 # first by purchase time.
 class ReceiptsController < ApplicationController
+  VALIDATOR_LABEL_KEYS = {
+    "validate_totals_sum" => "receipts.edit.validators.totals_sum.label",
+    "validate_article_count" => "receipts.edit.validators.article_count.label",
+    "validate_payments_sum" => "receipts.edit.validators.payments_sum.label"
+  }.freeze
+
   helper_method :parser_status_label, :receipt_line_kind_label, :receipt_line_option_label,
     :receipt_payment_category_label, :receipt_promotion_kind_label, :receipt_promotion_linking_method_label,
     :receipt_promotion_unit_label, :receipts_stream_name, :store_label, :unit_of_measure_label
 
-  before_action :load_receipt, only: %i[edit update]
+  before_action :load_receipt, only: %i[edit update mark_reviewed]
 
   def index
     @parser_statuses = Receipt.parser_statuses.keys
@@ -23,6 +29,15 @@ class ReceiptsController < ApplicationController
   def update
     if @receipt.update(receipt_params)
       render_successful_update
+    else
+      prepare_review_form
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def mark_reviewed
+    if @receipt.update(reviewed_receipt_params)
+      render_review_result(ReceiptIngestion::FinalizeReviewService.call(receipt: @receipt))
     else
       prepare_review_form
       render :edit, status: :unprocessable_entity
@@ -58,6 +73,35 @@ class ReceiptsController < ApplicationController
     prepare_review_form
     @review_form_notice = t(".success")
     render :edit
+  end
+
+  def render_review_result(result)
+    if result.success?
+      render_successful_review
+    else
+      add_validator_failure_error(result)
+      prepare_review_form
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def render_successful_review
+    unless turbo_frame_request?
+      return redirect_to edit_receipt_path(@receipt), notice: t("receipts.mark_reviewed.success")
+    end
+
+    prepare_review_form
+    @review_form_notice = t("receipts.mark_reviewed.success")
+    render :edit
+  end
+
+  def add_validator_failure_error(result)
+    labels = result.failed_validators.map { |validator| t(VALIDATOR_LABEL_KEYS.fetch(validator)) }
+
+    @receipt.errors.add(
+      :base,
+      t("receipts.mark_reviewed.errors.validators_failed", validators: labels.to_sentence)
+    )
   end
 
   def filtered_receipts
@@ -160,5 +204,26 @@ class ReceiptsController < ApplicationController
         :_destroy
       ]
     )
+  end
+
+  def reviewed_receipt_params
+    receipt_params.tap do |permitted_params|
+      normalize_reviewed_promotion_linking_methods(permitted_params)
+    end
+  end
+
+  def normalize_reviewed_promotion_linking_methods(permitted_params)
+    promotion_attributes = permitted_params[:receipt_promotions_attributes]
+    return unless promotion_attributes
+
+    promotion_attributes.each_value do |attributes|
+      next if ActiveModel::Type::Boolean.new.cast(attributes[:_destroy])
+
+      attributes[:linking_method] = if attributes[:linked_line_id].present?
+        "user_confirmed"
+      else
+        "unallocated"
+      end
+    end
   end
 end

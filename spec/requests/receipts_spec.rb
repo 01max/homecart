@@ -213,7 +213,13 @@ RSpec.describe "Receipts", type: :request do
     }
   end
 
-  def expect_review_page
+  def prepare_valid_review_receipt(receipt)
+    receipt.update!(declared_article_count: 1)
+    create(:receipt_payment, receipt: receipt, position: 1, amount_cents: receipt.total_cents)
+    receipt
+  end
+
+  def expect_review_page(receipt)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("RAW LINE\nTOTAL 12,34")
     expect_review_form_validator_panel
@@ -231,6 +237,8 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include(I18n.t("receipts.edit.payments.heading"))
     expect(response.body).to include(%q(name="receipt[receipt_promotions_attributes]))
     expect(response.body).to include(%q(name="receipt[receipt_payments_attributes]))
+    expect(response.body).to include(I18n.t("receipts.edit.form.mark_reviewed"))
+    expect(response.body).to include(mark_reviewed_receipt_path(receipt))
     expect(response.body).not_to include(%(name="text_extraction[text]"))
   end
 
@@ -298,6 +306,25 @@ RSpec.describe "Receipts", type: :request do
     expect(new_payment).to have_attributes(raw_label: "TR CARD", category: "tickets_restaurant", amount_cents: 534)
   end
 
+  def expect_receipt_to_be_marked_reviewed(receipt, promotion)
+    expect(response).to redirect_to(edit_receipt_path(receipt))
+    expect(flash[:notice]).to eq(I18n.t("receipts.mark_reviewed.success"))
+    expect(receipt.reload).to be_reviewed
+    expect(promotion.reload).to be_linking_method_user_confirmed
+  end
+
+  def expect_mark_reviewed_to_be_rejected(receipt)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include(I18n.t("receipts.edit.validators.article_count.label"))
+    expect(response.body).to include(
+      I18n.t(
+        "receipts.mark_reviewed.errors.validators_failed",
+        validators: I18n.t("receipts.edit.validators.article_count.label")
+      )
+    )
+    expect(receipt.reload).to be_needs_review
+  end
+
   it "lists receipts newest first" do
     older_receipt = create_listed_receipt(parser_status: "parsed", purchased_at: 2.days.ago, total_cents: 1_111)
     newer_receipt = create_listed_receipt(parser_status: "needs_review", purchased_at: 1.day.ago, total_cents: 2_222)
@@ -344,7 +371,7 @@ RSpec.describe "Receipts", type: :request do
 
     get edit_receipt_path(receipt)
 
-    expect_review_page
+    expect_review_page(receipt)
   end
 
   it "updates editable receipt header fields" do
@@ -385,6 +412,25 @@ RSpec.describe "Receipts", type: :request do
     patch receipt_path(receipt), params: review_receipt_promotion_and_payment_params(receipt: receipt)
 
     expect_promotions_and_payments_to_be_updated(receipt)
+  end
+
+  it "marks a receipt reviewed when submitted edits satisfy every validator" do
+    receipt = prepare_valid_review_receipt(create_review_receipt)
+    line = receipt.receipt_lines.sole
+    promotion = create(:receipt_promotion, receipt: receipt, linked_line: line, linking_method: "parser_inferred")
+
+    patch mark_reviewed_receipt_path(receipt), params: { receipt: { total_cents: receipt.total_cents.to_s } }
+
+    expect_receipt_to_be_marked_reviewed(receipt, promotion)
+  end
+
+  it "rejects marking reviewed when a validator fails" do
+    receipt = create_review_receipt
+    create(:receipt_payment, receipt: receipt, position: 1, amount_cents: receipt.total_cents)
+
+    patch mark_reviewed_receipt_path(receipt), params: { receipt: { total_cents: receipt.total_cents.to_s } }
+
+    expect_mark_reviewed_to_be_rejected(receipt)
   end
 
   it "ignores the blank add-row when default controls submit values" do

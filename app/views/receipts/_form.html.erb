@@ -117,8 +117,14 @@
     <p class="min-h-5 text-sm font-medium text-emerald-800" aria-live="polite">
       <%= local_assigns[:notice] %>
     </p>
-    <%= form.submit t("receipts.edit.form.submit"),
-                    data: { turbo_submits_with: t("receipts.edit.form.saving") },
-                    class: "rounded bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" %>
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <%= form.submit t("receipts.edit.form.submit"),
+                      data: { turbo_submits_with: t("receipts.edit.form.saving") },
+                      class: "rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" %>
+      <%= form.submit t("receipts.edit.form.mark_reviewed"),
+                      formaction: mark_reviewed_receipt_path(receipt),
+                      data: { turbo_submits_with: t("receipts.edit.form.marking_reviewed") },
+                      class: "rounded bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" %>
+    </div>
   </div>
 <% end %>
