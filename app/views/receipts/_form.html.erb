@@ -1,0 +1,66 @@
+<section class="rounded border border-slate-200 bg-white p-5 shadow-sm">
+  <h2 class="text-lg font-semibold text-slate-950"><%= t("receipts.edit.form.heading") %></h2>
+
+  <% if receipt.errors.any? %>
+    <div class="mt-4 rounded border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+      <p class="font-medium"><%= t("receipts.edit.form.errors.heading") %></p>
+      <ul class="mt-2 list-disc space-y-1 pl-5">
+        <% receipt.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with model: receipt, class: "mt-5 space-y-5" do |form| %>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="sm:col-span-2">
+        <%= form.label :purchased_at, t("receipts.edit.form.purchased_at"), class: "block text-sm font-medium text-slate-700" %>
+        <%= form.datetime_field :purchased_at,
+                                value: receipt.purchased_at&.strftime("%Y-%m-%dT%H:%M"),
+                                class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+      </div>
+
+      <div>
+        <%= form.label :register_number, t("receipts.edit.form.register_number"), class: "block text-sm font-medium text-slate-700" %>
+        <%= form.text_field :register_number, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+      </div>
+
+      <div>
+        <%= form.label :ticket_number, t("receipts.edit.form.ticket_number"), class: "block text-sm font-medium text-slate-700" %>
+        <%= form.text_field :ticket_number, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+      </div>
+
+      <div>
+        <%= form.label :cashier_code, t("receipts.edit.form.cashier_code"), class: "block text-sm font-medium text-slate-700" %>
+        <%= form.text_field :cashier_code, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+      </div>
+
+      <div>
+        <%= form.label :total_cents, t("receipts.edit.form.total_cents"), class: "block text-sm font-medium text-slate-700" %>
+        <%= form.number_field :total_cents, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+      </div>
+
+      <div>
+        <%= form.label :declared_article_count, t("receipts.edit.form.declared_article_count"), class: "block text-sm font-medium text-slate-700" %>
+        <%= form.number_field :declared_article_count, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+      </div>
+    </div>
+
+    <dl class="grid gap-4 border-t border-slate-200 pt-5 text-sm sm:grid-cols-2">
+      <div>
+        <dt class="font-medium text-slate-500"><%= t("receipts.edit.form.parser_status") %></dt>
+        <dd class="mt-1 text-slate-950"><%= parser_status_label(receipt.parser_status) %></dd>
+      </div>
+      <div>
+        <dt class="font-medium text-slate-500"><%= t("receipts.edit.form.parser_format") %></dt>
+        <dd class="mt-1 font-mono text-slate-950"><%= receipt.parser_format_before_type_cast %></dd>
+      </div>
+    </dl>
+
+    <div class="flex justify-end border-t border-slate-200 pt-5">
+      <%= form.submit t("receipts.edit.form.submit"),
+                      class: "rounded bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" %>
+    </div>
+  <% end %>
+</section>

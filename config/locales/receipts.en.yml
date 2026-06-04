@@ -18,3 +18,29 @@ en:
         parser_status: "Status"
         total: "Total"
         parser_format: "Parser format"
+        actions: "Actions"
+      review: "Review"
+    edit:
+      eyebrow: "Receipt review"
+      title: "Review receipt"
+      back_to_index: "Back to receipts"
+      extraction:
+        heading: "Extracted text"
+        engine: "Engine: %{engine}"
+        success: "Succeeded"
+        failure: "Failed"
+      form:
+        heading: "Receipt"
+        purchased_at: "Purchased at"
+        register_number: "Register number"
+        ticket_number: "Ticket number"
+        cashier_code: "Cashier code"
+        total_cents: "Total cents"
+        declared_article_count: "Declared article count"
+        parser_status: "Parser status"
+        parser_format: "Parser format"
+        submit: "Save receipt"
+        errors:
+          heading: "Receipt could not be saved."
+    update:
+      success: "Receipt updated."

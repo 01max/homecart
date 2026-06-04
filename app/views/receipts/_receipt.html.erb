@@ -19,4 +19,9 @@
     <%= receipt.total_cents ? number_to_currency(receipt.total_cents / 100.0, unit: "€", separator: ",", delimiter: " ", format: "%n %u") : t("receipts.index.empty_value") %>
   </td>
   <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-700"><%= receipt.parser_format_before_type_cast %></td>
+  <td class="whitespace-nowrap px-4 py-3">
+    <%= link_to t("receipts.index.review"),
+                edit_receipt_path(receipt),
+                class: "text-sm font-medium text-slate-700 underline underline-offset-4 hover:text-slate-950" %>
+  </td>
 </tr>

@@ -23,6 +23,59 @@ RSpec.describe "Receipts", type: :request do
     create_listed_receipt(parser_status: "reviewed", purchased_at: Time.current, total_cents: 3_333)
   end
 
+  def create_review_receipt
+    source_document = create(:source_document, store: store)
+    text_extraction = create(:text_extraction, source_document: source_document, text: "RAW LINE\nTOTAL 12,34")
+    create(
+      :receipt,
+      store: store,
+      source_document: source_document,
+      text_extraction: text_extraction,
+      purchased_at: Time.zone.local(2026, 6, 1, 9, 15),
+      register_number: "101",
+      ticket_number: "12345",
+      cashier_code: "C12",
+      total_cents: 1_234,
+      declared_article_count: 2,
+      parser_status: "needs_review"
+    )
+  end
+
+  def review_receipt_params
+    {
+      receipt: {
+        purchased_at: "2026-06-02T10:30",
+        register_number: "202",
+        ticket_number: "54321",
+        cashier_code: "D34",
+        total_cents: "2345",
+        declared_article_count: "4"
+      }
+    }
+  end
+
+  def expect_review_page
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("RAW LINE\nTOTAL 12,34")
+    expect(response.body).to include(I18n.t("receipts.edit.form.heading"))
+    expect(response.body).to include(I18n.t("receipts.edit.form.total_cents"))
+    expect(response.body).to include(%(name="receipt[total_cents]"))
+    expect(response.body).not_to include(%(name="text_extraction[text]"))
+  end
+
+  def expect_receipt_to_be_updated(receipt)
+    expect(response).to redirect_to(edit_receipt_path(receipt))
+    expect(flash[:notice]).to eq(I18n.t("receipts.update.success"))
+    expect(receipt.reload).to have_attributes(
+      purchased_at: Time.zone.local(2026, 6, 2, 10, 30),
+      register_number: "202",
+      ticket_number: "54321",
+      cashier_code: "D34",
+      total_cents: 2_345,
+      declared_article_count: 4
+    )
+  end
+
   it "lists receipts newest first" do
     older_receipt = create_listed_receipt(parser_status: "parsed", purchased_at: 2.days.ago, total_cents: 1_111)
     newer_receipt = create_listed_receipt(parser_status: "needs_review", purchased_at: 1.day.ago, total_cents: 2_222)
@@ -62,6 +115,22 @@ RSpec.describe "Receipts", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(I18n.t("receipts.index.empty"))
+  end
+
+  it "renders the side-by-side review page with extracted text and receipt form" do
+    receipt = create_review_receipt
+
+    get edit_receipt_path(receipt)
+
+    expect_review_page
+  end
+
+  it "updates editable receipt header fields" do
+    receipt = create_review_receipt
+
+    patch receipt_path(receipt), params: review_receipt_params
+
+    expect_receipt_to_be_updated(receipt)
   end
 
   def formatted_total(receipt)

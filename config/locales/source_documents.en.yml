@@ -58,4 +58,5 @@ en:
         heading: "Receipt"
         present: "A parsed receipt is associated with this source document."
         link: "View receipt"
+        review_link: "Review receipt"
         empty: "No receipt has been parsed from this source document yet."
