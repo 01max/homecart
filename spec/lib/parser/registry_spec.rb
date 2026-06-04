@@ -2,7 +2,9 @@ require "rails_helper"
 
 RSpec.describe Parser::Registry do
   def stub_parser(name)
-    stub_const(name, Class.new)
+    Class.new.tap do |parser_class|
+      allow(parser_class).to receive(:name).and_return(name)
+    end
   end
 
   it "registers and looks up a parser by dotted format" do
@@ -41,8 +43,14 @@ RSpec.describe Parser::Registry do
 
   it "raises a clear error for unregistered parser formats" do
     with_empty_registry do
-      expect { described_class.for("leclerc.paper.v1") }
-        .to raise_error(described_class::UnknownFormatError, "no parser registered for leclerc.paper.v1")
+      expect { described_class.for("unknown.paper.v1") }
+        .to raise_error(described_class::UnknownFormatError, "no parser registered for unknown.paper.v1")
+    end
+  end
+
+  it "loads the expected parser constant before reporting an unregistered format" do
+    with_empty_registry do
+      expect(described_class.for("auchan.paper.v1")).to eq(Parser::Auchan::Paper::V1)
     end
   end
 
