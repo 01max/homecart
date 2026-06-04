@@ -54,8 +54,13 @@ RSpec.describe "Source documents", type: :request do
   end
 
   def create_unknown_parser_hint_store
-    create_store(
-      retail_brand: create_retail_brand(slug: "retailer-a").tap { |brand| brand.update!(name: "Retailer A") },
+    brand = RetailBrand.find_or_create_by!(slug: "retailer-a") do |retail_brand|
+      retail_brand.name = "Retailer A"
+      retail_brand.aliases = []
+    end
+
+    Store.find_or_create_by!(
+      retail_brand: brand,
       location_name: "Location 01",
       channel: "physical"
     )
