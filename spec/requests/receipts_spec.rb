@@ -139,6 +139,10 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include(I18n.t("receipts.edit.lines.heading"))
     expect(response.body).to include(%(name="receipt[total_cents]"))
     expect(response.body).to include(%q(name="receipt[receipt_lines_attributes]))
+    expect(response.body).to include("lg:grid-cols-2")
+    expect(response.body).to include("min-w-[72rem]")
+    expect(response.body).to include("overflow-x-auto")
+    expect(response.body).to include(I18n.t("receipts.edit.lines.tr_eligible"))
     expect(response.body).not_to include(%(name="text_extraction[text]"))
   end
 

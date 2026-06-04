@@ -65,7 +65,7 @@ en:
         unit_price_cents: "Unit cents"
         total_cents: "Total cents"
         kind: "Kind"
-        tr_eligible: "TR"
+        tr_eligible: "TResto"
         section_label: "Section"
         remove: "Remove"
         new_line: "New"
