@@ -2,15 +2,15 @@ require "rails_helper"
 
 RSpec.describe ReceiptIngestion::DetectDuplicateService do
   def build_candidate_receipt(
-    store: create_store,
+    store: create(:store),
     purchased_at: Time.zone.local(2026, 6, 1, 12, 30, 0),
     register_number: "101",
     ticket_number: "12345",
     total_cents: 500,
     parser_warnings: []
   )
-    source_document = create_source_document(store: store)
-    text_extraction = create_text_extraction(source_document: source_document)
+    source_document = create(:source_document, store: store)
+    text_extraction = create(:text_extraction, source_document: source_document)
 
     Receipt.new(
       store: store,
@@ -28,7 +28,7 @@ RSpec.describe ReceiptIngestion::DetectDuplicateService do
   end
 
   def create_existing_receipt(store:, purchased_at:, total_cents: 500)
-    create_receipt(
+    create(:receipt,
       store: store,
       purchased_at: purchased_at,
       total_cents: total_cents,
@@ -43,7 +43,7 @@ RSpec.describe ReceiptIngestion::DetectDuplicateService do
   end
 
   def build_exact_duplicate_pair
-    store = create_store
+    store = create(:store)
     purchased_at = Time.zone.local(2026, 6, 1, 12, 30, 0)
 
     [
@@ -53,7 +53,7 @@ RSpec.describe ReceiptIngestion::DetectDuplicateService do
   end
 
   def build_suspected_duplicate_pair
-    store = create_store
+    store = create(:store)
 
     [
       create_existing_receipt(store: store, purchased_at: Time.zone.local(2026, 6, 1, 9, 15, 0)),
@@ -112,7 +112,7 @@ RSpec.describe ReceiptIngestion::DetectDuplicateService do
   end
 
   it "preserves other parser warnings while replacing a stale suspected-duplicate warning" do
-    store = create_store
+    store = create(:store)
     existing_receipt = create_existing_receipt(store: store, purchased_at: Time.zone.local(2026, 6, 1, 9, 15, 0))
     candidate = build_candidate_with_stale_suspected_duplicate(store)
 
@@ -125,7 +125,7 @@ RSpec.describe ReceiptIngestion::DetectDuplicateService do
   end
 
   it "does not flag receipts that only match on a different date" do
-    store = create_store
+    store = create(:store)
     create_existing_receipt(store: store, purchased_at: Time.zone.local(2026, 6, 1, 9, 15, 0))
     candidate = build_candidate_receipt(store: store, purchased_at: Time.zone.local(2026, 6, 2, 9, 15, 0), total_cents: 500)
 

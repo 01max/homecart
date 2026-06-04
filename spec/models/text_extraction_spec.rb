@@ -1,15 +1,15 @@
 require "rails_helper"
 
 RSpec.describe TextExtraction do
-  let(:source_document) { create_source_document(content_hash: "a" * 64) }
-  let(:text_extraction) { create_text_extraction(source_document: source_document) }
+  let(:source_document) { create(:source_document, content_hash: "a" * 64) }
+  let(:text_extraction) { create(:text_extraction, source_document: source_document) }
 
   it "belongs to a source document" do
     expect(source_document.text_extractions).to contain_exactly(text_extraction)
   end
 
   it "can own one parsed receipt" do
-    receipt = create_receipt(source_document: source_document, text_extraction: text_extraction)
+    receipt = create(:receipt, source_document: source_document, text_extraction: text_extraction)
 
     expect(text_extraction.receipt).to eq(receipt)
   end
@@ -41,10 +41,12 @@ RSpec.describe TextExtraction do
   end
 
   it "rejects evidence changes through Active Record" do
+    original_text = text_extraction.text
+
     expect { text_extraction.update!(text: "corrected text") }
       .to raise_error(ActiveRecord::RecordInvalid, /Text is immutable/)
 
-    expect(text_extraction.reload.text).to eq("raw receipt text")
+    expect(text_extraction.reload.text).to eq(original_text)
   end
 
   it "rejects evidence changes through direct SQL" do

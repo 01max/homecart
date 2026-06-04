@@ -50,6 +50,7 @@ module Parser
       # @raise [UnknownFormatError] when no parser has registered the format
       def for(format)
         format = normalize_format(format)
+        load_parser_constant(format)
 
         registry.fetch(format) do
           raise UnknownFormatError, "no parser registered for #{format}"
@@ -65,6 +66,15 @@ module Parser
 
       def registry
         @registry ||= {}
+      end
+
+      def load_parser_constant(format)
+        return if registry.key?(format)
+
+        klass = expected_parser_name(format).constantize
+        register(format, klass) unless registry.key?(format)
+      rescue NameError
+        nil
       end
 
       def normalize_format(format)

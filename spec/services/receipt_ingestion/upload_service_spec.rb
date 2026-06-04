@@ -3,8 +3,9 @@ require "digest"
 require "tempfile"
 
 RSpec.describe ReceiptIngestion::UploadService do
-  let(:store) { create_store }
+  let(:store) { create(:store) }
   let(:job_class) { class_spy(Receipt::ProcessSourceDocumentJob) }
+  let(:broadcaster) { class_spy(ReceiptIngestion::BroadcastProcessingStatusService) }
 
   after do
     uploaded_files.each do |file|
@@ -35,28 +36,48 @@ RSpec.describe ReceiptIngestion::UploadService do
     expect(source_document.original_file).to be_attached
   end
 
+  def call_service(file)
+    described_class.call(
+      file: file,
+      store: store,
+      parser_format: "leclerc.paper.v1",
+      job_class: job_class,
+      broadcaster: broadcaster
+    )
+  end
+
+  def expect_queued_broadcast(source_document)
+    expect(broadcaster).to have_received(:call).with(
+      source_document: source_document,
+      extraction_state: "queued",
+      parsing_state: "waiting"
+    )
+  end
+
   it "creates a source document, stores the original file, and enqueues source document processing" do
     content = "new receipt"
     file = uploaded_file(content: content)
 
-    result = described_class.call(file: file, store: store, parser_format: "leclerc.paper.v1", job_class: job_class)
+    result = call_service(file)
     source_document = result.source_document
 
     expect(result.duplicate).to be(false)
     expect_uploaded_source_document(source_document, content: content)
     expect(job_class).to have_received(:perform_later).with(source_document)
+    expect_queued_broadcast(source_document)
   end
 
   it "returns an existing source document for duplicate content without enqueueing processing" do
-    existing_source_document = create_source_document(content_hash: Digest::SHA256.hexdigest("same receipt"))
+    existing_source_document = create(:source_document, content_hash: Digest::SHA256.hexdigest("same receipt"))
     file = uploaded_file(content: "same receipt")
 
-    result = described_class.call(file: file, store: store, parser_format: "leclerc.paper.v1", job_class: job_class)
+    result = call_service(file)
 
     expect(result.source_document).to eq(existing_source_document)
     expect(result.duplicate).to be(true)
     expect(SourceDocument.count).to eq(1)
     expect(job_class).not_to have_received(:perform_later)
+    expect(broadcaster).not_to have_received(:call)
   end
 
   it "rejects unsupported MIME types before creating a source document" do

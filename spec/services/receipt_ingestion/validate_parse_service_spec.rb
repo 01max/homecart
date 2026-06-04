@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe ReceiptIngestion::ValidateParseService do
   def build_receipt(total_cents: 500, declared_article_count: 2, parser_warnings: [])
-    create_receipt(
+    create(:receipt,
       total_cents: total_cents,
       declared_article_count: declared_article_count,
       parser_status: "needs_review",
@@ -11,7 +11,7 @@ RSpec.describe ReceiptIngestion::ValidateParseService do
   end
 
   def add_line(receipt, position:, total_cents:, quantity: 1, unit_of_measure: "piece", kind: "item")
-    create_receipt_line(
+    create(:receipt_line,
       receipt: receipt,
       position: position,
       total_cents: total_cents,
@@ -22,7 +22,7 @@ RSpec.describe ReceiptIngestion::ValidateParseService do
   end
 
   def add_payment(receipt, amount_cents:)
-    create_receipt_payment(receipt: receipt, amount_cents: amount_cents)
+    create(:receipt_payment, receipt: receipt, amount_cents: amount_cents)
   end
 
   def valid_receipt

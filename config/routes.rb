@@ -1,7 +1,8 @@
 Rails.application.routes.draw do
   root "home#index"
 
-  get "receipts", to: "home#index", as: :receipts
+  resources :source_documents, only: %i[new create show]
+  resources :receipts, only: :index
 
   post "hotwire/ping", to: "home#ping", as: :hotwire_ping
 

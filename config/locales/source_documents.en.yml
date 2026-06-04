@@ -1,0 +1,61 @@
+en:
+  source_documents:
+    form:
+      store_option: "%{brand} — %{location} (%{channel})"
+    new:
+      eyebrow: "Receipts"
+      title: "Upload receipt"
+      file_label: "Receipt file"
+      store_label: "Store"
+      store_prompt: "Choose a store"
+      parser_format_label: "Parser format"
+      parser_format_prompt: "Choose a parser format"
+      submit: "Upload receipt"
+    create:
+      success: "Receipt upload started."
+      duplicate: "This receipt file was already uploaded."
+      errors:
+        missing_file: "Choose a receipt file."
+        missing_store: "Choose a store."
+        missing_parser_format: "Choose a parser format."
+    show:
+      eyebrow: "Receipt source"
+      title: "Source document"
+      processing:
+        heading: "Processing"
+        extraction: "Text extraction"
+        parsing: "Parsing"
+        states:
+          queued: "Queued"
+          running: "Running"
+          complete: "Complete"
+          failed: "Failed"
+          blocked: "Blocked"
+          waiting: "Waiting"
+      preview:
+        heading: "Original file"
+        image_alt: "Uploaded receipt image"
+        pdf_title: "Uploaded receipt PDF"
+        open_original: "Open original file"
+        unavailable: "Preview is not available for this file type."
+        missing_file: "No original file is attached."
+      latest_extraction:
+        heading: "Latest text extraction"
+        engine: "Engine"
+        ran_at: "Ran at"
+        status: "Status"
+        success: "Succeeded"
+        failure: "Failed"
+        empty: "No text extraction has run yet."
+      details:
+        heading: "Details"
+        store: "Store"
+        parser_format: "Parser format"
+        mime_type: "MIME type"
+        ingested_at: "Ingested"
+        content_hash: "Content hash"
+      receipt:
+        heading: "Receipt"
+        present: "A parsed receipt is associated with this source document."
+        link: "View receipt"
+        empty: "No receipt has been parsed from this source document yet."

@@ -1,0 +1,22 @@
+<% content_for :title, t(".title") %>
+<%= turbo_stream_from receipts_stream_name(@selected_parser_status) %>
+
+<section>
+  <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-sm font-medium text-slate-500"><%= t(".eyebrow") %></p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950"><%= t(".title") %></h1>
+    </div>
+
+    <%= form_with url: receipts_path, method: :get, local: true, class: "flex flex-col gap-2 sm:min-w-64" do |form| %>
+      <%= form.label :parser_status, t(".parser_status_filter"), class: "text-sm font-medium text-slate-700" %>
+      <%= form.select :parser_status,
+                      @parser_statuses.map { |status| [ parser_status_label(status), status ] },
+                      { include_blank: t(".all_statuses"), selected: @selected_parser_status },
+                      class: "rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900",
+                      onchange: "this.form.requestSubmit()" %>
+    <% end %>
+  </div>
+
+  <%= render "receipts/list", receipts: @receipts, selected_parser_status: @selected_parser_status %>
+</section>

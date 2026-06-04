@@ -54,12 +54,12 @@ RSpec.describe ReceiptIngestion::ParseService do
     end
   end
 
-  def parse_context(parser_result: build_parser_result, text_extraction: create_text_extraction, parser_format: "leclerc.paper.v1")
+  def parse_context(parser_result: build_parser_result, text_extraction: create(:text_extraction), parser_format: "leclerc.paper.v1")
     parser_class = parser_class_for(parser_result)
     parse_context_for_parser_class(parser_class, text_extraction: text_extraction, parser_format: parser_format)
   end
 
-  def parse_context_for_parser_class(parser_class, text_extraction: create_text_extraction, parser_format: "leclerc.paper.v1")
+  def parse_context_for_parser_class(parser_class, text_extraction: create(:text_extraction), parser_format: "leclerc.paper.v1")
     parser_registry = parser_registry_for(parser_class)
     service_arguments = {
       text_extraction: text_extraction,
@@ -182,7 +182,7 @@ RSpec.describe ReceiptIngestion::ParseService do
   end
 
   def create_existing_receipt_for_duplicate(store:, purchased_at:, register_number: nil, ticket_number: nil)
-    create_receipt(
+    create(:receipt,
       store: store,
       purchased_at: purchased_at,
       total_cents: 500,
@@ -193,8 +193,8 @@ RSpec.describe ReceiptIngestion::ParseService do
   end
 
   def text_extraction_for_store(store)
-    source_document = create_source_document(store: store)
-    create_text_extraction(source_document: source_document)
+    source_document = create(:source_document, store: store)
+    create(:text_extraction, source_document: source_document)
   end
 
   def text_extraction_with_existing_exact_duplicate(store:, purchased_at:)
@@ -241,9 +241,9 @@ RSpec.describe ReceiptIngestion::ParseService do
   end
 
   it "copies store and parser format from the source document instead of trusting parser attributes" do
-    source_document = create_source_document(store: create_store, parser_format: "u.paper.v2")
-    text_extraction = create_text_extraction(source_document: source_document)
-    parser_receipt = receipt_attributes.merge(store: create_store, parser_format: "auchan.paper.v1")
+    source_document = create(:source_document, store: create(:store), parser_format: "u.paper.v2")
+    text_extraction = create(:text_extraction, source_document: source_document)
+    parser_receipt = receipt_attributes.merge(store: create(:store), parser_format: "auchan.paper.v1")
 
     context = parse_context(parser_result: build_parser_result(receipt: parser_receipt), text_extraction: text_extraction, parser_format: nil)
 
@@ -273,7 +273,7 @@ RSpec.describe ReceiptIngestion::ParseService do
   end
 
   it "flags suspected duplicate receipts for review after persistence" do
-    store = create_store
+    store = create(:store)
     duplicate = create_existing_receipt_for_duplicate(store: store, purchased_at: Time.zone.local(2026, 6, 1, 9, 15, 0))
     text_extraction = text_extraction_for_store(store)
 
@@ -284,7 +284,7 @@ RSpec.describe ReceiptIngestion::ParseService do
   end
 
   it "rejects an exact composite duplicate before persisting a new receipt graph" do
-    store = create_store
+    store = create(:store)
     text_extraction = text_extraction_with_existing_exact_duplicate(
       store: store,
       purchased_at: Time.zone.local(2026, 6, 1, 12, 30, 0)

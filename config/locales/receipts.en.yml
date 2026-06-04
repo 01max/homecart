@@ -1,0 +1,20 @@
+en:
+  receipts:
+    store_label: "%{brand} — %{location} (%{channel})"
+    parser_statuses:
+      parsed: "Parsed"
+      needs_review: "Needs review"
+      reviewed: "Reviewed"
+    index:
+      eyebrow: "Receipts"
+      title: "Receipts"
+      parser_status_filter: "Parser status"
+      all_statuses: "All statuses"
+      empty: "No receipts found."
+      empty_value: "Not available"
+      table:
+        purchased_at: "Purchased"
+        store: "Store"
+        parser_status: "Status"
+        total: "Total"
+        parser_format: "Parser format"
