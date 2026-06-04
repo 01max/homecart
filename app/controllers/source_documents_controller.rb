@@ -131,6 +131,8 @@ class SourceDocumentsController < ApplicationController
       "leclerc.paper.v2"
     in [ "magasins-u" | "systeme-u" | "u", "physical" ]
       "u.paper.v2"
+    else
+      nil
     end
   end
 

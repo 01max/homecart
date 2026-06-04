@@ -53,8 +53,28 @@ RSpec.describe "Source documents", type: :request do
     )
   end
 
+  def create_unknown_parser_hint_store
+    create_store(
+      retail_brand: create_retail_brand(slug: "retailer-a").tap { |brand| brand.update!(name: "Retailer A") },
+      location_name: "Location 01",
+      channel: "physical"
+    )
+  end
+
   def expect_option_default(label, parser_format)
     expect(option_for(label)["data-default-parser-format"]).to eq(parser_format)
+  end
+
+  def expect_option_without_default(label)
+    expect(option_for(label)["data-default-parser-format"]).to be_nil
+  end
+
+  def expect_known_parser_format_defaults
+    expect_option_default("Auchan — Villeneuve sur Lot (physical)", "auchan.paper.v1")
+    expect_option_default("E.Leclerc — Villeneuve sur Lot (physical)", "leclerc.paper.v2")
+    expect_option_default("E.Leclerc — PARISDIF (drive)", "leclerc.web.v1")
+    expect_option_default("Magasins U — Pujols (physical)", "u.paper.v2")
+    expect_option_default("E.Leclerc — Legacy override (physical)", "leclerc.paper.v1")
   end
 
   def expect_created_source_document(source_document)
@@ -98,15 +118,13 @@ RSpec.describe "Source documents", type: :request do
 
   it "renders default parser format hints for the upload form controller" do
     create_parser_hint_stores
+    create_unknown_parser_hint_store
 
     get new_source_document_path
 
     expect(response).to have_http_status(:ok)
-    expect_option_default("Auchan — Villeneuve sur Lot (physical)", "auchan.paper.v1")
-    expect_option_default("E.Leclerc — Villeneuve sur Lot (physical)", "leclerc.paper.v2")
-    expect_option_default("E.Leclerc — PARISDIF (drive)", "leclerc.web.v1")
-    expect_option_default("Magasins U — Pujols (physical)", "u.paper.v2")
-    expect_option_default("E.Leclerc — Legacy override (physical)", "leclerc.paper.v1")
+    expect_known_parser_format_defaults
+    expect_option_without_default("Retailer A — Location 01 (physical)")
   end
 
   it "creates a source document, attaches the upload, and enqueues processing" do
