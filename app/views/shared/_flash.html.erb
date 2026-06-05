@@ -2,14 +2,14 @@
   <% flash_classes =
        case level.to_s
        when "notice"
-         "border-emerald-200 bg-emerald-50 text-emerald-900"
+         "hc-flash--notice"
        when "alert"
-         "border-rose-200 bg-rose-50 text-rose-900"
+         "hc-flash--alert"
        else
-         "border-slate-200 bg-white text-slate-800"
+         ""
        end %>
 
-  <div class="<%= flash_classes %> mb-4 rounded border px-4 py-2 text-sm">
+  <div class="hc-flash <%= flash_classes %> text-sm">
     <%= message %>
   </div>
 <% end %>

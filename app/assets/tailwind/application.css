@@ -102,6 +102,28 @@
     background: color-mix(in srgb, var(--hc-surface-container-lowest) 94%, transparent);
   }
 
+  .hc-brand {
+    color: var(--hc-on-surface);
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.75rem;
+  }
+
+  .hc-brand:hover {
+    color: var(--hc-primary);
+  }
+
+  .hc-nav-link {
+    color: var(--hc-on-surface-variant);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+  }
+
+  .hc-nav-link:hover {
+    color: var(--hc-on-surface);
+  }
+
   .hc-container {
     margin-inline: auto;
     max-width: var(--hc-container-max);

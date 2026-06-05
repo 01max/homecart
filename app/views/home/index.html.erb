@@ -1,23 +1,25 @@
 <%= turbo_stream_from "hotwire_smoke" %>
 
 <section class="w-full max-w-3xl">
-  <p class="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500"><%= t(".eyebrow") %></p>
-  <h1 class="text-3xl font-semibold text-slate-950"><%= t(".title") %></h1>
+  <div class="hc-page-header">
+    <p class="hc-eyebrow"><%= t(".eyebrow") %></p>
+    <h1 class="hc-heading-lg mt-2"><%= t(".title") %></h1>
+  </div>
 
   <div class="mt-8 grid gap-4 md:grid-cols-2">
-    <div class="border border-slate-200 bg-white p-5 shadow-sm">
-      <p class="text-sm font-semibold text-slate-900"><%= t(".turbo_stream") %></p>
-      <%= turbo_frame_tag "hotwire_smoke_status", class: "mt-4 block rounded border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700" do %>
+    <div class="hc-card">
+      <p class="text-sm font-semibold"><%= t(".turbo_stream") %></p>
+      <%= turbo_frame_tag "hotwire_smoke_status", class: "hc-surface-muted mt-4 block p-4 text-sm" do %>
         <%= t(".waiting_for_stream") %>
       <% end %>
       <%= button_to t(".ping_stream"),
                     hotwire_ping_path,
-                    class: "mt-4 inline-flex items-center justify-center bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+                    class: "hc-button hc-button--primary mt-4" %>
     </div>
 
-    <div class="border border-slate-200 bg-white p-5 shadow-sm">
-      <p class="text-sm font-semibold text-slate-900"><%= t(".stimulus") %></p>
-      <p class="mt-4 rounded border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"
+    <div class="hc-card">
+      <p class="text-sm font-semibold"><%= t(".stimulus") %></p>
+      <p class="hc-surface-muted mt-4 p-4 text-sm"
          data-controller="hotwire-smoke"
          data-hotwire-smoke-message-value="<%= t(".stimulus_connected") %>">
         <%= t(".waiting_for_stimulus") %>
