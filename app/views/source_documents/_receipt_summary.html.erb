@@ -7,6 +7,9 @@
     <%= link_to t("source_documents.show.receipt.link"),
                 receipts_path(anchor: dom_id(receipt)),
                 class: "mt-4 inline-flex rounded bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" %>
+    <%= link_to t("source_documents.show.receipt.review_link"),
+                edit_receipt_path(receipt),
+                class: "mt-4 inline-flex rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" %>
   <% else %>
     <p class="mt-3 text-slate-600"><%= t("source_documents.show.receipt.empty") %></p>
   <% end %>

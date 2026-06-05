@@ -1,8 +1,13 @@
 Rails.application.routes.draw do
   root "home#index"
 
-  resources :source_documents, only: %i[new create show]
-  resources :receipts, only: :index
+  resources :source_documents, only: %i[new create show] do
+    get :status, on: :member
+  end
+  resources :receipts, only: %i[index edit update] do
+    patch :mark_reviewed, on: :member
+    patch :rerun_parser, on: :member
+  end
 
   post "hotwire/ping", to: "home#ping", as: :hotwire_ping
 

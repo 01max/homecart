@@ -112,6 +112,41 @@ RSpec.describe "Source documents", type: :request do
     expect(response.body).to include(%(href="/receipts#receipt_#{receipt.id}"))
   end
 
+  def create_showable_source_document
+    source_document = create(:source_document, store: store)
+    attach_original_file(source_document)
+    create_extraction(source_document: source_document, text: "older extraction", ran_at: 2.hours.ago)
+    latest_extraction = create_extraction(source_document: source_document, text: "latest extraction", ran_at: 1.hour.ago)
+    receipt = create(:receipt, store: store, source_document: source_document, text_extraction: latest_extraction)
+
+    [ source_document, receipt ]
+  end
+
+  def expect_source_document_evidence_to_be_read_only
+    expect(response.body).not_to include(%(name="source_document[original_file]"))
+    expect(response.body).not_to include(%(name="source_document[content_hash]"))
+    expect(response.body).not_to include(%(name="source_document[mime_type]"))
+    expect(response.body).not_to include(%(name="source_document[ingested_at]"))
+    expect(response.body).not_to include(%(name="text_extraction[engine]"))
+    expect(response.body).not_to include(%(name="text_extraction[text]"))
+    expect(response.body).not_to include(%(name="text_extraction[ran_at]"))
+    expect(response.body).not_to include(%(name="text_extraction[success]"))
+    expect(response.body).not_to include(%(name="text_extraction[error_message]"))
+  end
+
+  def dom_id(record, prefix)
+    ActionView::RecordIdentifier.dom_id(record, prefix)
+  end
+
+  def expect_status_streams_for(source_document)
+    expect(response.body).to include(
+      %(target="#{dom_id(source_document, :processing_status)}"),
+      %(target="#{dom_id(source_document, :latest_text_extraction)}"),
+      %(target="#{dom_id(source_document, :receipt_summary)}"),
+      %(data-processing-complete="false")
+    )
+  end
+
   it "renders a single upload form with store and parser format dropdowns" do
     store
 
@@ -179,16 +214,13 @@ RSpec.describe "Source documents", type: :request do
   end
 
   it "shows the original file preview, latest extraction, and associated receipt link" do
-    source_document = create(:source_document, store: store)
-    attach_original_file(source_document)
-    create_extraction(source_document: source_document, text: "older extraction", ran_at: 2.hours.ago)
-    latest_extraction = create_extraction(source_document: source_document, text: "latest extraction", ran_at: 1.hour.ago)
-    receipt = create(:receipt, store: store, source_document: source_document, text_extraction: latest_extraction)
+    source_document, receipt = create_showable_source_document
 
     get source_document_path(source_document)
 
     expect(response).to have_http_status(:ok)
     expect_source_document_show(receipt)
+    expect_source_document_evidence_to_be_read_only
   end
 
   it "shows empty states before extraction and parsing complete" do
@@ -200,5 +232,15 @@ RSpec.describe "Source documents", type: :request do
     expect(response.body).to include(I18n.t("source_documents.show.preview.missing_file"))
     expect(response.body).to include(I18n.t("source_documents.show.latest_extraction.empty"))
     expect(response.body).to include(I18n.t("source_documents.show.receipt.empty"))
+  end
+
+  it "renders turbo stream status replacements for source document polling" do
+    source_document = create(:source_document, store: store)
+
+    get status_source_document_path(source_document, format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    expect_status_streams_for(source_document)
   end
 end

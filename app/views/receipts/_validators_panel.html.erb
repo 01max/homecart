@@ -1,0 +1,22 @@
+<section class="rounded border border-slate-200 bg-white p-5 shadow-sm">
+  <h3 class="text-base font-semibold text-slate-950"><%= t("receipts.edit.validators.heading") %></h3>
+
+  <div class="mt-4 grid gap-3 md:grid-cols-3">
+    <% %w[totals_sum article_count payments_sum].each do |validator| %>
+      <div class="rounded border border-slate-200 p-4"
+           data-receipt-validators-target="<%= "#{validator.camelize(:lower)}Card" %>">
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-sm font-medium text-slate-700"><%= t("receipts.edit.validators.#{validator}.label") %></p>
+          <span class="rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700"
+                data-receipt-validators-target="<%= "#{validator.camelize(:lower)}Status" %>">
+            <%= t("receipts.edit.validators.pending") %>
+          </span>
+        </div>
+        <p class="mt-2 text-sm text-slate-600"
+           data-receipt-validators-target="<%= "#{validator.camelize(:lower)}Detail" %>">
+          <%= t("receipts.edit.validators.pending_detail") %>
+        </p>
+      </div>
+    <% end %>
+  </div>
+</section>

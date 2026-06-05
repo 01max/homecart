@@ -4,7 +4,17 @@
 # the request carries one of the known enum values, then renders receipts newest
 # first by purchase time.
 class ReceiptsController < ApplicationController
-  helper_method :parser_status_label, :receipts_stream_name, :store_label
+  VALIDATOR_LABEL_KEYS = {
+    "validate_totals_sum" => "receipts.edit.validators.totals_sum.label",
+    "validate_article_count" => "receipts.edit.validators.article_count.label",
+    "validate_payments_sum" => "receipts.edit.validators.payments_sum.label"
+  }.freeze
+
+  helper_method :parser_status_label, :receipt_line_kind_label, :receipt_line_option_label,
+    :receipt_payment_category_label, :receipt_promotion_kind_label, :receipt_promotion_linking_method_label,
+    :receipt_promotion_unit_label, :receipts_stream_name, :store_label, :unit_of_measure_label
+
+  before_action :load_receipt, only: %i[edit update mark_reviewed rerun_parser]
 
   def index
     @parser_statuses = Receipt.parser_statuses.keys
@@ -12,7 +22,119 @@ class ReceiptsController < ApplicationController
     @receipts = filtered_receipts
   end
 
+  def edit
+    prepare_review_form
+  end
+
+  def update
+    if @receipt.update(receipt_params)
+      render_successful_update
+    else
+      prepare_review_form
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def mark_reviewed
+    if @receipt.update(reviewed_receipt_params)
+      render_review_result(ReceiptIngestion::FinalizeReviewService.call(receipt: @receipt))
+    else
+      prepare_review_form
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def rerun_parser
+    parser_format = rerun_parser_params[:parser_format]
+    return render_invalid_parser_format unless SourceDocument::PARSER_FORMATS.values.include?(parser_format)
+
+    ReceiptIngestion::RerunParserService.call(receipt: @receipt, parser_format: parser_format)
+    render_successful_rerun
+  rescue ReceiptIngestion::RerunParserService::MissingSuccessfulTextExtractionError,
+         ReceiptIngestion::DetectDuplicateService::DuplicateReceiptError => e
+    add_rerun_error(e.message)
+    prepare_review_form
+    render :edit, status: :unprocessable_entity
+  end
+
   private
+
+  def load_receipt
+    @receipt = Receipt
+               .includes(:text_extraction, :receipt_lines, :receipt_promotions, :receipt_payments, store: :retail_brand)
+               .find(params[:id])
+  end
+
+  def prepare_review_form
+    @stores = Store.includes(:retail_brand).sort_by { |store| [ store.retail_brand.name, store.location_name, store.channel ] }
+    @receipt.receipt_lines.build(position: next_receipt_line_position) unless @receipt.receipt_lines.any?(&:new_record?)
+    @receipt.receipt_promotions.build unless @receipt.receipt_promotions.any?(&:new_record?)
+    @receipt.receipt_payments.build(position: next_receipt_payment_position) unless @receipt.receipt_payments.any?(&:new_record?)
+  end
+
+  def next_receipt_line_position
+    @receipt.receipt_lines.reject(&:marked_for_destruction?).filter_map(&:position).max.to_i + 1
+  end
+
+  def next_receipt_payment_position
+    @receipt.receipt_payments.reject(&:marked_for_destruction?).filter_map(&:position).max.to_i + 1
+  end
+
+  def render_successful_update
+    return redirect_to edit_receipt_path(@receipt), notice: t(".success") unless turbo_frame_request?
+
+    prepare_review_form
+    @review_form_notice = t(".success")
+    render :edit
+  end
+
+  def render_review_result(result)
+    if result.success?
+      render_successful_review
+    else
+      add_validator_failure_error(result)
+      prepare_review_form
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def render_successful_review
+    unless turbo_frame_request?
+      return redirect_to edit_receipt_path(@receipt), notice: t("receipts.mark_reviewed.success")
+    end
+
+    prepare_review_form
+    @review_form_notice = t("receipts.mark_reviewed.success")
+    render :edit
+  end
+
+  def render_successful_rerun
+    @receipt.reload
+    return redirect_to edit_receipt_path(@receipt), notice: t("receipts.rerun_parser.success") unless turbo_frame_request?
+
+    prepare_review_form
+    @review_form_notice = t("receipts.rerun_parser.success")
+    render :edit
+  end
+
+  def render_invalid_parser_format
+    add_rerun_error(t("receipts.rerun_parser.errors.invalid_parser_format"))
+    prepare_review_form
+    render :edit, status: :unprocessable_entity
+  end
+
+  def add_rerun_error(message)
+    @receipt.errors.add(:base, message)
+  end
+
+  def add_validator_failure_error(result)
+    labels = result.failed_validators.map { |validator| t(VALIDATOR_LABEL_KEYS.fetch(validator)) }
+
+    @receipt.errors.add(
+      :base,
+      t("receipts.mark_reviewed.errors.validators_failed", validators: labels.to_sentence)
+    )
+  end
 
   def filtered_receipts
     receipts = Receipt.includes(store: :retail_brand).recent_first
@@ -30,6 +152,30 @@ class ReceiptsController < ApplicationController
     t("receipts.parser_statuses.#{parser_status}")
   end
 
+  def receipt_line_kind_label(kind)
+    t("receipts.receipt_line_kinds.#{kind}")
+  end
+
+  def receipt_line_option_label(line)
+    t("receipts.edit.promotions.linked_line_option", position: line.position, label: line.label)
+  end
+
+  def receipt_payment_category_label(category)
+    t("receipts.receipt_payment_categories.#{category}")
+  end
+
+  def receipt_promotion_kind_label(kind)
+    t("receipts.receipt_promotion_kinds.#{kind}")
+  end
+
+  def receipt_promotion_linking_method_label(linking_method)
+    t("receipts.receipt_promotion_linking_methods.#{linking_method}")
+  end
+
+  def receipt_promotion_unit_label(unit)
+    t("receipts.receipt_promotion_units.#{unit}")
+  end
+
   def receipts_stream_name(parser_status)
     ReceiptIngestion::BroadcastProcessingStatusService.receipts_stream_name(parser_status)
   end
@@ -41,5 +187,79 @@ class ReceiptsController < ApplicationController
       location: store.location_name,
       channel: store.channel
     )
+  end
+
+  def unit_of_measure_label(unit_of_measure)
+    t("receipts.unit_of_measures.#{unit_of_measure}")
+  end
+
+  def receipt_params
+    params.require(:receipt).permit(
+      :store_id,
+      :purchased_at,
+      :register_number,
+      :ticket_number,
+      :cashier_code,
+      :total_cents,
+      :declared_article_count,
+      receipt_lines_attributes: [
+        :id,
+        :position,
+        :raw_text,
+        :label,
+        :quantity,
+        :unit_of_measure,
+        :unit_price_cents,
+        :total_cents,
+        :kind,
+        :tr_eligible,
+        :section_label,
+        :_destroy
+      ],
+      receipt_promotions_attributes: [
+        :id,
+        :program,
+        :unit,
+        :delta,
+        :label,
+        :linked_line_id,
+        :kind,
+        :linking_method,
+        :_destroy
+      ],
+      receipt_payments_attributes: [
+        :id,
+        :position,
+        :raw_label,
+        :category,
+        :amount_cents,
+        :_destroy
+      ]
+    )
+  end
+
+  def reviewed_receipt_params
+    receipt_params.tap do |permitted_params|
+      normalize_reviewed_promotion_linking_methods(permitted_params)
+    end
+  end
+
+  def rerun_parser_params
+    params.require(:receipt).permit(:parser_format)
+  end
+
+  def normalize_reviewed_promotion_linking_methods(permitted_params)
+    promotion_attributes = permitted_params[:receipt_promotions_attributes]
+    return unless promotion_attributes
+
+    promotion_attributes.each_value do |attributes|
+      next if ActiveModel::Type::Boolean.new.cast(attributes[:_destroy])
+
+      attributes[:linking_method] = if attributes[:linked_line_id].present?
+        "user_confirmed"
+      else
+        "unallocated"
+      end
+    end
   end
 end

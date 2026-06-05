@@ -1,0 +1,82 @@
+<section class="rounded border border-slate-200 bg-white p-5 shadow-sm">
+  <div class="mb-3 flex flex-col gap-1">
+    <h3 class="text-base font-semibold text-slate-950"><%= t("receipts.edit.promotions.heading") %></h3>
+    <p class="text-sm text-slate-600"><%= t("receipts.edit.promotions.add_hint") %></p>
+  </div>
+
+  <div class="overflow-x-auto rounded border border-slate-200">
+    <table class="w-full min-w-[72rem] table-fixed border-collapse text-sm">
+      <thead class="bg-slate-100 text-left text-xs font-semibold uppercase text-slate-600">
+        <tr>
+          <th class="w-36 px-2 py-2"><%= t("receipts.edit.promotions.program") %></th>
+          <th class="w-32 px-2 py-2"><%= t("receipts.edit.promotions.unit") %></th>
+          <th class="w-24 px-2 py-2"><%= t("receipts.edit.promotions.delta") %></th>
+          <th class="w-44 px-2 py-2"><%= t("receipts.edit.promotions.label") %></th>
+          <th class="w-44 px-2 py-2"><%= t("receipts.edit.promotions.linked_line") %></th>
+          <th class="w-36 px-2 py-2"><%= t("receipts.edit.promotions.kind") %></th>
+          <th class="w-36 px-2 py-2"><%= t("receipts.edit.promotions.linking_method") %></th>
+          <th class="w-20 px-2 py-2"><%= t("receipts.edit.promotions.remove") %></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-200 bg-white">
+        <%= form.fields_for :receipt_promotions, receipt.receipt_promotions.sort_by { |promotion| [ promotion.created_at || Time.zone.at(0), promotion.id || "" ] }, include_id: false do |promotion_form| %>
+          <tr class="<%= promotion_form.object.new_record? ? "bg-slate-50" : "" %>">
+            <td class="px-2 py-2 align-top">
+              <%= promotion_form.hidden_field :id if promotion_form.object.persisted? %>
+              <%= promotion_form.label :program, t("receipts.edit.promotions.program"), class: "sr-only" %>
+              <%= promotion_form.text_field :program, class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+            </td>
+            <td class="px-2 py-2 align-top">
+              <%= promotion_form.label :unit, t("receipts.edit.promotions.unit"), class: "sr-only" %>
+              <%= promotion_form.select :unit,
+                                        ReceiptPromotion.units.keys.map { |unit| [ receipt_promotion_unit_label(unit), unit ] },
+                                        {},
+                                        class: "w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm" %>
+            </td>
+            <td class="px-2 py-2 align-top">
+              <%= promotion_form.label :delta, t("receipts.edit.promotions.delta"), class: "sr-only" %>
+              <%= promotion_form.number_field :delta, class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+            </td>
+            <td class="px-2 py-2 align-top">
+              <%= promotion_form.label :label, t("receipts.edit.promotions.label"), class: "sr-only" %>
+              <%= promotion_form.text_field :label, class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+            </td>
+            <td class="px-2 py-2 align-top">
+              <%= promotion_form.label :linked_line_id, t("receipts.edit.promotions.linked_line"), class: "sr-only" %>
+              <%= promotion_form.collection_select :linked_line_id,
+                                                   receipt.receipt_lines.reject(&:new_record?).sort_by(&:position),
+                                                   :id,
+                                                   ->(line) { receipt_line_option_label(line) },
+                                                   { include_blank: t("receipts.edit.promotions.unallocated_link") },
+                                                   class: "w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm" %>
+            </td>
+            <td class="px-2 py-2 align-top">
+              <%= promotion_form.label :kind, t("receipts.edit.promotions.kind"), class: "sr-only" %>
+              <%= promotion_form.select :kind,
+                                        ReceiptPromotion.kinds.keys.map { |kind| [ receipt_promotion_kind_label(kind), kind ] },
+                                        {},
+                                        class: "w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm" %>
+            </td>
+            <td class="px-2 py-2 align-top">
+              <%= promotion_form.label :linking_method, t("receipts.edit.promotions.linking_method"), class: "sr-only" %>
+              <%= promotion_form.select :linking_method,
+                                        ReceiptPromotion.linking_methods.keys.map { |method| [ receipt_promotion_linking_method_label(method), method ] },
+                                        {},
+                                        class: "w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm" %>
+            </td>
+            <td class="px-2 py-2 align-top text-center">
+              <% if promotion_form.object.persisted? %>
+                <%= promotion_form.label :_destroy, class: "inline-flex items-center gap-2 text-xs text-rose-700" do %>
+                  <%= promotion_form.check_box :_destroy, class: "h-4 w-4 rounded border-slate-300 text-rose-700" %>
+                  <span><%= t("receipts.edit.promotions.remove") %></span>
+                <% end %>
+              <% else %>
+                <span class="text-xs text-slate-500"><%= t("receipts.edit.promotions.new_promotion") %></span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
