@@ -15,7 +15,7 @@
                 receipt_validators_payments_fail_detail_template_value: t("receipts.edit.validators.payments_sum.fail_detail")
               } do |form| %>
   <% if receipt.errors.any? %>
-    <div class="rounded border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+    <div class="hc-flash hc-flash--alert text-sm">
       <p class="font-medium"><%= t("receipts.edit.form.errors.heading") %></p>
       <ul class="mt-2 list-disc space-y-1 pl-5">
         <% receipt.errors.full_messages.each do |message| %>
@@ -118,25 +118,25 @@
   <%= render "receipt_payments_fields", form: form, receipt: receipt %>
   <%= render "validators_panel" %>
 
-  <div class="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
-    <p class="min-h-5 text-sm font-medium text-emerald-800" aria-live="polite">
+  <div class="hc-divider-top flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
+    <p class="min-h-5 text-sm font-semibold" aria-live="polite">
       <%= local_assigns[:notice] %>
     </p>
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
       <%= form.submit t("receipts.edit.form.submit"),
                       data: { turbo_submits_with: t("receipts.edit.form.saving") },
-                      class: "rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" %>
+                      class: "hc-button hc-button--secondary" %>
       <%= form.submit t("receipts.edit.form.mark_reviewed"),
                       formaction: mark_reviewed_receipt_path(receipt),
                       data: { turbo_submits_with: t("receipts.edit.form.marking_reviewed") },
-                      class: "rounded bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" %>
+                      class: "hc-button hc-button--primary" %>
       <%= form.submit t("receipts.edit.form.rerun_parser"),
                       formaction: rerun_parser_receipt_path(receipt),
                       data: {
                         turbo_confirm: t("receipts.edit.form.rerun_parser_confirm"),
                         turbo_submits_with: t("receipts.edit.form.rerunning_parser")
                       },
-                      class: "rounded border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100" %>
+                      class: "hc-button hc-button--tertiary" %>
     </div>
   </div>
 <% end %>
