@@ -72,6 +72,9 @@ en:
         saving: "Saving..."
         mark_reviewed: "Mark reviewed"
         marking_reviewed: "Marking reviewed..."
+        rerun_parser: "Re-run parser"
+        rerunning_parser: "Re-running parser..."
+        rerun_parser_confirm: "Re-run the parser and replace the current receipt lines, promotions, and payments?"
         errors:
           heading: "Receipt could not be saved."
       lines:
@@ -138,3 +141,7 @@ en:
       success: "Receipt marked reviewed."
       errors:
         validators_failed: "Validators must pass before marking reviewed: %{validators}."
+    rerun_parser:
+      success: "Receipt re-parsed."
+      errors:
+        invalid_parser_format: "Select a valid parser format before re-running the parser."

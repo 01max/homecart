@@ -102,7 +102,12 @@
         </div>
         <div>
           <dt class="font-medium text-slate-500"><%= t("receipts.edit.form.parser_format") %></dt>
-          <dd class="mt-1 font-mono text-slate-950"><%= receipt.parser_format_before_type_cast %></dd>
+          <dd class="mt-1">
+            <%= form.select :parser_format,
+                            SourceDocument::PARSER_FORMATS.values,
+                            { selected: receipt.parser_format_before_type_cast },
+                            class: "w-full rounded border border-slate-300 bg-white px-2 py-1 font-mono text-sm text-slate-950" %>
+          </dd>
         </div>
       </dl>
     </section>
@@ -125,6 +130,13 @@
                       formaction: mark_reviewed_receipt_path(receipt),
                       data: { turbo_submits_with: t("receipts.edit.form.marking_reviewed") },
                       class: "rounded bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" %>
+      <%= form.submit t("receipts.edit.form.rerun_parser"),
+                      formaction: rerun_parser_receipt_path(receipt),
+                      data: {
+                        turbo_confirm: t("receipts.edit.form.rerun_parser_confirm"),
+                        turbo_submits_with: t("receipts.edit.form.rerunning_parser")
+                      },
+                      class: "rounded border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100" %>
     </div>
   </div>
 <% end %>

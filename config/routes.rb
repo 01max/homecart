@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   end
   resources :receipts, only: %i[index edit update] do
     patch :mark_reviewed, on: :member
+    patch :rerun_parser, on: :member
   end
 
   post "hotwire/ping", to: "home#ping", as: :hotwire_ping

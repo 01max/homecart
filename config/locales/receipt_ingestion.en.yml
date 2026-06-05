@@ -25,6 +25,9 @@ en:
     parse:
       errors:
         missing_promotion_linked_line: "promotion linked_line_position %{position} did not match a persisted line"
+    rerun_parser:
+      errors:
+        missing_successful_text_extraction: "receipt has no successful text extraction to parse"
     parser_warnings:
       parser_exception:
         detail: "Parser failed: %{detail}"

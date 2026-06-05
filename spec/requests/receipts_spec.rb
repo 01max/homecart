@@ -239,6 +239,9 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include(%q(name="receipt[receipt_payments_attributes]))
     expect(response.body).to include(I18n.t("receipts.edit.form.mark_reviewed"))
     expect(response.body).to include(mark_reviewed_receipt_path(receipt))
+    expect(response.body).to include(I18n.t("receipts.edit.form.rerun_parser"))
+    expect(response.body).to include(rerun_parser_receipt_path(receipt))
+    expect(response.body).to include(%(name="receipt[parser_format]"))
     expect(response.body).not_to include(%(name="text_extraction[text]"))
   end
 
@@ -322,6 +325,17 @@ RSpec.describe "Receipts", type: :request do
         validators: I18n.t("receipts.edit.validators.article_count.label")
       )
     )
+    expect(receipt.reload).to be_needs_review
+  end
+
+  def expect_rerun_parser_to_succeed(receipt)
+    expect(response).to redirect_to(edit_receipt_path(receipt))
+    expect(flash[:notice]).to eq(I18n.t("receipts.rerun_parser.success"))
+  end
+
+  def expect_rerun_parser_to_be_rejected(receipt)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include(I18n.t("receipts.rerun_parser.errors.invalid_parser_format"))
     expect(receipt.reload).to be_needs_review
   end
 
@@ -431,6 +445,26 @@ RSpec.describe "Receipts", type: :request do
     patch mark_reviewed_receipt_path(receipt), params: { receipt: { total_cents: receipt.total_cents.to_s } }
 
     expect_mark_reviewed_to_be_rejected(receipt)
+  end
+
+  it "delegates parser re-runs to the rerun parser service" do
+    receipt = create_review_receipt
+    allow(ReceiptIngestion::RerunParserService).to receive(:call)
+
+    patch rerun_parser_receipt_path(receipt), params: { receipt: { parser_format: "u.paper.v2" } }
+
+    expect(ReceiptIngestion::RerunParserService).to have_received(:call).with(receipt: receipt, parser_format: "u.paper.v2")
+    expect_rerun_parser_to_succeed(receipt)
+  end
+
+  it "rejects parser re-runs with an unsupported parser format" do
+    receipt = create_review_receipt
+    allow(ReceiptIngestion::RerunParserService).to receive(:call)
+
+    patch rerun_parser_receipt_path(receipt), params: { receipt: { parser_format: "unknown.format" } }
+
+    expect(ReceiptIngestion::RerunParserService).not_to have_received(:call)
+    expect_rerun_parser_to_be_rejected(receipt)
   end
 
   it "ignores the blank add-row when default controls submit values" do

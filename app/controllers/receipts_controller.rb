@@ -14,7 +14,7 @@ class ReceiptsController < ApplicationController
     :receipt_payment_category_label, :receipt_promotion_kind_label, :receipt_promotion_linking_method_label,
     :receipt_promotion_unit_label, :receipts_stream_name, :store_label, :unit_of_measure_label
 
-  before_action :load_receipt, only: %i[edit update mark_reviewed]
+  before_action :load_receipt, only: %i[edit update mark_reviewed rerun_parser]
 
   def index
     @parser_statuses = Receipt.parser_statuses.keys
@@ -42,6 +42,19 @@ class ReceiptsController < ApplicationController
       prepare_review_form
       render :edit, status: :unprocessable_entity
     end
+  end
+
+  def rerun_parser
+    parser_format = rerun_parser_params[:parser_format]
+    return render_invalid_parser_format unless SourceDocument::PARSER_FORMATS.values.include?(parser_format)
+
+    ReceiptIngestion::RerunParserService.call(receipt: @receipt, parser_format: parser_format)
+    render_successful_rerun
+  rescue ReceiptIngestion::RerunParserService::MissingSuccessfulTextExtractionError,
+         ReceiptIngestion::DetectDuplicateService::DuplicateReceiptError => e
+    add_rerun_error(e.message)
+    prepare_review_form
+    render :edit, status: :unprocessable_entity
   end
 
   private
@@ -93,6 +106,25 @@ class ReceiptsController < ApplicationController
     prepare_review_form
     @review_form_notice = t("receipts.mark_reviewed.success")
     render :edit
+  end
+
+  def render_successful_rerun
+    @receipt.reload
+    return redirect_to edit_receipt_path(@receipt), notice: t("receipts.rerun_parser.success") unless turbo_frame_request?
+
+    prepare_review_form
+    @review_form_notice = t("receipts.rerun_parser.success")
+    render :edit
+  end
+
+  def render_invalid_parser_format
+    add_rerun_error(t("receipts.rerun_parser.errors.invalid_parser_format"))
+    prepare_review_form
+    render :edit, status: :unprocessable_entity
+  end
+
+  def add_rerun_error(message)
+    @receipt.errors.add(:base, message)
   end
 
   def add_validator_failure_error(result)
@@ -210,6 +242,10 @@ class ReceiptsController < ApplicationController
     receipt_params.tap do |permitted_params|
       normalize_reviewed_promotion_linking_methods(permitted_params)
     end
+  end
+
+  def rerun_parser_params
+    params.require(:receipt).permit(:parser_format)
   end
 
   def normalize_reviewed_promotion_linking_methods(permitted_params)
