@@ -14,16 +14,15 @@ Implemented:
 - Development Docker compose stack with Rails, PostgreSQL, and a Solid Queue worker, plus a separate production-shaped compose file for self-hosted runs.
 - Receipt evidence models: `RetailBrand`, `Store`, `SourceDocument`, `TextExtraction`, `Receipt`, `ReceiptLine`, `ReceiptPromotion`, and `ReceiptPayment`.
 - Immutable evidence guards for source documents and extraction records.
-- Upload and extraction services for PDFs and images.
+- Upload, extraction, parsing, duplicate detection, review finalization, parser rerun, and processing-status broadcast services.
 - PDF text extraction through `pdftotext -layout`.
 - Image OCR through `rtesseract`, currently tuned for French receipts.
 - Parser registry and parser implementations for the known receipt corpus.
+- Upload, source-document status, receipt listing, and side-by-side receipt review UI.
+- Parser reruns from the review UI.
 
 Still in progress:
 
-- Persisting parser results from `TextExtraction` into receipts through a parse service/job.
-- Upload, listing, and review UI.
-- Parser reruns and human review workflow.
 - End-to-end ingestion of the historical receipt corpus.
 
 ## Stack
@@ -62,9 +61,9 @@ The canonical format list lives in `lib/parser/registry.rb`. Parser classes live
 
 Parser warnings are structured hashes with `code`, `validator`, `detail`, and `value`.
 
-## Docker
+## Docker Bootstrap
 
-Start the development app stack:
+From a fresh checkout with Docker installed, start the development app stack with one command:
 
 ```sh
 docker compose up
@@ -78,7 +77,7 @@ Open a development console:
 docker compose exec app bundle exec rails console
 ```
 
-Run the full test suite in Docker:
+Run the full RSpec suite in Docker:
 
 ```sh
 docker compose run --rm -e RAILS_ENV=test app bundle exec rspec
@@ -178,11 +177,15 @@ bundle exec rails db:seed
 
 ## Adding a Parser Format
 
-1. Add the dotted format to `Parser::Registry::FORMATS`.
-2. Add a parser class under the matching namespace.
-3. Register the class with `Parser::Registry`.
-4. Add anonymized text fixtures under `spec/fixtures/files/parser/`.
-5. Add parser specs covering receipt fields, lines, promotions, payments, and validator outcomes.
-6. Run focused parser specs, then the broader suite.
+Parser formats are both Ruby registry keys and PostgreSQL enum values. Keep the dotted `brand.channel.version` ID consistent everywhere.
+
+1. Add a migration that adds the new value to the `parser_format` enum.
+2. Add the dotted format to `Parser::Registry::FORMATS`.
+3. Add a parser class under the matching namespace, for example `Parser::Leclerc::Paper::V3` for `leclerc.paper.v3`.
+4. Register the class with `Parser::Registry`.
+5. Add anonymized text fixtures under `spec/fixtures/files/parser/`.
+6. Add parser specs covering receipt fields, lines, promotions, payments, and validator outcomes.
+7. Add or update upload/review coverage if the new format needs new UI hints or defaults.
+8. Run focused parser specs, then `bundle exec rspec` and `bundle exec rubocop`.
 
 Parsers return structured attributes only; persistence belongs in receipt-ingestion services.
