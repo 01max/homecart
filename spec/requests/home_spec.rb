@@ -33,7 +33,7 @@ RSpec.describe "Home", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Hotwire is ready.")
-      expect(response.body).to include("border-emerald-200")
+      expect(response.body).to include("hc-flash--notice")
     end
   end
 end
