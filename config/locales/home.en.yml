@@ -1,7 +1,7 @@
 en:
   home:
     index:
-      eyebrow: "Homecart"
+      eyebrow: "homecart"
       title: "Receipt ingestion starts here."
       turbo_stream: "Turbo Stream"
       waiting_for_stream: "Waiting for the first server-rendered update."
