@@ -186,6 +186,7 @@
     border-radius: var(--hc-radius-lg);
     background: var(--hc-surface-container-lowest);
     box-shadow: var(--hc-shadow-ambient);
+    min-width: 0;
   }
 
   .hc-card {
@@ -388,7 +389,15 @@
     border-radius: var(--hc-radius-lg);
     background: var(--hc-surface-container-lowest);
     box-shadow: var(--hc-shadow-ambient);
+    contain: inline-size;
+    max-width: 100%;
     overflow-x: auto;
+    width: 100%;
+  }
+
+  .hc-review-frame {
+    display: block;
+    min-width: 0;
   }
 
   .hc-table {
