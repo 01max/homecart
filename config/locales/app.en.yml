@@ -2,7 +2,7 @@ en:
   app:
     title: "homecart"
     nav:
-      home: "homecart"
+      home: "homecart 🛒"
       receipts: "Receipts"
       upload_receipt: "Upload receipt"
     pwa:
