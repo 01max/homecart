@@ -1,6 +1,13 @@
 require "rails_helper"
 
 RSpec.describe "Home", type: :request do
+  def expect_global_navigation
+    expect(response.body).to include(%(href="/receipts"))
+    expect(response.body).to include("Receipts")
+    expect(response.body).to include(%(href="/source_documents/new"))
+    expect(response.body).to include("Upload receipt")
+  end
+
   describe "GET /" do
     it "renders the Hotwire smoke page" do
       get root_path
@@ -8,8 +15,7 @@ RSpec.describe "Home", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("turbo-cable-stream-source")
       expect(response.body).to include('data-controller="hotwire-smoke"')
-      expect(response.body).to include(%(href="/receipts"))
-      expect(response.body).to include("Receipts")
+      expect_global_navigation
     end
   end
 

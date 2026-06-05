@@ -27,7 +27,12 @@
     <header class="border-b border-slate-200 bg-white">
       <nav class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <%= link_to t("app.nav.home"), root_path, class: "text-lg font-semibold text-slate-950" %>
-        <%= link_to t("app.nav.receipts"), receipts_path, class: "text-sm font-medium text-slate-600 hover:text-slate-950" %>
+        <div class="flex items-center gap-4">
+          <%= link_to t("app.nav.receipts"), receipts_path, class: "text-sm font-medium text-slate-600 hover:text-slate-950" %>
+          <%= link_to t("app.nav.upload_receipt"),
+                      new_source_document_path,
+                      class: "rounded bg-slate-950 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800" %>
+        </div>
       </nav>
     </header>
 

@@ -4,5 +4,6 @@ en:
     nav:
       home: "Homecart"
       receipts: "Receipts"
+      upload_receipt: "Upload receipt"
     pwa:
       description: "Homecart."
