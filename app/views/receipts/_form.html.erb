@@ -44,69 +44,69 @@
       <% end %>
     </section>
 
-    <section class="min-w-0 rounded border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 class="text-lg font-semibold text-slate-950"><%= t("receipts.edit.form.heading") %></h2>
+    <section class="hc-card min-w-0">
+      <h2 class="hc-heading-md"><%= t("receipts.edit.form.heading") %></h2>
 
       <div class="mt-5 grid gap-4 sm:grid-cols-2">
         <div class="sm:col-span-2">
-          <%= form.label :store_id, t("receipts.edit.form.store"), class: "block text-sm font-medium text-slate-700" %>
+          <%= form.label :store_id, t("receipts.edit.form.store"), class: "hc-label" %>
           <%= form.collection_select :store_id,
                                      @stores,
                                      :id,
                                      ->(store) { store_label(store) },
                                      {},
-                                     class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+                                     class: "hc-select mt-1" %>
         </div>
 
         <div class="sm:col-span-2">
-          <%= form.label :purchased_at, t("receipts.edit.form.purchased_at"), class: "block text-sm font-medium text-slate-700" %>
+          <%= form.label :purchased_at, t("receipts.edit.form.purchased_at"), class: "hc-label" %>
           <%= form.datetime_field :purchased_at,
                                   value: receipt.purchased_at&.strftime("%Y-%m-%dT%H:%M"),
-                                  class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+                                  class: "hc-input mt-1" %>
         </div>
 
         <div>
-          <%= form.label :register_number, t("receipts.edit.form.register_number"), class: "block text-sm font-medium text-slate-700" %>
-          <%= form.text_field :register_number, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+          <%= form.label :register_number, t("receipts.edit.form.register_number"), class: "hc-label" %>
+          <%= form.text_field :register_number, class: "hc-input mt-1" %>
         </div>
 
         <div>
-          <%= form.label :ticket_number, t("receipts.edit.form.ticket_number"), class: "block text-sm font-medium text-slate-700" %>
-          <%= form.text_field :ticket_number, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+          <%= form.label :ticket_number, t("receipts.edit.form.ticket_number"), class: "hc-label" %>
+          <%= form.text_field :ticket_number, class: "hc-input mt-1" %>
         </div>
 
         <div>
-          <%= form.label :cashier_code, t("receipts.edit.form.cashier_code"), class: "block text-sm font-medium text-slate-700" %>
-          <%= form.text_field :cashier_code, class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+          <%= form.label :cashier_code, t("receipts.edit.form.cashier_code"), class: "hc-label" %>
+          <%= form.text_field :cashier_code, class: "hc-input mt-1" %>
         </div>
 
         <div>
-          <%= form.label :total_cents, t("receipts.edit.form.total_cents"), class: "block text-sm font-medium text-slate-700" %>
+          <%= form.label :total_cents, t("receipts.edit.form.total_cents"), class: "hc-label" %>
           <%= form.number_field :total_cents,
                                 data: { receipt_validators_target: "receiptTotal" },
-                                class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+                                class: "hc-input mt-1" %>
         </div>
 
         <div>
-          <%= form.label :declared_article_count, t("receipts.edit.form.declared_article_count"), class: "block text-sm font-medium text-slate-700" %>
+          <%= form.label :declared_article_count, t("receipts.edit.form.declared_article_count"), class: "hc-label" %>
           <%= form.number_field :declared_article_count,
                                 data: { receipt_validators_target: "declaredArticleCount" },
-                                class: "mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" %>
+                                class: "hc-input mt-1" %>
         </div>
       </div>
 
-      <dl class="mt-5 grid gap-4 border-t border-slate-200 pt-5 text-sm sm:grid-cols-2">
+      <dl class="hc-divider-top mt-5 grid gap-4 pt-5 text-sm sm:grid-cols-2">
         <div>
-          <dt class="font-medium text-slate-500"><%= t("receipts.edit.form.parser_status") %></dt>
-          <dd class="mt-1 text-slate-950"><%= parser_status_label(receipt.parser_status) %></dd>
+          <dt class="hc-label"><%= t("receipts.edit.form.parser_status") %></dt>
+          <dd class="mt-1"><%= parser_status_label(receipt.parser_status) %></dd>
         </div>
         <div>
-          <dt class="font-medium text-slate-500"><%= t("receipts.edit.form.parser_format") %></dt>
+          <dt class="hc-label"><%= t("receipts.edit.form.parser_format") %></dt>
           <dd class="mt-1">
             <%= form.select :parser_format,
                             SourceDocument::PARSER_FORMATS.values,
                             { selected: receipt.parser_format_before_type_cast },
-                            class: "w-full rounded border border-slate-300 bg-white px-2 py-1 font-mono text-sm text-slate-950" %>
+                            class: "hc-select hc-code" %>
           </dd>
         </div>
       </dl>

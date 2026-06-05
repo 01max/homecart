@@ -1,58 +1,58 @@
-<section class="rounded border border-slate-200 bg-white p-5 shadow-sm">
+<section class="hc-card">
   <div class="mb-3 flex flex-col gap-1">
-    <h3 class="text-base font-semibold text-slate-950"><%= t("receipts.edit.payments.heading") %></h3>
-    <p class="text-sm text-slate-600"><%= t("receipts.edit.payments.add_hint") %></p>
+    <h3 class="hc-heading-md"><%= t("receipts.edit.payments.heading") %></h3>
+    <p class="hc-body text-sm"><%= t("receipts.edit.payments.add_hint") %></p>
   </div>
 
-  <div class="overflow-x-auto rounded border border-slate-200">
-    <table class="w-full min-w-[48rem] table-fixed border-collapse text-sm">
-      <thead class="bg-slate-100 text-left text-xs font-semibold uppercase text-slate-600">
+  <div class="hc-table-frame">
+    <table class="hc-table hc-table--dense hc-table--fixed min-w-[48rem]">
+      <thead>
         <tr>
-          <th class="w-16 px-2 py-2"><%= t("receipts.edit.payments.position") %></th>
-          <th class="w-56 px-2 py-2"><%= t("receipts.edit.payments.raw_label") %></th>
-          <th class="w-40 px-2 py-2"><%= t("receipts.edit.payments.category") %></th>
-          <th class="w-28 px-2 py-2"><%= t("receipts.edit.payments.amount_cents") %></th>
-          <th class="w-24 px-2 py-2"><%= t("receipts.edit.payments.remove") %></th>
+          <th class="w-16"><%= t("receipts.edit.payments.position") %></th>
+          <th class="w-56"><%= t("receipts.edit.payments.raw_label") %></th>
+          <th class="w-40"><%= t("receipts.edit.payments.category") %></th>
+          <th class="w-28"><%= t("receipts.edit.payments.amount_cents") %></th>
+          <th class="w-24"><%= t("receipts.edit.payments.remove") %></th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-slate-200 bg-white">
+      <tbody>
         <%= form.fields_for :receipt_payments, receipt.receipt_payments.sort_by { |payment| [ payment.position || Float::INFINITY, payment.id || "" ] }, include_id: false do |payment_form| %>
-          <tr class="<%= payment_form.object.new_record? ? "bg-slate-50" : "" %>"
+          <tr class="<%= payment_form.object.new_record? ? "hc-table-row--new" : "" %>"
               data-receipt-validators-target="payment">
-            <td class="px-2 py-2 align-top">
+            <td>
               <%= payment_form.hidden_field :id if payment_form.object.persisted? %>
               <%= payment_form.label :position, t("receipts.edit.payments.position"), class: "sr-only" %>
-              <%= payment_form.number_field :position, class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+              <%= payment_form.number_field :position, class: "hc-input hc-input--compact" %>
             </td>
-            <td class="px-2 py-2 align-top">
+            <td>
               <%= payment_form.label :raw_label, t("receipts.edit.payments.raw_label"), class: "sr-only" %>
               <%= payment_form.text_field :raw_label,
                                           data: { receipt_validators_target: "paymentRawLabel" },
-                                          class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+                                          class: "hc-input hc-input--compact" %>
             </td>
-            <td class="px-2 py-2 align-top">
+            <td>
               <%= payment_form.label :category, t("receipts.edit.payments.category"), class: "sr-only" %>
               <%= payment_form.select :category,
                                       ReceiptPayment.categories.keys.map { |category| [ receipt_payment_category_label(category), category ] },
                                       {},
-                                      class: "w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm" %>
+                                      class: "hc-select hc-select--compact" %>
             </td>
-            <td class="px-2 py-2 align-top">
+            <td>
               <%= payment_form.label :amount_cents, t("receipts.edit.payments.amount_cents"), class: "sr-only" %>
               <%= payment_form.number_field :amount_cents,
                                             data: { receipt_validators_target: "paymentAmount" },
-                                            class: "w-full rounded border border-slate-300 px-2 py-1 text-sm" %>
+                                            class: "hc-input hc-input--compact" %>
             </td>
-            <td class="px-2 py-2 align-top text-center">
+            <td class="text-center">
               <% if payment_form.object.persisted? %>
-                <%= payment_form.label :_destroy, class: "inline-flex items-center gap-2 text-xs text-rose-700" do %>
+                <%= payment_form.label :_destroy, class: "hc-remove-control" do %>
                   <%= payment_form.check_box :_destroy,
                                              data: { receipt_validators_target: "paymentDestroy" },
-                                             class: "h-4 w-4 rounded border-slate-300 text-rose-700" %>
+                                             class: "hc-checkbox" %>
                   <span><%= t("receipts.edit.payments.remove") %></span>
                 <% end %>
               <% else %>
-                <span class="text-xs text-slate-500"><%= t("receipts.edit.payments.new_payment") %></span>
+                <span class="hc-badge hc-badge--neutral"><%= t("receipts.edit.payments.new_payment") %></span>
               <% end %>
             </td>
           </tr>
