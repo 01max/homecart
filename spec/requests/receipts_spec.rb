@@ -242,7 +242,19 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include(I18n.t("receipts.edit.form.rerun_parser"))
     expect(response.body).to include(rerun_parser_receipt_path(receipt))
     expect(response.body).to include(%(name="receipt[parser_format]"))
+    expect_review_evidence_to_be_read_only
+  end
+
+  def expect_review_evidence_to_be_read_only
+    expect(response.body).not_to include(%(name="source_document[original_file]"))
+    expect(response.body).not_to include(%(name="source_document[content_hash]"))
+    expect(response.body).not_to include(%(name="source_document[mime_type]"))
+    expect(response.body).not_to include(%(name="source_document[ingested_at]"))
+    expect(response.body).not_to include(%(name="text_extraction[engine]"))
     expect(response.body).not_to include(%(name="text_extraction[text]"))
+    expect(response.body).not_to include(%(name="text_extraction[ran_at]"))
+    expect(response.body).not_to include(%(name="text_extraction[success]"))
+    expect(response.body).not_to include(%(name="text_extraction[error_message]"))
   end
 
   def expect_review_form_validator_panel
