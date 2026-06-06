@@ -10,6 +10,12 @@ class SourceDocumentsController < ApplicationController
   before_action :load_form_options, only: %i[new create]
   before_action :load_source_document, only: %i[show status]
 
+  def index
+    @source_documents = SourceDocument
+                        .includes(:receipts, :text_extractions, store: :retail_brand)
+                        .order(ingested_at: :desc, id: :desc)
+  end
+
   def new; end
 
   def create

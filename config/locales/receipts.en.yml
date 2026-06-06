@@ -43,6 +43,7 @@ en:
       empty_value: "Not available"
       actions:
         upload_receipt: "Upload receipt"
+        view_source_documents: "View sources"
       filters:
         heading: "Receipt filters"
         description: "Limit the workbench to receipts in a specific parser state."
@@ -64,7 +65,69 @@ en:
         source_document: "Source"
         actions: "Actions"
       source_document: "Source"
+      view: "View"
       review: "Review"
+      delete: "Delete"
+      delete_confirm: "Delete this receipt and its parsed lines, promotions, and payments?"
+    show:
+      eyebrow: "Receipt"
+      title: "Receipt"
+      description: "Browse parsed receipt data for %{store}."
+      empty_value: "Not available"
+      actions:
+        back_to_index: "Back to receipts"
+        source_document: "Source document"
+        review_receipt: "Review receipt"
+        delete_receipt: "Delete receipt"
+        delete_confirm: "Delete this receipt and its parsed lines, promotions, and payments?"
+      details:
+        heading: "Details"
+        description: "Receipt header data captured by parsing and review."
+        purchased_at: "Purchased"
+        store: "Store"
+        status: "Status"
+        total: "Total"
+        register: "Register"
+        ticket: "Ticket"
+        cashier: "Cashier"
+        parser_format: "Parser format"
+      extraction:
+        heading: "Extracted text"
+        description: "OCR output from %{engine}, kept read-only for evidence review."
+      lines:
+        heading: "Receipt lines"
+        description: "Parsed line observations from the receipt."
+        empty: "No receipt lines are attached."
+        count:
+          one: "%{count} line"
+          other: "%{count} lines"
+        table:
+          position: "#"
+          label: "Label"
+          quantity: "Qty"
+          unit: "Unit"
+          unit_price: "Unit"
+          total: "Total"
+          kind: "Kind"
+          section: "Section"
+      promotions:
+        heading: "Promotions"
+        description: "Parsed loyalty, coupon, and points events."
+        empty: "No promotions are attached."
+        table:
+          program: "Program"
+          delta: "Delta"
+          kind: "Kind"
+          link: "Linked line"
+      payments:
+        heading: "Payments"
+        description: "Parsed payment methods and amounts."
+        empty: "No payments are attached."
+        table:
+          position: "#"
+          label: "Raw label"
+          category: "Category"
+          amount: "Amount"
     edit:
       eyebrow: "Receipt review"
       title: "Review receipt"
@@ -161,6 +224,8 @@ en:
           fail_detail: "Payments differ by %{discrepancy} cents (%{computed} vs %{declared})."
     update:
       success: "Receipt updated."
+    destroy:
+      success: "Receipt deleted."
     mark_reviewed:
       success: "Receipt marked reviewed."
       errors:

@@ -1,10 +1,10 @@
 Rails.application.routes.draw do
   root "home#index"
 
-  resources :source_documents, only: %i[new create show] do
+  resources :source_documents, only: %i[index new create show] do
     get :status, on: :member
   end
-  resources :receipts, only: %i[index edit update] do
+  resources :receipts, only: %i[index show edit update destroy] do
     patch :mark_reviewed, on: :member
     patch :rerun_parser, on: :member
   end

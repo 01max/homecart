@@ -9,7 +9,7 @@
     <p class="hc-body mt-3 text-sm"><%= t("source_documents.show.receipt.present") %></p>
     <div class="hc-action-group mt-4">
       <%= link_to t("source_documents.show.receipt.link"),
-                  receipts_path(anchor: dom_id(receipt)),
+                  receipt_path(receipt),
                   class: "hc-button hc-button--primary" %>
       <%= link_to t("source_documents.show.receipt.review_link"),
                   edit_receipt_path(receipt),

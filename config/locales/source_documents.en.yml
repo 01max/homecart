@@ -2,6 +2,36 @@ en:
   source_documents:
     form:
       store_option: "%{brand} — %{location} (%{channel})"
+    index:
+      eyebrow: "Receipt sources"
+      title: "Source documents"
+      description: "Browse immutable uploaded receipt evidence and jump to generated receipts."
+      empty: "No source documents found."
+      actions:
+        upload_receipt: "Upload receipt"
+        view_receipts: "View receipts"
+        view_source: "View source"
+        view_receipt: "View receipt"
+      workbench:
+        heading: "Source workbench"
+        description: "All uploaded source documents ordered by ingestion time."
+        count:
+          one: "%{count} source"
+          other: "%{count} sources"
+      table:
+        ingested_at: "Ingested"
+        store: "Store"
+        parser_format: "Parser format"
+        mime_type: "MIME type"
+        extraction: "Extraction"
+        receipt: "Receipt"
+        actions: "Actions"
+      extraction:
+        success: "Succeeded"
+        failure: "Failed"
+        waiting: "Waiting"
+      receipt:
+        empty: "Waiting"
     new:
       eyebrow: "Receipts"
       title: "Upload receipt"

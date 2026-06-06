@@ -13,10 +13,10 @@ class ReceiptsController < ApplicationController
   helper_method :parser_status_label, :receipt_line_kind_label, :receipt_line_option_label,
     :purchased_at_field_value, :receipt_integer_field_value, :receipt_payment_category_label,
     :receipt_promotion_kind_label, :receipt_promotion_linking_method_label, :receipt_promotion_unit_label,
-    :receipt_quantity_field_step, :receipt_quantity_field_value, :receipts_stream_name, :store_label,
-    :unit_of_measure_label
+    :receipt_quantity_field_step, :receipt_quantity_field_value, :receipt_total_label, :receipts_stream_name,
+    :store_label, :unit_of_measure_label
 
-  before_action :load_receipt, only: %i[edit update mark_reviewed rerun_parser]
+  before_action :load_receipt, only: %i[show edit update destroy mark_reviewed rerun_parser]
 
   def index
     @parser_statuses = Receipt.parser_statuses.keys
@@ -27,6 +27,8 @@ class ReceiptsController < ApplicationController
   def edit
     prepare_review_form
   end
+
+  def show; end
 
   def update
     if @receipt.update(receipt_params)
@@ -57,6 +59,11 @@ class ReceiptsController < ApplicationController
     add_rerun_error(e.message)
     prepare_review_form
     render :edit, status: :unprocessable_entity
+  end
+
+  def destroy
+    @receipt.destroy!
+    redirect_to receipts_path, notice: t(".success")
   end
 
   private
@@ -209,6 +216,12 @@ class ReceiptsController < ApplicationController
 
   def receipt_quantity_field_step(line)
     line.unit_of_measure == "piece" ? "1" : "0.001"
+  end
+
+  def receipt_total_label(total_cents)
+    return t("receipts.index.empty_value") if total_cents.blank?
+
+    helpers.number_to_currency(total_cents / 100.0, unit: "€", separator: ",", delimiter: " ", format: "%n %u")
   end
 
   def receipt_params

@@ -36,9 +36,17 @@
   </td>
   <td>
     <div class="hc-table-cell-actions">
+      <%= link_to t("receipts.index.view"),
+                  receipt_path(receipt),
+                  class: "hc-link text-sm" %>
       <%= link_to t("receipts.index.review"),
                   edit_receipt_path(receipt),
                   class: "hc-link text-sm" %>
+      <%= button_to t("receipts.index.delete"),
+                    receipt_path(receipt),
+                    method: :delete,
+                    form: { class: "inline", data: { turbo_confirm: t("receipts.index.delete_confirm") } },
+                    class: "hc-link text-sm" %>
     </div>
   </td>
 </tr>

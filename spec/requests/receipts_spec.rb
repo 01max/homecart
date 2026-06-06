@@ -31,7 +31,9 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include("hc-filter-block", "hc-table-block", "hc-table--dense")
     expect(response.body).to include(I18n.t("receipts.index.workbench.heading"))
     expect(response.body).to include(%(href="/source_documents/#{receipt.source_document.id}"))
+    expect(response.body).to include(%(href="/receipts/#{receipt.id}"))
     expect(response.body).to include(%(href="/receipts/#{receipt.id}/edit"))
+    expect(response.body).to include(I18n.t("receipts.index.delete"))
   end
 
   def expect_receipt_before(rows, first_receipt, second_receipt)
@@ -395,6 +397,50 @@ RSpec.describe "Receipts", type: :request do
     expect(receipt.reload).to be_needs_review
   end
 
+  def expect_receipt_show(receipt)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(
+      I18n.t("receipts.show.title"),
+      I18n.t("receipts.show.details.heading"),
+      I18n.t("receipts.show.lines.heading"),
+      I18n.t("receipts.show.promotions.heading"),
+      I18n.t("receipts.show.payments.heading"),
+      "RAW LINE\nTOTAL 12,34",
+      "Original label",
+      "12,34 €",
+      "Test promo",
+      "CARD"
+    )
+    expect(response.body).to include(%(href="/source_documents/#{receipt.source_document.id}"))
+    expect(response.body).to include(%(href="/receipts/#{receipt.id}/edit"))
+    expect(response.body).to include(%(action="/receipts/#{receipt.id}"))
+    expect(response.body).not_to include(%(name="receipt[total_cents]"))
+  end
+
+  def create_deletable_receipt
+    create_review_receipt.tap do |receipt|
+      create(:receipt_line, receipt: receipt, position: 2)
+      create(:receipt_promotion, receipt: receipt)
+      create(:receipt_payment, receipt: receipt)
+    end
+  end
+
+  def expect_receipt_destroy_counts(receipt)
+    expect do
+      delete receipt_path(receipt)
+    end.to change(Receipt, :count).by(-1)
+      .and change(ReceiptLine, :count).by(-2)
+      .and change(ReceiptPromotion, :count).by(-1)
+      .and change(ReceiptPayment, :count).by(-1)
+  end
+
+  def expect_source_evidence_to_remain(source_document, text_extraction)
+    expect(response).to redirect_to(receipts_path)
+    expect(flash[:notice]).to eq(I18n.t("receipts.destroy.success"))
+    expect(SourceDocument.exists?(source_document.id)).to be(true)
+    expect(TextExtraction.exists?(text_extraction.id)).to be(true)
+  end
+
   it "lists receipts newest first" do
     older_receipt = create_listed_receipt(parser_status: "parsed", purchased_at: 2.days.ago, total_cents: 1_111)
     newer_receipt = create_listed_receipt(parser_status: "needs_review", purchased_at: 1.day.ago, total_cents: 2_222)
@@ -434,6 +480,17 @@ RSpec.describe "Receipts", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(I18n.t("receipts.index.empty"))
+  end
+
+  it "shows a read-only receipt page" do
+    receipt = create_review_receipt
+    line = receipt.receipt_lines.sole
+    create(:receipt_promotion, receipt: receipt, program: "Test promo", linked_line: line, linking_method: "parser_inferred")
+    create(:receipt_payment, receipt: receipt, position: 1, raw_label: "CARD", amount_cents: receipt.total_cents)
+
+    get receipt_path(receipt)
+
+    expect_receipt_show(receipt)
   end
 
   it "renders the side-by-side review page with extracted text and receipt form" do
@@ -482,6 +539,15 @@ RSpec.describe "Receipts", type: :request do
     patch receipt_path(receipt), params: review_receipt_promotion_and_payment_params(receipt: receipt)
 
     expect_promotions_and_payments_to_be_updated(receipt)
+  end
+
+  it "deletes receipts without deleting source evidence" do
+    receipt = create_deletable_receipt
+    source_document = receipt.source_document
+    text_extraction = receipt.text_extraction
+
+    expect_receipt_destroy_counts(receipt)
+    expect_source_evidence_to_remain(source_document, text_extraction)
   end
 
   it "marks a receipt reviewed when submitted edits satisfy every validator" do

@@ -1,0 +1,204 @@
+<% content_for :title, t(".title") %>
+
+<section class="hc-stack">
+  <div class="hc-page-toolbar">
+    <div>
+      <p class="hc-eyebrow"><%= t(".eyebrow") %></p>
+      <h1 class="hc-heading-lg mt-2"><%= t(".title") %></h1>
+      <p class="hc-body mt-2"><%= t(".description", store: store_label(@receipt.store)) %></p>
+    </div>
+
+    <div class="hc-page-actions">
+      <%= link_to t(".actions.back_to_index"), receipts_path(anchor: dom_id(@receipt)), class: "hc-button hc-button--secondary" %>
+      <%= link_to t(".actions.source_document"), source_document_path(@receipt.source_document), class: "hc-button hc-button--secondary" %>
+      <%= link_to t(".actions.review_receipt"), edit_receipt_path(@receipt), class: "hc-button hc-button--primary" %>
+      <%= button_to t(".actions.delete_receipt"),
+                    receipt_path(@receipt),
+                    method: :delete,
+                    form: { data: { turbo_confirm: t(".actions.delete_confirm") } },
+                    class: "hc-button hc-button--tertiary" %>
+    </div>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
+    <div class="space-y-6">
+      <section class="hc-table-block">
+        <div class="hc-block-header">
+          <div class="hc-block-heading">
+            <h2 class="hc-block-title"><%= t(".lines.heading") %></h2>
+            <p class="hc-block-description"><%= t(".lines.description") %></p>
+          </div>
+          <p class="hc-badge hc-badge--neutral"><%= t(".lines.count", count: @receipt.receipt_lines.size) %></p>
+        </div>
+
+        <% if @receipt.receipt_lines.any? %>
+          <div class="hc-table-frame">
+            <table class="hc-table hc-table--dense min-w-[72rem]">
+              <thead>
+                <tr>
+                  <th><%= t(".lines.table.position") %></th>
+                  <th><%= t(".lines.table.label") %></th>
+                  <th><%= t(".lines.table.quantity") %></th>
+                  <th><%= t(".lines.table.unit") %></th>
+                  <th><%= t(".lines.table.unit_price") %></th>
+                  <th><%= t(".lines.table.total") %></th>
+                  <th><%= t(".lines.table.kind") %></th>
+                  <th><%= t(".lines.table.section") %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @receipt.receipt_lines.sort_by(&:position).each do |line| %>
+                  <tr>
+                    <td class="whitespace-nowrap"><%= line.position %></td>
+                    <td><%= line.label %></td>
+                    <td class="whitespace-nowrap"><%= receipt_quantity_field_value(line) %></td>
+                    <td class="whitespace-nowrap"><%= unit_of_measure_label(line.unit_of_measure) %></td>
+                    <td class="whitespace-nowrap"><%= receipt_total_label(line.unit_price_cents) %></td>
+                    <td class="whitespace-nowrap"><%= receipt_total_label(line.total_cents) %></td>
+                    <td class="whitespace-nowrap"><%= receipt_line_kind_label(line.kind) %></td>
+                    <td><%= line.section_label.presence || t(".empty_value") %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="hc-block-body">
+            <p class="hc-body text-sm"><%= t(".lines.empty") %></p>
+          </div>
+        <% end %>
+      </section>
+
+      <div class="grid gap-6 xl:grid-cols-2">
+        <section class="hc-table-block">
+          <div class="hc-block-header">
+            <div class="hc-block-heading">
+              <h2 class="hc-block-title"><%= t(".promotions.heading") %></h2>
+              <p class="hc-block-description"><%= t(".promotions.description") %></p>
+            </div>
+          </div>
+
+          <% if @receipt.receipt_promotions.any? %>
+            <div class="hc-table-frame">
+              <table class="hc-table hc-table--dense min-w-[44rem]">
+                <thead>
+                  <tr>
+                    <th><%= t(".promotions.table.program") %></th>
+                    <th><%= t(".promotions.table.delta") %></th>
+                    <th><%= t(".promotions.table.kind") %></th>
+                    <th><%= t(".promotions.table.link") %></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @receipt.receipt_promotions.each do |promotion| %>
+                    <tr>
+                      <td><%= promotion.program %></td>
+                      <td class="whitespace-nowrap"><%= promotion.euro_cents? ? receipt_total_label(promotion.delta) : promotion.delta %></td>
+                      <td class="whitespace-nowrap"><%= receipt_promotion_kind_label(promotion.kind) %></td>
+                      <td><%= promotion.linked_line ? receipt_line_option_label(promotion.linked_line) : t(".empty_value") %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="hc-block-body">
+              <p class="hc-body text-sm"><%= t(".promotions.empty") %></p>
+            </div>
+          <% end %>
+        </section>
+
+        <section class="hc-table-block">
+          <div class="hc-block-header">
+            <div class="hc-block-heading">
+              <h2 class="hc-block-title"><%= t(".payments.heading") %></h2>
+              <p class="hc-block-description"><%= t(".payments.description") %></p>
+            </div>
+          </div>
+
+          <% if @receipt.receipt_payments.any? %>
+            <div class="hc-table-frame">
+              <table class="hc-table hc-table--dense min-w-[36rem]">
+                <thead>
+                  <tr>
+                    <th><%= t(".payments.table.position") %></th>
+                    <th><%= t(".payments.table.label") %></th>
+                    <th><%= t(".payments.table.category") %></th>
+                    <th><%= t(".payments.table.amount") %></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @receipt.receipt_payments.sort_by(&:position).each do |payment| %>
+                    <tr>
+                      <td class="whitespace-nowrap"><%= payment.position %></td>
+                      <td><%= payment.raw_label %></td>
+                      <td class="whitespace-nowrap"><%= receipt_payment_category_label(payment.category) %></td>
+                      <td class="whitespace-nowrap"><%= receipt_total_label(payment.amount_cents) %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="hc-block-body">
+              <p class="hc-body text-sm"><%= t(".payments.empty") %></p>
+            </div>
+          <% end %>
+        </section>
+      </div>
+    </div>
+
+    <aside class="space-y-6">
+      <section class="hc-detail-block hc-block text-sm">
+        <div class="hc-block-heading">
+          <h2 class="hc-block-title"><%= t(".details.heading") %></h2>
+          <p class="hc-block-description"><%= t(".details.description") %></p>
+        </div>
+        <dl class="hc-detail-grid mt-4">
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.purchased_at") %></dt>
+            <dd class="hc-detail-value"><%= @receipt.purchased_at ? l(@receipt.purchased_at, format: :short) : t(".empty_value") %></dd>
+          </div>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.store") %></dt>
+            <dd class="hc-detail-value"><%= store_label(@receipt.store) %></dd>
+          </div>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.status") %></dt>
+            <dd class="hc-detail-value"><%= parser_status_label(@receipt.parser_status) %></dd>
+          </div>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.total") %></dt>
+            <dd class="hc-detail-value"><%= receipt_total_label(@receipt.total_cents) %></dd>
+          </div>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.register") %></dt>
+            <dd class="hc-detail-value"><%= @receipt.register_number.presence || t(".empty_value") %></dd>
+          </div>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.ticket") %></dt>
+            <dd class="hc-detail-value"><%= @receipt.ticket_number.presence || t(".empty_value") %></dd>
+          </div>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.cashier") %></dt>
+            <dd class="hc-detail-value"><%= @receipt.cashier_code.presence || t(".empty_value") %></dd>
+          </div>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.parser_format") %></dt>
+            <dd class="hc-detail-value hc-code"><%= @receipt.parser_format_before_type_cast %></dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="hc-evidence-block hc-block text-sm">
+        <div class="hc-block-heading">
+          <h2 class="hc-block-title"><%= t(".extraction.heading") %></h2>
+          <p class="hc-block-description"><%= t(".extraction.description", engine: @receipt.text_extraction.engine) %></p>
+        </div>
+        <div class="hc-block-body">
+          <pre class="hc-evidence-pane max-h-96"><%= @receipt.text_extraction.text %></pre>
+        </div>
+      </section>
+    </aside>
+  </div>
+</section>
