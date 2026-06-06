@@ -40,6 +40,12 @@ RSpec.describe Parser::Auchan::Paper::V1 do
       expect(result.lines.pluck(:label)).not_to include("ARTICLE MANQUANT", "ARTICLE RETIRE")
       expect(result.warnings).to contain_exactly(selfscan_warning("Nouveau scan incorrect"))
     end
+
+    it "differentiates Waaoh cash credit and debit summary lines" do
+      result = described_class.new(text: cashier_text_with_waaoh_cash_events).call
+
+      expect(result.promotions).to contain_exactly(waaoh_cash_credit_promotion, waaoh_cash_debit_promotion)
+    end
   end
 
   def parse_fixture(path)
@@ -50,6 +56,13 @@ RSpec.describe Parser::Auchan::Paper::V1 do
     Rails.root.join("spec/fixtures/files/parser/auchan_paper_v1_cashier.txt").read.sub(
       "TOT. ARTICLES ELIGIBLES TR",
       "-ARTICLE MANQUANT 1,20\n+ARTICLE RETIRE 2,30\nNouveau scan incorrect\nTOT. ARTICLES ELIGIBLES TR"
+    )
+  end
+
+  def cashier_text_with_waaoh_cash_events
+    Rails.root.join("spec/fixtures/files/parser/auchan_paper_v1_cashier.txt").read.sub(
+      "ARTICLE TRONQUE EXTRA.. 0,40",
+      "Crédit du jour : 0,40\nDébit du jour : 0,15"
     )
   end
 
@@ -109,9 +122,33 @@ RSpec.describe Parser::Auchan::Paper::V1 do
       unit: "euro_cents",
       delta: 40,
       label: "ARTICLE TRONQUE EXTRA",
-      kind: "loyalty_credit",
+      kind: "loyalty_cash_credit",
       linked_line_position: 1,
       linking_method: "parser_inferred"
+    }
+  end
+
+  def waaoh_cash_credit_promotion
+    {
+      program: "auchan_waaoh",
+      unit: "euro_cents",
+      delta: 40,
+      label: "Crédit du jour",
+      kind: "loyalty_cash_credit",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def waaoh_cash_debit_promotion
+    {
+      program: "auchan_waaoh",
+      unit: "euro_cents",
+      delta: -15,
+      label: "Débit du jour",
+      kind: "loyalty_cash_debit",
+      linked_line_position: nil,
+      linking_method: "unallocated"
     }
   end
 

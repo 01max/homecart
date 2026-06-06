@@ -6,7 +6,7 @@ FactoryBot.define do
     delta { 100 }
     label { Faker::Commerce.promotion_code }
     linked_line { nil }
-    kind { "loyalty_credit" }
+    kind { "loyalty_cash_credit" }
     linking_method { "unallocated" }
   end
 end

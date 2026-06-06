@@ -106,7 +106,7 @@ RSpec.describe ReceiptIngestion::RerunParserService do
         unit: "euro_cents",
         delta: 40,
         label: "ARTICLE A",
-        kind: "loyalty_credit",
+        kind: "loyalty_cash_credit",
         linked_line_position: 1,
         linking_method: "parser_inferred"
       }

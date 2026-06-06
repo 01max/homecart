@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Nmx5Q8f2X54c4G3OfzzMZV7Qvrm3PWgd4dZgYNwHD2pm60F5pgmVLHeI7lWQWkj
+\restrict XcTvZlKfwzFA58DrQgftAigeSJFtpOBaQynk1v7oiMVh2qf85wKgqd2OTsOKWJ1
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -106,7 +106,8 @@ CREATE TYPE public.receipt_payment_category AS ENUM (
 --
 
 CREATE TYPE public.receipt_promotion_kind AS ENUM (
-    'loyalty_credit',
+    'loyalty_cash_credit',
+    'loyalty_cash_debit',
     'immediate_discount',
     'coupon',
     'points_accrual'
@@ -779,13 +780,13 @@ ALTER TABLE ONLY public.receipt_promotions
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Nmx5Q8f2X54c4G3OfzzMZV7Qvrm3PWgd4dZgYNwHD2pm60F5pgmVLHeI7lWQWkj
+\unrestrict XcTvZlKfwzFA58DrQgftAigeSJFtpOBaQynk1v7oiMVh2qf85wKgqd2OTsOKWJ1
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict 4IEMqk2vE7P0Gn0pyncXS0LjpWzySYH2fsWAYEvPIAvDIEIpNWayMFHFSsLWONZ
+\restrict Dba4tiLI2KxAo7ovJdFLmSDHt9PSPxNcnVS9RZV06XKVUrkWa08UGFYlawd1hs1
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -816,11 +817,12 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260601112500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601113500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601124500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601130500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260606200500');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 4IEMqk2vE7P0Gn0pyncXS0LjpWzySYH2fsWAYEvPIAvDIEIpNWayMFHFSsLWONZ
+\unrestrict Dba4tiLI2KxAo7ovJdFLmSDHt9PSPxNcnVS9RZV06XKVUrkWa08UGFYlawd1hs1
 

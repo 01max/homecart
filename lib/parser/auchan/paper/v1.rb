@@ -12,7 +12,8 @@ module Parser
         ITEM_LINE_PATTERN = /\A(?<tr_marker>\*)?(?<label>.+?)\s+(?:(?<quantity>\d+(?:[,.]\d+)?)\*(?<unit_price>\d+,\d{2})\s+)?(?<total>-?\d+,\d{2})\z/
         DATE_PATTERN = /\ALe (?<day>\d{2}) (?<month>\p{L}+) (?<year>\d{4}) à (?<hour>\d{2}):(?<minute>\d{2}):(?<second>\d{2})\z/
         REGISTER_PATTERN = /\ACaisse\s*:\s*(?<register>\d+)\s+Ticket\s*:\s*(?<ticket>\d+)\z/
-        WAAOH_CREDIT_PATTERN = /\A(?<label>.+?)\s+(?<amount>\d+,\d{2})\s*(?:€)?\z/
+        WAAOH_AMOUNT_PATTERN = /\A(?<label>.+?)\s+(?<amount>\d+,\d{2})\s*(?:€)?\z/
+        WAAOH_CASH_EVENT_PATTERN = /\A(?<event>Crédit du jour|Débit du jour)\s*:\s*(?<amount>\d+,\d{2})\s*(?:€)?\z/i
 
         Parser::Registry.register(FORMAT, self)
 
@@ -138,20 +139,19 @@ module Parser
         end
 
         def promotion_attributes
-          waaoh_credit_lines.map do |match|
-            label = match[:label].strip
+          waaoh_promotion_lines.map do |attributes|
             promotion_attributes_for(
               program: "auchan_waaoh",
               unit: "euro_cents",
-              delta: cents_from(match[:amount]),
-              label: label,
-              kind: "loyalty_credit",
-              linked_line_position: linked_line_position_for(label)
+              delta: attributes.fetch(:delta),
+              label: attributes.fetch(:label),
+              kind: attributes.fetch(:kind),
+              linked_line_position: attributes.fetch(:linked_line_position)
             )
           end
         end
 
-        def waaoh_credit_lines
+        def waaoh_promotion_lines
           in_waaoh_section = false
           text_lines.filter_map do |line|
             if line.match?(/\A(?:VOTRE COMPTE|CAGNOTTE).+WAAOH/i)
@@ -164,8 +164,34 @@ module Parser
             next unless in_waaoh_section
             next if scan_correction_line?(line)
 
-            line.match(WAAOH_CREDIT_PATTERN)
+            waaoh_cash_event(line) || waaoh_cash_credit(line)
           end
+        end
+
+        def waaoh_cash_event(line)
+          match = line.match(WAAOH_CASH_EVENT_PATTERN)
+          return unless match
+
+          debit = match[:event].casecmp?("Débit du jour")
+          {
+            delta: debit ? -cents_from(match[:amount]) : cents_from(match[:amount]),
+            label: match[:event],
+            kind: debit ? "loyalty_cash_debit" : "loyalty_cash_credit",
+            linked_line_position: nil
+          }
+        end
+
+        def waaoh_cash_credit(line)
+          match = line.match(WAAOH_AMOUNT_PATTERN)
+          return unless match
+
+          label = match[:label].strip
+          {
+            delta: cents_from(match[:amount]),
+            label: label,
+            kind: "loyalty_cash_credit",
+            linked_line_position: linked_line_position_for(label)
+          }
         end
 
         def payment_attributes

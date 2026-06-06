@@ -108,7 +108,7 @@ RSpec.describe Parser::MagasinsU::Paper::V1 do
       unit: "euro_cents",
       delta: delta,
       label: "Carte U solde",
-      kind: "loyalty_credit",
+      kind: "loyalty_cash_credit",
       linked_line_position: nil,
       linking_method: "unallocated"
     }

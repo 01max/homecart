@@ -9,7 +9,8 @@ class ReceiptPromotion < ApplicationRecord
   }, validate: true
 
   enum :kind, {
-    loyalty_credit: "loyalty_credit",
+    loyalty_cash_credit: "loyalty_cash_credit",
+    loyalty_cash_debit: "loyalty_cash_debit",
     immediate_discount: "immediate_discount",
     coupon: "coupon",
     points_accrual: "points_accrual"

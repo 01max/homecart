@@ -13,7 +13,8 @@ en:
       euro_cents: "Euro cents"
       vignette_count: "Vignette count"
     receipt_promotion_kinds:
-      loyalty_credit: "Loyalty credit"
+      loyalty_cash_credit: "Loyalty cash credit"
+      loyalty_cash_debit: "Loyalty cash debit"
       immediate_discount: "Immediate discount"
       coupon: "Coupon"
       points_accrual: "Points accrual"

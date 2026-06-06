@@ -43,7 +43,7 @@ module Parser
               unit: "euro_cents",
               delta: delta,
               label: "Carte U solde",
-              kind: delta.positive? ? "loyalty_credit" : "coupon"
+              kind: delta.positive? ? "loyalty_cash_credit" : "loyalty_cash_debit"
             )
           end
         end

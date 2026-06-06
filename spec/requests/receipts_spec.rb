@@ -211,7 +211,7 @@ RSpec.describe "Receipts", type: :request do
             delta: "",
             label: "",
             linked_line_id: "",
-            kind: "loyalty_credit",
+            kind: "loyalty_cash_credit",
             linking_method: "unallocated"
           }
         },
