@@ -23,22 +23,56 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="hc-app-shell antialiased">
-    <header class="hc-app-header">
-      <nav class="hc-container flex items-center justify-between py-3">
-        <%= link_to t("app.nav.home"), root_path, class: "hc-brand" %>
-        <div class="flex items-center gap-4">
-          <%= link_to t("app.nav.receipts"), receipts_path, class: "hc-nav-link" %>
+  <body class="hc-app-shell hc-workspace-shell hc-workspace-shell--sidebar antialiased">
+    <aside class="hc-workspace-sidebar">
+      <div class="hc-workspace-sidebar-inner">
+        <%= link_to root_path, class: "hc-workspace-brand" do %>
+          <span class="hc-workspace-brand-mark" aria-hidden="true">hc</span>
+          <span class="hc-workspace-brand-copy">
+            <span class="hc-workspace-brand-name"><%= t("app.title") %></span>
+            <span class="hc-workspace-brand-tagline"><%= t("app.nav.tagline") %></span>
+          </span>
+        <% end %>
+
+        <nav class="hc-workspace-nav" aria-label="<%= t("app.nav.menu") %>">
+          <%= workspace_nav_link t("app.nav.dashboard"), root_path, icon: "D", active: controller_name == "home" %>
+          <%= workspace_nav_link t("app.nav.receipts"), receipts_path, icon: "R", active: controller_name == "receipts" %>
+        </nav>
+
+        <div class="hc-workspace-sidebar-footer">
           <%= link_to t("app.nav.upload_receipt"),
                       new_source_document_path,
                       class: "hc-button hc-button--primary" %>
         </div>
-      </nav>
-    </header>
+      </div>
+    </aside>
 
-    <main class="hc-container hc-page">
-      <%= render "shared/flash" %>
-      <%= yield %>
-    </main>
+    <div class="hc-workspace-main">
+      <details class="lg:hidden">
+        <summary class="hc-mobile-shell-bar list-none cursor-pointer">
+          <span class="hc-workspace-brand">
+            <span class="hc-workspace-brand-mark" aria-hidden="true">hc</span>
+            <span class="hc-workspace-brand-copy">
+              <span class="hc-workspace-brand-name"><%= t("app.title") %></span>
+              <span class="hc-workspace-brand-tagline"><%= t("app.nav.tagline") %></span>
+            </span>
+          </span>
+          <span class="hc-button hc-button--secondary"><%= t("app.nav.menu") %></span>
+        </summary>
+
+        <nav class="hc-mobile-nav-panel" aria-label="<%= t("app.nav.menu") %>">
+          <%= workspace_nav_link t("app.nav.dashboard"), root_path, icon: "D", active: controller_name == "home" %>
+          <%= workspace_nav_link t("app.nav.receipts"), receipts_path, icon: "R", active: controller_name == "receipts" %>
+          <%= link_to t("app.nav.upload_receipt"),
+                      new_source_document_path,
+                      class: "hc-button hc-button--primary" %>
+        </nav>
+      </details>
+
+      <main class="hc-workspace-main-inner <%= "hc-workspace-main-inner--wide" if content_for?(:wide_workspace) %>">
+        <%= render "shared/flash" %>
+        <%= yield %>
+      </main>
+    </div>
   </body>
 </html>
