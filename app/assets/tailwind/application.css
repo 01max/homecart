@@ -408,6 +408,13 @@
     min-width: 0;
   }
 
+  .hc-content-grid > *,
+  .hc-stack > *,
+  .hc-stack > .grid > * {
+    max-width: 100%;
+    min-width: 0;
+  }
+
   .hc-block,
   .hc-metric-block,
   .hc-filter-block,
@@ -602,6 +609,8 @@
   }
 
   .hc-table-block {
+    contain: layout inline-size paint;
+    max-width: 100%;
     overflow: hidden;
   }
 
@@ -1046,9 +1055,9 @@
     border-radius: var(--hc-radius-lg);
     background: var(--hc-surface-container-lowest);
     box-shadow: var(--hc-shadow-ambient);
-    contain: inline-size;
+    contain: layout inline-size paint;
     max-width: 100%;
-    overflow-x: auto;
+    overflow: auto hidden;
     width: 100%;
   }
 
