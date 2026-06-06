@@ -1,17 +1,32 @@
 <% content_for :title, t(".title") %>
 <%= turbo_stream_from @source_document %>
 
-<section data-controller="source-document-processing"
+<section class="hc-stack"
+         data-controller="source-document-processing"
          data-source-document-processing-url-value="<%= status_source_document_path(@source_document, format: :turbo_stream) %>">
-  <div class="hc-page-header">
-    <p class="hc-eyebrow"><%= t(".eyebrow") %></p>
-    <h1 class="hc-heading-lg mt-2"><%= t(".title") %></h1>
+  <div class="hc-page-toolbar">
+    <div>
+      <p class="hc-eyebrow"><%= t(".eyebrow") %></p>
+      <h1 class="hc-heading-lg mt-2"><%= t(".title") %></h1>
+      <p class="hc-body mt-2"><%= t(".description") %></p>
+    </div>
+
+    <div class="hc-page-actions">
+      <%= link_to t(".actions.upload_receipt"), new_source_document_path, class: "hc-button hc-button--primary" %>
+      <%= link_to t(".actions.view_receipts"), receipts_path, class: "hc-button hc-button--secondary" %>
+      <% if @receipt %>
+        <%= link_to t(".actions.review_receipt"), edit_receipt_path(@receipt), class: "hc-button hc-button--subtle" %>
+      <% end %>
+    </div>
   </div>
 
   <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
     <div class="space-y-6">
       <section class="hc-evidence-block hc-block">
-        <h2 class="hc-heading-md"><%= t(".preview.heading") %></h2>
+        <div class="hc-block-heading">
+          <h2 class="hc-block-title"><%= t(".preview.heading") %></h2>
+          <p class="hc-block-description"><%= t(".preview.description") %></p>
+        </div>
 
         <% if @source_document.original_file.attached? %>
           <div class="hc-surface-muted mt-4 overflow-hidden">
@@ -43,7 +58,10 @@
                  receipt: @receipt %>
 
       <section class="hc-detail-block hc-block text-sm">
-        <h2 class="hc-heading-md"><%= t(".details.heading") %></h2>
+        <div class="hc-block-heading">
+          <h2 class="hc-block-title"><%= t(".details.heading") %></h2>
+          <p class="hc-block-description"><%= t(".details.description") %></p>
+        </div>
         <dl class="hc-detail-grid mt-4">
           <div class="hc-detail-item">
             <dt class="hc-detail-term"><%= t(".details.store") %></dt>

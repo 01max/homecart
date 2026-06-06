@@ -1,7 +1,10 @@
 <% latest_text_extraction = local_assigns.fetch(:latest_text_extraction) { source_document.text_extractions.order(ran_at: :desc, created_at: :desc).first } %>
 
 <section id="<%= dom_id(source_document, :latest_text_extraction) %>" class="hc-evidence-block hc-block">
-  <h2 class="hc-heading-md"><%= t("source_documents.show.latest_extraction.heading") %></h2>
+  <div class="hc-block-heading">
+    <h2 class="hc-block-title"><%= t("source_documents.show.latest_extraction.heading") %></h2>
+    <p class="hc-block-description"><%= t("source_documents.show.latest_extraction.description") %></p>
+  </div>
 
   <% if latest_text_extraction %>
     <dl class="hc-detail-grid mt-4 text-sm sm:grid-cols-3">

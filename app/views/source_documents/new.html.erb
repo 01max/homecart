@@ -1,47 +1,80 @@
 <% content_for :title, t(".title") %>
 
-<section class="max-w-2xl">
-  <div class="hc-page-header">
-    <p class="hc-eyebrow"><%= t(".eyebrow") %></p>
-    <h1 class="hc-heading-lg mt-2"><%= t(".title") %></h1>
+<section class="hc-stack max-w-3xl">
+  <div class="hc-page-toolbar">
+    <div>
+      <p class="hc-eyebrow"><%= t(".eyebrow") %></p>
+      <h1 class="hc-heading-lg mt-2"><%= t(".title") %></h1>
+      <p class="hc-body mt-2"><%= t(".description") %></p>
+    </div>
+
+    <div class="hc-page-actions">
+      <%= link_to t(".actions.view_receipts"), receipts_path, class: "hc-button hc-button--secondary" %>
+    </div>
   </div>
 
-  <%= form_with url: source_documents_path,
-                scope: :source_document,
-                local: true,
-                html: { multipart: true, data: { controller: "parser-format-suggestion" } },
-                class: "hc-filter-block" do |form| %>
-    <div>
-      <%= form.label :file, t(".file_label"), class: "hc-label" %>
-      <%= form.file_field :file, accept: @accepted_mime_types, class: "hc-file-input mt-2 block" %>
-    </div>
+  <div class="hc-content-grid hc-content-grid--two">
+    <%= form_with url: source_documents_path,
+                  scope: :source_document,
+                  local: true,
+                  html: { multipart: true, data: { controller: "parser-format-suggestion" } },
+                  class: "hc-filter-block" do |form| %>
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t(".form.heading") %></h2>
+        <p class="hc-block-description"><%= t(".form.description") %></p>
+      </div>
 
-    <div>
-      <%= form.label :store_id, t(".store_label"), class: "hc-label" %>
-      <%= form.select :store_id,
-                      store_options_for_select,
-                      { prompt: t(".store_prompt"), selected: @selected_store_id },
-                      class: "hc-select mt-2 block",
-                      data: {
-                        parser_format_suggestion_target: "store",
-                        action: "parser-format-suggestion#suggest"
-                      } %>
-    </div>
+      <div class="hc-filter-row">
+        <div class="hc-filter-group">
+          <%= form.label :file, t(".file_label"), class: "hc-label" %>
+          <%= form.file_field :file, accept: @accepted_mime_types, class: "hc-file-input block" %>
+        </div>
 
-    <div>
-      <%= form.label :parser_format, t(".parser_format_label"), class: "hc-label" %>
-      <%= form.select :parser_format,
-                      @parser_formats,
-                      { prompt: t(".parser_format_prompt"), selected: @selected_parser_format },
-                      class: "hc-select mt-2 block",
-                      data: {
-                        parser_format_suggestion_target: "parserFormat",
-                        action: "parser-format-suggestion#markManualSelection"
-                      } %>
-    </div>
+        <div class="hc-filter-group">
+          <%= form.label :store_id, t(".store_label"), class: "hc-label" %>
+          <%= form.select :store_id,
+                          store_options_for_select,
+                          { prompt: t(".store_prompt"), selected: @selected_store_id },
+                          class: "hc-select block",
+                          data: {
+                            parser_format_suggestion_target: "store",
+                            action: "parser-format-suggestion#suggest"
+                          } %>
+        </div>
 
-    <div class="pt-2">
-      <%= form.submit t(".submit"), class: "hc-button hc-button--primary" %>
-    </div>
-  <% end %>
+        <div class="hc-filter-group">
+          <%= form.label :parser_format, t(".parser_format_label"), class: "hc-label" %>
+          <%= form.select :parser_format,
+                          @parser_formats,
+                          { prompt: t(".parser_format_prompt"), selected: @selected_parser_format },
+                          class: "hc-select block",
+                          data: {
+                            parser_format_suggestion_target: "parserFormat",
+                            action: "parser-format-suggestion#markManualSelection"
+                          } %>
+        </div>
+      </div>
+
+      <div class="hc-filter-actions">
+        <%= form.submit t(".submit"), class: "hc-button hc-button--primary" %>
+      </div>
+    <% end %>
+
+    <aside class="hc-action-block">
+      <div class="hc-action-block-copy">
+        <p class="font-semibold"><%= t(".workflow.heading") %></p>
+        <p class="mt-2"><%= t(".workflow.description") %></p>
+        <dl class="hc-detail-grid mt-4">
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".workflow.accepted_types") %></dt>
+            <dd class="hc-detail-value"><%= @accepted_mime_types %></dd>
+          </div>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".workflow.processing") %></dt>
+            <dd class="hc-detail-value"><%= t(".workflow.processing_value") %></dd>
+          </div>
+        </dl>
+      </div>
+    </aside>
+  </div>
 </section>
