@@ -1,4 +1,17 @@
 module ApplicationHelper
+  def parser_status_label(parser_status)
+    t("receipts.parser_statuses.#{parser_status}")
+  end
+
+  def store_label(store)
+    t(
+      "receipts.store_label",
+      brand: store.retail_brand.name,
+      location: store.location_name,
+      channel: store.channel
+    )
+  end
+
   def workspace_nav_link(label, path, icon:, active: current_page?(path))
     link_to path,
             class: class_names("hc-workspace-nav-link", "hc-workspace-nav-link--active": active),

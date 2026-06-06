@@ -1,14 +1,44 @@
 en:
   home:
     index:
-      eyebrow: "homecart"
-      title: "Receipt ingestion starts here."
-      turbo_stream: "Turbo Stream"
-      waiting_for_stream: "Waiting for the first server-rendered update."
-      ping_stream: "Ping stream"
-      stimulus: "Stimulus"
-      waiting_for_stimulus: "Waiting for Stimulus."
-      stimulus_connected: "Stimulus connected."
+      eyebrow: "Dashboard"
+      title: "Receipt operations"
+      description: "Real-time overview of receipt ingestion, parser review, and recent source activity."
+      empty_value: "Not available"
+      actions:
+        upload_receipt: "Upload receipt"
+        view_receipts: "View receipts"
+      metrics:
+        source_documents:
+          label: "Source documents"
+          support: "Uploaded receipt evidence"
+        receipts:
+          label: "Parsed receipts"
+          support: "Structured receipts available for review"
+        needs_review:
+          label: "Needs review"
+          support:
+            one: "%{count} receipt needs review"
+            other: "%{count} receipts need review"
+      recent_receipts:
+        heading: "Recent receipt activity"
+        description: "Latest parsed receipts by purchase date."
+        action: "Open receipts"
+        empty: "No receipts have been parsed yet."
+        review: "Review"
+        table:
+          purchased_at: "Purchased"
+          store: "Store"
+          status: "Status"
+          total: "Total"
+          action: "Action"
+      recent_source_documents:
+        heading: "Recent uploads"
+        description: "Latest source documents entering the ingestion workflow."
+        empty: "No source documents have been uploaded yet."
+        ingested_at: "Ingested"
+        parser_format: "Parser format"
+        view: "View"
     ping:
       ready: "Hotwire is ready."
       rendered_at: "Turbo Stream rendered at %{time}."

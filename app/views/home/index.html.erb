@@ -1,29 +1,131 @@
-<%= turbo_stream_from "hotwire_smoke" %>
+<% content_for :title, t(".title") %>
 
-<section class="w-full max-w-3xl">
-  <div class="hc-page-header">
-    <p class="hc-eyebrow"><%= t(".eyebrow") %></p>
-    <h1 class="hc-heading-lg mt-2"><%= t(".title") %></h1>
+<section class="hc-stack">
+  <div class="hc-page-toolbar">
+    <div>
+      <p class="hc-eyebrow"><%= t(".eyebrow") %></p>
+      <h1 class="hc-heading-lg mt-2"><%= t(".title") %></h1>
+      <p class="hc-body mt-2"><%= t(".description") %></p>
+    </div>
+
+    <div class="hc-page-actions">
+      <%= link_to t(".actions.upload_receipt"), new_source_document_path, class: "hc-button hc-button--primary" %>
+      <%= link_to t(".actions.view_receipts"), receipts_path, class: "hc-button hc-button--secondary" %>
+    </div>
   </div>
 
-  <div class="mt-8 grid gap-4 md:grid-cols-2">
-    <div class="hc-block">
-      <p class="text-sm font-semibold"><%= t(".turbo_stream") %></p>
-      <%= turbo_frame_tag "hotwire_smoke_status", class: "hc-surface-muted mt-4 block p-4 text-sm" do %>
-        <%= t(".waiting_for_stream") %>
-      <% end %>
-      <%= button_to t(".ping_stream"),
-                    hotwire_ping_path,
-                    class: "hc-button hc-button--primary mt-4" %>
-    </div>
+  <div class="hc-content-grid hc-content-grid--three">
+    <section class="hc-metric-block">
+      <p class="hc-metric-label"><%= t(".metrics.source_documents.label") %></p>
+      <p class="hc-metric-value hc-metric-value--primary"><%= number_with_delimiter(@source_document_count) %></p>
+      <p class="hc-metric-support"><%= t(".metrics.source_documents.support") %></p>
+    </section>
 
-    <div class="hc-block">
-      <p class="text-sm font-semibold"><%= t(".stimulus") %></p>
-      <p class="hc-surface-muted mt-4 p-4 text-sm"
-         data-controller="hotwire-smoke"
-         data-hotwire-smoke-message-value="<%= t(".stimulus_connected") %>">
-        <%= t(".waiting_for_stimulus") %>
-      </p>
-    </div>
+    <section class="hc-metric-block">
+      <p class="hc-metric-label"><%= t(".metrics.receipts.label") %></p>
+      <p class="hc-metric-value"><%= number_with_delimiter(@receipt_count) %></p>
+      <p class="hc-metric-support"><%= t(".metrics.receipts.support") %></p>
+    </section>
+
+    <section class="hc-metric-block">
+      <p class="hc-metric-label"><%= t(".metrics.needs_review.label") %></p>
+      <p class="hc-metric-value hc-metric-value--warning"><%= number_with_delimiter(@needs_review_count) %></p>
+      <p class="hc-metric-support hc-metric-support--warning"><%= t(".metrics.needs_review.support", count: @needs_review_count) %></p>
+    </section>
+  </div>
+
+  <div class="hc-content-grid hc-content-grid--two">
+    <section class="hc-table-block">
+      <div class="hc-block-header">
+        <div class="hc-block-heading">
+          <h2 class="hc-block-title"><%= t(".recent_receipts.heading") %></h2>
+          <p class="hc-block-description"><%= t(".recent_receipts.description") %></p>
+        </div>
+        <div class="hc-block-actions">
+          <%= link_to t(".recent_receipts.action"), receipts_path, class: "hc-button hc-button--subtle" %>
+        </div>
+      </div>
+
+      <% if @recent_receipts.any? %>
+        <div class="hc-table-frame">
+          <table class="hc-table">
+            <thead>
+              <tr>
+                <th><%= t(".recent_receipts.table.purchased_at") %></th>
+                <th><%= t(".recent_receipts.table.store") %></th>
+                <th><%= t(".recent_receipts.table.status") %></th>
+                <th><%= t(".recent_receipts.table.total") %></th>
+                <th><%= t(".recent_receipts.table.action") %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @recent_receipts.each do |receipt| %>
+                <tr>
+                  <td class="whitespace-nowrap">
+                    <%= receipt.purchased_at ? l(receipt.purchased_at, format: :short) : t(".empty_value") %>
+                  </td>
+                  <td><%= store_label(receipt.store) %></td>
+                  <td class="whitespace-nowrap">
+                    <span class="hc-badge <%= receipt.needs_review? ? "hc-badge--warning" : "hc-badge--success" %>">
+                      <%= parser_status_label(receipt.parser_status) %>
+                    </span>
+                  </td>
+                  <td class="whitespace-nowrap">
+                    <%= receipt.total_cents ? number_to_currency(receipt.total_cents / 100.0, unit: "€", separator: ",", delimiter: " ", format: "%n %u") : t(".empty_value") %>
+                  </td>
+                  <td>
+                    <div class="hc-table-cell-actions">
+                      <%= link_to t(".recent_receipts.review"), edit_receipt_path(receipt), class: "hc-link text-sm" %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="hc-block-body">
+          <p class="hc-body text-sm"><%= t(".recent_receipts.empty") %></p>
+        </div>
+      <% end %>
+    </section>
+
+    <section class="hc-detail-block">
+      <div class="hc-block-header">
+        <div class="hc-block-heading">
+          <h2 class="hc-block-title"><%= t(".recent_source_documents.heading") %></h2>
+          <p class="hc-block-description"><%= t(".recent_source_documents.description") %></p>
+        </div>
+      </div>
+
+      <div class="hc-block-body">
+        <% if @recent_source_documents.any? %>
+          <div class="hc-stack">
+            <% @recent_source_documents.each do |source_document| %>
+              <article class="hc-surface-muted p-4 text-sm">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 class="font-semibold"><%= store_label(source_document.store) %></h3>
+                    <dl class="hc-detail-grid mt-3">
+                      <div class="hc-detail-item">
+                        <dt class="hc-detail-term"><%= t(".recent_source_documents.ingested_at") %></dt>
+                        <dd class="hc-detail-value"><%= l(source_document.ingested_at, format: :short) %></dd>
+                      </div>
+                      <div class="hc-detail-item">
+                        <dt class="hc-detail-term"><%= t(".recent_source_documents.parser_format") %></dt>
+                        <dd class="hc-detail-value hc-code"><%= source_document.parser_format_before_type_cast %></dd>
+                      </div>
+                    </dl>
+                  </div>
+                  <%= link_to t(".recent_source_documents.view"), source_document_path(source_document), class: "hc-link text-sm" %>
+                </div>
+              </article>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="hc-body text-sm"><%= t(".recent_source_documents.empty") %></p>
+        <% end %>
+      </div>
+    </section>
   </div>
 </section>
