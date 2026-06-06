@@ -180,6 +180,15 @@
     width: 2.25rem;
   }
 
+  .hc-workspace-rail-button > [aria-hidden="true"] {
+    align-items: center;
+    display: inline-flex;
+    height: 100%;
+    justify-content: center;
+    line-height: 1;
+    width: 100%;
+  }
+
   .hc-workspace-rail-button:hover {
     background: var(--hc-surface-container-low);
     color: var(--hc-primary);
@@ -188,6 +197,10 @@
   @media (min-width: 64rem) {
     .hc-workspace-rail-button {
       display: inline-flex;
+    }
+
+    .hc-workspace-sidebar .hc-workspace-brand-mark {
+      display: none;
     }
   }
 
@@ -314,6 +327,11 @@
       position: absolute;
       white-space: nowrap;
       width: 1px;
+    }
+
+    .hc-workspace-shell--rail .hc-workspace-sidebar .hc-workspace-brand-mark,
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) .hc-workspace-sidebar .hc-workspace-brand-mark {
+      display: inline-flex;
     }
 
     .hc-workspace-shell--rail .hc-workspace-nav-link,
