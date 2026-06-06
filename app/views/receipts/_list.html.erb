@@ -1,24 +1,26 @@
 <div id="<%= ReceiptIngestion::BroadcastProcessingStatusService.receipts_list_dom_id(selected_parser_status) %>">
   <% if receipts.any? %>
-    <div class="hc-table-frame">
-      <table class="hc-table">
-        <thead>
-          <tr>
-            <th><%= t("receipts.index.table.purchased_at") %></th>
-            <th><%= t("receipts.index.table.store") %></th>
-            <th><%= t("receipts.index.table.parser_status") %></th>
-            <th><%= t("receipts.index.table.total") %></th>
-            <th><%= t("receipts.index.table.parser_format") %></th>
-            <th><%= t("receipts.index.table.actions") %></th>
-          </tr>
-        </thead>
-        <tbody>
-          <%= render partial: "receipts/receipt", collection: receipts, as: :receipt %>
-        </tbody>
-      </table>
+    <div class="hc-table-block">
+      <div class="hc-table-frame">
+        <table class="hc-table">
+          <thead>
+            <tr>
+              <th><%= t("receipts.index.table.purchased_at") %></th>
+              <th><%= t("receipts.index.table.store") %></th>
+              <th><%= t("receipts.index.table.parser_status") %></th>
+              <th><%= t("receipts.index.table.total") %></th>
+              <th><%= t("receipts.index.table.parser_format") %></th>
+              <th><%= t("receipts.index.table.actions") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= render partial: "receipts/receipt", collection: receipts, as: :receipt %>
+          </tbody>
+        </table>
+      </div>
     </div>
   <% else %>
-    <div class="hc-card hc-body text-sm">
+    <div class="hc-block hc-body text-sm">
       <%= t("receipts.index.empty") %>
     </div>
   <% end %>

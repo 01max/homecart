@@ -27,9 +27,11 @@
     <%= receipt.total_cents ? number_to_currency(receipt.total_cents / 100.0, unit: "€", separator: ",", delimiter: " ", format: "%n %u") : t("receipts.index.empty_value") %>
   </td>
   <td class="hc-code whitespace-nowrap"><%= receipt.parser_format_before_type_cast %></td>
-  <td class="whitespace-nowrap">
+  <td>
+    <div class="hc-table-cell-actions">
     <%= link_to t("receipts.index.review"),
                 edit_receipt_path(receipt),
                 class: "hc-link text-sm" %>
+    </div>
   </td>
 </tr>

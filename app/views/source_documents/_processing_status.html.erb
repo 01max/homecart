@@ -17,17 +17,17 @@
 <section id="<%= dom_id(source_document, :processing_status) %>"
          data-source-document-processing-target="status"
          data-processing-complete="<%= processing_complete %>"
-         class="hc-card text-sm">
+         class="hc-detail-block hc-block text-sm">
   <h2 class="hc-heading-md"><%= t("source_documents.show.processing.heading") %></h2>
-  <dl class="mt-4 space-y-3">
+  <dl class="mt-4 grid gap-3">
     <div class="flex items-center justify-between gap-3">
-      <dt class="hc-label"><%= t("source_documents.show.processing.extraction") %></dt>
+      <dt class="hc-detail-term"><%= t("source_documents.show.processing.extraction") %></dt>
       <dd class="hc-badge <%= state_classes.fetch(extraction_state) %>">
         <%= t("source_documents.show.processing.states.#{extraction_state}") %>
       </dd>
     </div>
     <div class="flex items-center justify-between gap-3">
-      <dt class="hc-label"><%= t("source_documents.show.processing.parsing") %></dt>
+      <dt class="hc-detail-term"><%= t("source_documents.show.processing.parsing") %></dt>
       <dd class="hc-badge <%= state_classes.fetch(parsing_state) %>">
         <%= t("source_documents.show.processing.states.#{parsing_state}") %>
       </dd>

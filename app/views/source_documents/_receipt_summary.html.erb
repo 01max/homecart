@@ -1,6 +1,6 @@
 <% receipt = local_assigns.fetch(:receipt) { source_document.receipts.order(created_at: :desc).first } %>
 
-<section id="<%= dom_id(source_document, :receipt_summary) %>" class="hc-card text-sm">
+<section id="<%= dom_id(source_document, :receipt_summary) %>" class="hc-detail-block hc-block text-sm">
   <h2 class="hc-heading-md"><%= t("source_documents.show.receipt.heading") %></h2>
   <% if receipt %>
     <p class="hc-body mt-3 text-sm"><%= t("source_documents.show.receipt.present") %></p>

@@ -10,7 +10,7 @@
                 scope: :source_document,
                 local: true,
                 html: { multipart: true, data: { controller: "parser-format-suggestion" } },
-                class: "hc-card space-y-5" do |form| %>
+                class: "hc-filter-block" do |form| %>
     <div>
       <%= form.label :file, t(".file_label"), class: "hc-label" %>
       <%= form.file_field :file, accept: @accepted_mime_types, class: "hc-file-input mt-2 block" %>

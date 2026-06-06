@@ -26,7 +26,7 @@
   <% end %>
 
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-    <section class="hc-card min-w-0">
+    <section class="hc-evidence-block hc-block min-w-0">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 class="hc-heading-md"><%= t("receipts.edit.extraction.heading") %></h2>
@@ -44,7 +44,7 @@
       <% end %>
     </section>
 
-    <section class="hc-card min-w-0">
+    <section class="hc-detail-block hc-block min-w-0">
       <h2 class="hc-heading-md"><%= t("receipts.edit.form.heading") %></h2>
 
       <div class="mt-5 grid gap-4 sm:grid-cols-2">
@@ -95,14 +95,14 @@
         </div>
       </div>
 
-      <dl class="hc-divider-top mt-5 grid gap-4 pt-5 text-sm sm:grid-cols-2">
-        <div>
-          <dt class="hc-label"><%= t("receipts.edit.form.parser_status") %></dt>
-          <dd class="mt-1"><%= parser_status_label(receipt.parser_status) %></dd>
+      <dl class="hc-divider-top hc-detail-grid mt-5 pt-5 text-sm">
+        <div class="hc-detail-item">
+          <dt class="hc-detail-term"><%= t("receipts.edit.form.parser_status") %></dt>
+          <dd class="hc-detail-value"><%= parser_status_label(receipt.parser_status) %></dd>
         </div>
-        <div>
-          <dt class="hc-label"><%= t("receipts.edit.form.parser_format") %></dt>
-          <dd class="mt-1">
+        <div class="hc-detail-item">
+          <dt class="hc-detail-term"><%= t("receipts.edit.form.parser_format") %></dt>
+          <dd class="hc-detail-value">
             <%= form.select :parser_format,
                             SourceDocument::PARSER_FORMATS.values,
                             { selected: receipt.parser_format_before_type_cast },
@@ -118,11 +118,11 @@
   <%= render "receipt_payments_fields", form: form, receipt: receipt %>
   <%= render "validators_panel" %>
 
-  <div class="hc-divider-top flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
-    <p class="min-h-5 text-sm font-semibold" aria-live="polite">
+  <div class="hc-action-block">
+    <p class="hc-action-block-copy min-h-5 font-semibold" aria-live="polite">
       <%= local_assigns[:notice] %>
     </p>
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <div class="hc-action-group">
       <%= form.submit t("receipts.edit.form.submit"),
                       data: { turbo_submits_with: t("receipts.edit.form.saving") },
                       class: "hc-button hc-button--secondary" %>

@@ -1,21 +1,21 @@
 <% latest_text_extraction = local_assigns.fetch(:latest_text_extraction) { source_document.text_extractions.order(ran_at: :desc, created_at: :desc).first } %>
 
-<section id="<%= dom_id(source_document, :latest_text_extraction) %>" class="hc-card">
+<section id="<%= dom_id(source_document, :latest_text_extraction) %>" class="hc-evidence-block hc-block">
   <h2 class="hc-heading-md"><%= t("source_documents.show.latest_extraction.heading") %></h2>
 
   <% if latest_text_extraction %>
-    <dl class="mt-4 grid gap-4 text-sm sm:grid-cols-3">
-      <div>
-        <dt class="hc-label"><%= t("source_documents.show.latest_extraction.engine") %></dt>
-        <dd class="hc-code mt-1"><%= latest_text_extraction.engine %></dd>
+    <dl class="hc-detail-grid mt-4 text-sm sm:grid-cols-3">
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("source_documents.show.latest_extraction.engine") %></dt>
+        <dd class="hc-detail-value hc-code"><%= latest_text_extraction.engine %></dd>
       </div>
-      <div>
-        <dt class="hc-label"><%= t("source_documents.show.latest_extraction.ran_at") %></dt>
-        <dd class="mt-1"><%= l(latest_text_extraction.ran_at, format: :short) %></dd>
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("source_documents.show.latest_extraction.ran_at") %></dt>
+        <dd class="hc-detail-value"><%= l(latest_text_extraction.ran_at, format: :short) %></dd>
       </div>
-      <div>
-        <dt class="hc-label"><%= t("source_documents.show.latest_extraction.status") %></dt>
-        <dd class="mt-1">
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("source_documents.show.latest_extraction.status") %></dt>
+        <dd class="hc-detail-value">
           <span class="hc-badge <%= latest_text_extraction.success? ? "hc-badge--success" : "hc-badge--failed" %>">
           <%= latest_text_extraction.success? ? t("source_documents.show.latest_extraction.success") : t("source_documents.show.latest_extraction.failure") %>
           </span>

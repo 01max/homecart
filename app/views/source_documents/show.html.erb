@@ -10,7 +10,7 @@
 
   <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
     <div class="space-y-6">
-      <section class="hc-card">
+      <section class="hc-evidence-block hc-block">
         <h2 class="hc-heading-md"><%= t(".preview.heading") %></h2>
 
         <% if @source_document.original_file.attached? %>
@@ -42,28 +42,28 @@
                  latest_text_extraction: @latest_text_extraction,
                  receipt: @receipt %>
 
-      <section class="hc-card text-sm">
+      <section class="hc-detail-block hc-block text-sm">
         <h2 class="hc-heading-md"><%= t(".details.heading") %></h2>
-        <dl class="mt-4 space-y-4">
-          <div>
-            <dt class="hc-label"><%= t(".details.store") %></dt>
-            <dd class="mt-1"><%= store_option_label(@source_document.store) %></dd>
+        <dl class="hc-detail-grid mt-4">
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.store") %></dt>
+            <dd class="hc-detail-value"><%= store_option_label(@source_document.store) %></dd>
           </div>
-          <div>
-            <dt class="hc-label"><%= t(".details.parser_format") %></dt>
-            <dd class="hc-code mt-1"><%= @source_document.parser_format_before_type_cast %></dd>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.parser_format") %></dt>
+            <dd class="hc-detail-value hc-code"><%= @source_document.parser_format_before_type_cast %></dd>
           </div>
-          <div>
-            <dt class="hc-label"><%= t(".details.mime_type") %></dt>
-            <dd class="mt-1"><%= @source_document.mime_type_before_type_cast %></dd>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.mime_type") %></dt>
+            <dd class="hc-detail-value"><%= @source_document.mime_type_before_type_cast %></dd>
           </div>
-          <div>
-            <dt class="hc-label"><%= t(".details.ingested_at") %></dt>
-            <dd class="mt-1"><%= l(@source_document.ingested_at, format: :short) %></dd>
+          <div class="hc-detail-item">
+            <dt class="hc-detail-term"><%= t(".details.ingested_at") %></dt>
+            <dd class="hc-detail-value"><%= l(@source_document.ingested_at, format: :short) %></dd>
           </div>
-          <div>
-            <dt class="hc-label"><%= t(".details.content_hash") %></dt>
-            <dd class="hc-code mt-1 break-all"><%= @source_document.content_hash %></dd>
+          <div class="hc-detail-item sm:col-span-2">
+            <dt class="hc-detail-term"><%= t(".details.content_hash") %></dt>
+            <dd class="hc-detail-value hc-code"><%= @source_document.content_hash %></dd>
           </div>
         </dl>
       </section>

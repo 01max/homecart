@@ -1,9 +1,9 @@
-<section class="hc-card">
-  <h3 class="hc-heading-md"><%= t("receipts.edit.validators.heading") %></h3>
+<section class="hc-validator-block">
+  <h3 class="hc-block-title"><%= t("receipts.edit.validators.heading") %></h3>
 
-  <div class="mt-4 grid gap-3 md:grid-cols-3">
+  <div class="hc-validator-list md:grid-cols-3">
     <% %w[totals_sum article_count payments_sum].each do |validator| %>
-      <div class="hc-validator-card"
+      <div class="hc-validator-card hc-validator-block"
            data-receipt-validators-target="<%= "#{validator.camelize(:lower)}Card" %>">
         <div class="flex items-center justify-between gap-3">
           <p class="hc-label"><%= t("receipts.edit.validators.#{validator}.label") %></p>

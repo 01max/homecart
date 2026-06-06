@@ -7,7 +7,7 @@
   </div>
 
   <div class="mt-8 grid gap-4 md:grid-cols-2">
-    <div class="hc-card">
+    <div class="hc-block">
       <p class="text-sm font-semibold"><%= t(".turbo_stream") %></p>
       <%= turbo_frame_tag "hotwire_smoke_status", class: "hc-surface-muted mt-4 block p-4 text-sm" do %>
         <%= t(".waiting_for_stream") %>
@@ -17,7 +17,7 @@
                     class: "hc-button hc-button--primary mt-4" %>
     </div>
 
-    <div class="hc-card">
+    <div class="hc-block">
       <p class="text-sm font-semibold"><%= t(".stimulus") %></p>
       <p class="hc-surface-muted mt-4 p-4 text-sm"
          data-controller="hotwire-smoke"
