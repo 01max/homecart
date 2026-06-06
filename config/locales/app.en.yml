@@ -1,8 +1,13 @@
 en:
   app:
-    title: "Homecart"
+    title: "homecart"
     nav:
-      home: "Homecart"
+      tagline: "Groceries companion"
+      home: "homecart 🛒"
+      dashboard: "Dashboard"
+      menu: "Menu"
+      collapse: "Collapse navigation"
       receipts: "Receipts"
+      upload_receipt: "Upload receipt"
     pwa:
-      description: "Homecart."
+      description: "homecart is a grocery companion app that helps you manage your grocery shopping."

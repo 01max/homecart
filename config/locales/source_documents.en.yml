@@ -5,12 +5,24 @@ en:
     new:
       eyebrow: "Receipts"
       title: "Upload receipt"
+      description: "Add receipt evidence, choose the source store, and start the existing ingestion workflow."
       file_label: "Receipt file"
       store_label: "Store"
       store_prompt: "Choose a store"
       parser_format_label: "Parser format"
       parser_format_prompt: "Choose a parser format"
       submit: "Upload receipt"
+      actions:
+        view_receipts: "View receipts"
+      form:
+        heading: "Source document"
+        description: "Select the original receipt file and parser format used for extraction."
+      workflow:
+        heading: "Processing workflow"
+        description: "Uploads are deduplicated by evidence hash, attached to the source document, then queued for text extraction and parsing."
+        accepted_types: "Accepted file types"
+        processing: "Processing"
+        processing_value: "Queued after upload"
     create:
       success: "Receipt upload started."
       duplicate: "This receipt file was already uploaded."
@@ -21,8 +33,14 @@ en:
     show:
       eyebrow: "Receipt source"
       title: "Source document"
+      description: "Inspect immutable source evidence, processing state, extracted text, and the parsed receipt link."
+      actions:
+        upload_receipt: "Upload receipt"
+        view_receipts: "View receipts"
+        review_receipt: "Review receipt"
       processing:
         heading: "Processing"
+        description: "Current extraction and parsing state for this source document."
         extraction: "Text extraction"
         parsing: "Parsing"
         states:
@@ -34,6 +52,7 @@ en:
           waiting: "Waiting"
       preview:
         heading: "Original file"
+        description: "Immutable uploaded receipt evidence."
         image_alt: "Uploaded receipt image"
         pdf_title: "Uploaded receipt PDF"
         open_original: "Open original file"
@@ -41,6 +60,7 @@ en:
         missing_file: "No original file is attached."
       latest_extraction:
         heading: "Latest text extraction"
+        description: "Most recent extracted text and extraction metadata."
         engine: "Engine"
         ran_at: "Ran at"
         status: "Status"
@@ -49,6 +69,7 @@ en:
         empty: "No text extraction has run yet."
       details:
         heading: "Details"
+        description: "Source document metadata captured at ingestion."
         store: "Store"
         parser_format: "Parser format"
         mime_type: "MIME type"
@@ -56,6 +77,7 @@ en:
         content_hash: "Content hash"
       receipt:
         heading: "Receipt"
+        description: "Parsed receipt generated from this source document."
         present: "A parsed receipt is associated with this source document."
         link: "View receipt"
         review_link: "Review receipt"

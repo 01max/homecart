@@ -23,6 +23,8 @@ RSpec.describe "Source documents", type: :request do
   def expect_upload_form
     expected_content = [
       I18n.t("source_documents.new.file_label"),
+      I18n.t("source_documents.new.workflow.heading"),
+      "hc-filter-block",
       'data-controller="parser-format-suggestion"',
       "E.Leclerc — Villeneuve sur Lot (physical)",
       "auchan.paper.v1",
@@ -108,6 +110,7 @@ RSpec.describe "Source documents", type: :request do
 
   def expect_source_document_show(receipt)
     expect(response.body).to include("receipt_text.pdf", "<iframe", "latest extraction")
+    expect(response.body).to include("hc-page-toolbar", "hc-evidence-block", "hc-detail-block")
     expect(response.body).not_to include("older extraction")
     expect(response.body).to include(%(href="/receipts#receipt_#{receipt.id}"))
   end

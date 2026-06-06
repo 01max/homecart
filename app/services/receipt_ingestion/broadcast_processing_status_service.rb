@@ -109,7 +109,7 @@ module ReceiptIngestion
     end
 
     def receipts_for(parser_status)
-      receipts = Receipt.includes(store: :retail_brand).recent_first
+      receipts = Receipt.includes(:source_document, store: :retail_brand).recent_first
       return receipts unless parser_status
 
       receipts.where(parser_status: parser_status)

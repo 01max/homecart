@@ -1,25 +1,42 @@
 <div id="<%= ReceiptIngestion::BroadcastProcessingStatusService.receipts_list_dom_id(selected_parser_status) %>">
-  <% if receipts.any? %>
-    <div class="overflow-x-auto rounded border border-slate-200 bg-white shadow-sm">
-      <table class="min-w-full divide-y divide-slate-200 text-sm">
-        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
-          <tr>
-            <th class="px-4 py-3"><%= t("receipts.index.table.purchased_at") %></th>
-            <th class="px-4 py-3"><%= t("receipts.index.table.store") %></th>
-            <th class="px-4 py-3"><%= t("receipts.index.table.parser_status") %></th>
-            <th class="px-4 py-3"><%= t("receipts.index.table.total") %></th>
-            <th class="px-4 py-3"><%= t("receipts.index.table.parser_format") %></th>
-            <th class="px-4 py-3"><%= t("receipts.index.table.actions") %></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          <%= render partial: "receipts/receipt", collection: receipts, as: :receipt %>
-        </tbody>
-      </table>
+  <div class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("receipts.index.workbench.heading") %></h2>
+        <p class="hc-block-description">
+          <% if selected_parser_status %>
+            <%= t("receipts.index.workbench.filtered_description", status: parser_status_label(selected_parser_status)) %>
+          <% else %>
+            <%= t("receipts.index.workbench.description") %>
+          <% end %>
+        </p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t("receipts.index.workbench.count", count: receipts.size) %></p>
     </div>
-  <% else %>
-    <div class="rounded border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
-      <%= t("receipts.index.empty") %>
-    </div>
-  <% end %>
+
+    <% if receipts.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[72rem]">
+          <thead>
+            <tr>
+              <th><%= t("receipts.index.table.purchased_at") %></th>
+              <th><%= t("receipts.index.table.store") %></th>
+              <th><%= t("receipts.index.table.parser_status") %></th>
+              <th><%= t("receipts.index.table.total") %></th>
+              <th><%= t("receipts.index.table.parser_format") %></th>
+              <th><%= t("receipts.index.table.source_document") %></th>
+              <th><%= t("receipts.index.table.actions") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= render partial: "receipts/receipt", collection: receipts, as: :receipt %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t("receipts.index.empty") %></p>
+      </div>
+    <% end %>
+  </div>
 </div>

@@ -36,29 +36,50 @@ en:
     index:
       eyebrow: "Receipts"
       title: "Receipts"
+      description: "Review parsed receipts, filter by parser status, and jump back to source evidence."
       parser_status_filter: "Parser status"
       all_statuses: "All statuses"
       empty: "No receipts found."
       empty_value: "Not available"
+      actions:
+        upload_receipt: "Upload receipt"
+      filters:
+        heading: "Receipt filters"
+        description: "Limit the workbench to receipts in a specific parser state."
+        apply: "Apply filter"
+        clear: "Clear filter"
+      workbench:
+        heading: "Receipt workbench"
+        description: "All parsed receipts ordered by purchase date."
+        filtered_description: "Receipts currently filtered to %{status}."
+        count:
+          one: "%{count} receipt"
+          other: "%{count} receipts"
       table:
         purchased_at: "Purchased"
         store: "Store"
         parser_status: "Status"
         total: "Total"
         parser_format: "Parser format"
+        source_document: "Source"
         actions: "Actions"
+      source_document: "Source"
       review: "Review"
     edit:
       eyebrow: "Receipt review"
       title: "Review receipt"
-      back_to_index: "Back to receipts"
+      description: "Audit extracted evidence and structured receipt data for %{store}."
+      actions:
+        back_to_index: "Back to receipts"
+        source_document: "Source document"
       extraction:
         heading: "Extracted text"
-        engine: "Engine: %{engine}"
+        description: "OCR output from %{engine}, kept read-only for evidence review."
         success: "Succeeded"
         failure: "Failed"
       form:
         heading: "Receipt"
+        description: "Adjust normalized purchase details before saving or final review."
         store: "Store"
         purchased_at: "Purchased at"
         register_number: "Register number"
@@ -75,6 +96,7 @@ en:
         rerun_parser: "Re-run parser"
         rerunning_parser: "Re-running parser..."
         rerun_parser_confirm: "Re-run the parser and replace the current receipt lines, promotions, and payments?"
+        action_hint: "Save changes, mark a validated receipt as reviewed, or re-run extraction with another parser."
         errors:
           heading: "Receipt could not be saved."
       lines:
@@ -117,6 +139,7 @@ en:
         new_payment: "New"
       validators:
         heading: "Validators"
+        description: "Live checks compare the editable table data against receipt totals before review."
         pending: "Pending"
         pending_detail: "Edit receipt fields to recompute this validator."
         pass: "Pass"

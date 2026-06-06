@@ -96,26 +96,26 @@ export default class extends Controller {
   renderValidator(card, status, detail, { state, label, detail: detailText }) {
     const stateClasses = {
       fail: {
-        card: "border-rose-200 bg-rose-50",
-        status: "bg-rose-100 text-rose-800",
-        detail: "text-rose-900"
+        card: "hc-validator-card hc-validator-card--fail",
+        status: "hc-badge hc-badge--fail",
+        detail: "hc-validator-detail"
       },
       pass: {
-        card: "border-emerald-200 bg-emerald-50",
-        status: "bg-emerald-100 text-emerald-800",
-        detail: "text-emerald-900"
+        card: "hc-validator-card hc-validator-card--pass",
+        status: "hc-badge hc-badge--pass",
+        detail: "hc-validator-detail"
       },
       skipped: {
-        card: "border-slate-200 bg-slate-50",
-        status: "bg-slate-100 text-slate-700",
-        detail: "text-slate-700"
+        card: "hc-validator-card hc-validator-card--skipped",
+        status: "hc-badge hc-badge--skipped",
+        detail: "hc-validator-detail"
       }
     }
     const classes = stateClasses[state]
 
-    card.className = `rounded border p-4 ${classes.card}`
-    status.className = `rounded px-2 py-1 text-xs font-medium ${classes.status}`
-    detail.className = `mt-2 text-sm ${classes.detail}`
+    card.className = classes.card
+    status.className = classes.status
+    detail.className = classes.detail
     status.textContent = label
     detail.textContent = detailText
   }

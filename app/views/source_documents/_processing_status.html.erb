@@ -5,30 +5,33 @@
 <% parsing_state = local_assigns[:parsing_state] %>
 <% parsing_state ||= receipt ? "complete" : latest_text_extraction&.success? ? "queued" : latest_text_extraction ? "blocked" : "waiting" %>
 <% state_classes = {
-  "queued" => "bg-sky-50 text-sky-800",
-  "running" => "bg-amber-50 text-amber-800",
-  "complete" => "bg-emerald-50 text-emerald-800",
-  "failed" => "bg-rose-50 text-rose-800",
-  "blocked" => "bg-slate-100 text-slate-700",
-  "waiting" => "bg-slate-100 text-slate-700"
+  "queued" => "hc-badge--queued",
+  "running" => "hc-badge--running",
+  "complete" => "hc-badge--complete",
+  "failed" => "hc-badge--failed",
+  "blocked" => "hc-badge--neutral",
+  "waiting" => "hc-badge--neutral"
 } %>
 <% processing_complete = %w[complete failed].include?(extraction_state) && %w[complete failed blocked].include?(parsing_state) %>
 
 <section id="<%= dom_id(source_document, :processing_status) %>"
          data-source-document-processing-target="status"
          data-processing-complete="<%= processing_complete %>"
-         class="rounded border border-slate-200 bg-white p-5 text-sm shadow-sm">
-  <h2 class="text-lg font-semibold text-slate-950"><%= t("source_documents.show.processing.heading") %></h2>
-  <dl class="mt-4 space-y-3">
+         class="hc-detail-block hc-block text-sm">
+  <div class="hc-block-heading">
+    <h2 class="hc-block-title"><%= t("source_documents.show.processing.heading") %></h2>
+    <p class="hc-block-description"><%= t("source_documents.show.processing.description") %></p>
+  </div>
+  <dl class="mt-4 grid gap-3">
     <div class="flex items-center justify-between gap-3">
-      <dt class="font-medium text-slate-500"><%= t("source_documents.show.processing.extraction") %></dt>
-      <dd class="rounded px-2 py-1 text-xs font-medium <%= state_classes.fetch(extraction_state) %>">
+      <dt class="hc-detail-term"><%= t("source_documents.show.processing.extraction") %></dt>
+      <dd class="hc-badge <%= state_classes.fetch(extraction_state) %>">
         <%= t("source_documents.show.processing.states.#{extraction_state}") %>
       </dd>
     </div>
     <div class="flex items-center justify-between gap-3">
-      <dt class="font-medium text-slate-500"><%= t("source_documents.show.processing.parsing") %></dt>
-      <dd class="rounded px-2 py-1 text-xs font-medium <%= state_classes.fetch(parsing_state) %>">
+      <dt class="hc-detail-term"><%= t("source_documents.show.processing.parsing") %></dt>
+      <dd class="hc-badge <%= state_classes.fetch(parsing_state) %>">
         <%= t("source_documents.show.processing.states.#{parsing_state}") %>
       </dd>
     </div>

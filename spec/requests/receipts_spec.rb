@@ -27,6 +27,18 @@ RSpec.describe "Receipts", type: :request do
     create_listed_receipt(parser_status: "reviewed", purchased_at: Time.current, total_cents: 3_333)
   end
 
+  def expect_receipts_workbench(receipt)
+    expect(response.body).to include("hc-filter-block", "hc-table-block", "hc-table--dense")
+    expect(response.body).to include(I18n.t("receipts.index.workbench.heading"))
+    expect(response.body).to include(%(href="/source_documents/#{receipt.source_document.id}"))
+    expect(response.body).to include(%(href="/receipts/#{receipt.id}/edit"))
+  end
+
+  def expect_receipt_before(rows, first_receipt, second_receipt)
+    expect(rows.index { |row| row.include?(formatted_total(first_receipt)) })
+      .to be < rows.index { |row| row.include?(formatted_total(second_receipt)) }
+  end
+
   def create_review_receipt
     source_document = create(:source_document, store: store)
     text_extraction = create(:text_extraction, source_document: source_document, text: "RAW LINE\nTOTAL 12,34")
@@ -221,17 +233,26 @@ RSpec.describe "Receipts", type: :request do
 
   def expect_review_page(receipt)
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include("hc-page-toolbar", "hc-page-actions", "hc-stack")
+    expect(response.body).to include(I18n.t("receipts.edit.description", store: "E.Leclerc — Villeneuve sur Lot (physical)"))
+    expect(response.body).to include(I18n.t("receipts.edit.actions.source_document"))
+    expect(response.body).to include(source_document_path(receipt.source_document))
+    expect(response.body).to include(I18n.t("receipts.edit.actions.back_to_index"))
     expect(response.body).to include("RAW LINE\nTOTAL 12,34")
+    expect(response.body).to include("hc-evidence-block", "hc-detail-block", "hc-action-block")
     expect_review_form_validator_panel
     expect(response.body).to include(I18n.t("receipts.edit.form.heading"))
+    expect(response.body).to include(I18n.t("receipts.edit.form.description"))
     expect(response.body).to include(I18n.t("receipts.edit.form.store"))
     expect(response.body).to include(I18n.t("receipts.edit.form.total_cents"))
+    expect(response.body).to include(I18n.t("receipts.edit.form.action_hint"))
+    expect(response.body).to include(I18n.t("receipts.edit.extraction.description", engine: receipt.text_extraction.engine))
     expect(response.body).to include(I18n.t("receipts.edit.lines.heading"))
     expect(response.body).to include(%(name="receipt[total_cents]"))
     expect(response.body).to include(%q(name="receipt[receipt_lines_attributes]))
     expect(response.body).to include("lg:grid-cols-2")
     expect(response.body).to include("min-w-[72rem]")
-    expect(response.body).to include("overflow-x-auto")
+    expect(response.body).to include("hc-table-frame")
     expect(response.body).to include(I18n.t("receipts.edit.lines.tr_eligible"))
     expect(response.body).to include(I18n.t("receipts.edit.promotions.heading"))
     expect(response.body).to include(I18n.t("receipts.edit.payments.heading"))
@@ -267,6 +288,7 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include(%(data-receipt-validators-target="articleCountCard"))
     expect(response.body).to include(%(data-receipt-validators-target="paymentsSumCard"))
     expect(response.body).to include(I18n.t("receipts.edit.validators.heading"))
+    expect(response.body).to include(I18n.t("receipts.edit.validators.description"))
     expect(response.body).to include(I18n.t("receipts.edit.validators.totals_sum.label"))
     expect(response.body).to include(I18n.t("receipts.edit.validators.article_count.label"))
     expect(response.body).to include(I18n.t("receipts.edit.validators.payments_sum.label"))
@@ -359,9 +381,9 @@ RSpec.describe "Receipts", type: :request do
 
     rows = receipt_rows
     expect(response).to have_http_status(:ok)
-    expect(rows.index { |row| row.include?(formatted_total(newer_receipt)) })
-      .to be < rows.index { |row| row.include?(formatted_total(older_receipt)) }
+    expect_receipt_before(rows, newer_receipt, older_receipt)
     expect(response.body).to include("E.Leclerc — Villeneuve sur Lot (physical)")
+    expect_receipts_workbench(newer_receipt)
   end
 
   it "filters receipts by parser status" do
