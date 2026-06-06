@@ -82,6 +82,7 @@ en:
         description: "Adjust normalized purchase details before saving or final review."
         store: "Store"
         purchased_at: "Purchased at"
+        purchased_at_placeholder: "DD/MM/YYYY HH:MM"
         register_number: "Register number"
         ticket_number: "Ticket number"
         cashier_code: "Cashier code"

@@ -11,8 +11,10 @@ class ReceiptsController < ApplicationController
   }.freeze
 
   helper_method :parser_status_label, :receipt_line_kind_label, :receipt_line_option_label,
-    :receipt_payment_category_label, :receipt_promotion_kind_label, :receipt_promotion_linking_method_label,
-    :receipt_promotion_unit_label, :receipts_stream_name, :store_label, :unit_of_measure_label
+    :purchased_at_field_value, :receipt_integer_field_value, :receipt_payment_category_label,
+    :receipt_promotion_kind_label, :receipt_promotion_linking_method_label, :receipt_promotion_unit_label,
+    :receipt_quantity_field_step, :receipt_quantity_field_value, :receipts_stream_name, :store_label,
+    :unit_of_measure_label
 
   before_action :load_receipt, only: %i[edit update mark_reviewed rerun_parser]
 
@@ -193,6 +195,22 @@ class ReceiptsController < ApplicationController
     t("receipts.unit_of_measures.#{unit_of_measure}")
   end
 
+  def purchased_at_field_value(receipt)
+    receipt.purchased_at&.strftime("%d/%m/%Y %H:%M")
+  end
+
+  def receipt_integer_field_value(value)
+    value.to_i if value.present?
+  end
+
+  def receipt_quantity_field_value(line)
+    trimmed_decimal_value(line.quantity)
+  end
+
+  def receipt_quantity_field_step(line)
+    line.unit_of_measure == "piece" ? "1" : "0.001"
+  end
+
   def receipt_params
     params.require(:receipt).permit(
       :store_id,
@@ -235,7 +253,7 @@ class ReceiptsController < ApplicationController
         :amount_cents,
         :_destroy
       ]
-    )
+    ).tap { |permitted_params| normalize_purchased_at_param(permitted_params) }
   end
 
   def reviewed_receipt_params
@@ -261,5 +279,36 @@ class ReceiptsController < ApplicationController
         "unallocated"
       end
     end
+  end
+
+  def normalize_purchased_at_param(permitted_params)
+    value = permitted_params[:purchased_at]
+    return if value.blank?
+
+    parsed_value = parse_purchased_at_param(value)
+    permitted_params[:purchased_at] = parsed_value if parsed_value
+  end
+
+  def parse_purchased_at_param(value)
+    return value if value.match?(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}\z/)
+
+    match = value.match(/\A(?<day>\d{1,2})\/(?<month>\d{1,2})\/(?<year>\d{4})[ T](?<hour>\d{1,2}):(?<minute>\d{2})\z/)
+    return unless match
+
+    Time.zone.local(
+      match[:year].to_i,
+      match[:month].to_i,
+      match[:day].to_i,
+      match[:hour].to_i,
+      match[:minute].to_i
+    )
+  rescue ArgumentError
+    nil
+  end
+
+  def trimmed_decimal_value(value)
+    return if value.blank?
+
+    value.to_d.to_s("F").then { |string| string.include?(".") ? string.sub(/0+\z/, "").sub(/\.\z/, "") : string }
   end
 end

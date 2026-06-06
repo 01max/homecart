@@ -30,7 +30,11 @@
             <td>
               <%= line_form.hidden_field :id if line_form.object.persisted? %>
               <%= line_form.label :position, t("receipts.edit.lines.position"), class: "sr-only" %>
-              <%= line_form.number_field :position, class: "hc-input hc-input--compact" %>
+              <%= line_form.text_field :position,
+                                       value: receipt_integer_field_value(line_form.object.position),
+                                       inputmode: "numeric",
+                                       pattern: "[0-9]*",
+                                       class: "hc-input hc-input--compact" %>
             </td>
             <td>
               <%= line_form.label :label, t("receipts.edit.lines.label"), class: "sr-only" %>
@@ -48,7 +52,9 @@
             <td>
               <%= line_form.label :quantity, t("receipts.edit.lines.quantity"), class: "sr-only" %>
               <%= line_form.number_field :quantity,
-                                         step: "0.001",
+                                         value: receipt_quantity_field_value(line_form.object),
+                                         step: receipt_quantity_field_step(line_form.object),
+                                         inputmode: "decimal",
                                          data: { receipt_validators_target: "lineQuantity" },
                                          class: "hc-input hc-input--compact" %>
             </td>
@@ -63,12 +69,18 @@
             <td>
               <%= line_form.label :unit_price_cents, t("receipts.edit.lines.unit_price_cents"), class: "sr-only" %>
               <%= line_form.number_field :unit_price_cents,
+                                         value: receipt_integer_field_value(line_form.object.unit_price_cents),
+                                         step: 1,
+                                         inputmode: "numeric",
                                          data: { receipt_validators_target: "lineUnitPrice" },
                                          class: "hc-input hc-input--compact" %>
             </td>
             <td>
               <%= line_form.label :total_cents, t("receipts.edit.lines.total_cents"), class: "sr-only" %>
               <%= line_form.number_field :total_cents,
+                                         value: receipt_integer_field_value(line_form.object.total_cents),
+                                         step: 1,
+                                         inputmode: "numeric",
                                          data: { receipt_validators_target: "lineTotal" },
                                          class: "hc-input hc-input--compact" %>
             </td>

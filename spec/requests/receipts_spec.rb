@@ -55,14 +55,14 @@ RSpec.describe "Receipts", type: :request do
       declared_article_count: 2,
       parser_status: "needs_review"
     )
-    create(:receipt_line, receipt: receipt, position: 1, label: "Original label", raw_text: "ORIGINAL RAW", total_cents: 1_234)
+    create(:receipt_line, receipt: receipt, position: 1, label: "Original label", raw_text: "ORIGINAL RAW", unit_price_cents: 1_234, total_cents: 1_234)
     receipt
   end
 
   def review_receipt_params
     {
       receipt: {
-        purchased_at: "2026-06-02T10:30",
+        purchased_at: "02/06/2026 10:30",
         register_number: "202",
         ticket_number: "54321",
         cashier_code: "D34",
@@ -263,7 +263,29 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include(I18n.t("receipts.edit.form.rerun_parser"))
     expect(response.body).to include(rerun_parser_receipt_path(receipt))
     expect(response.body).to include(%(name="receipt[parser_format]"))
+    expect_review_form_field_values
     expect_review_evidence_to_be_read_only
+  end
+
+  def expect_review_form_field_values
+    document = Nokogiri::HTML(response.body)
+    purchased_at_field = document.at_css(%(input[name="receipt[purchased_at]"]))
+    position_field = document.css(%(input[name$="[position]"])).first
+    quantity_field = document.at_css(%(input[data-receipt-validators-target="lineQuantity"]))
+    unit_price_field = document.at_css(%(input[data-receipt-validators-target="lineUnitPrice"]))
+    total_field = document.at_css(%(input[data-receipt-validators-target="lineTotal"]))
+
+    expect(purchased_at_field["type"]).to eq("text")
+    expect(purchased_at_field["value"]).to eq("01/06/2026 09:15")
+    expect(purchased_at_field["placeholder"]).to eq(I18n.t("receipts.edit.form.purchased_at_placeholder"))
+    expect(position_field["type"]).to eq("text")
+    expect(position_field["value"]).to eq("1")
+    expect(quantity_field["value"]).to eq("1")
+    expect(quantity_field["step"]).to eq("1")
+    expect(unit_price_field["value"]).to eq("1234")
+    expect(unit_price_field["step"]).to eq("1")
+    expect(total_field["value"]).to eq("1234")
+    expect(total_field["step"]).to eq("1")
   end
 
   def expect_review_evidence_to_be_read_only

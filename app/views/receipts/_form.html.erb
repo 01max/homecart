@@ -72,9 +72,12 @@
 
           <div class="sm:col-span-2">
             <%= form.label :purchased_at, t("receipts.edit.form.purchased_at"), class: "hc-label" %>
-            <%= form.datetime_field :purchased_at,
-                                    value: receipt.purchased_at&.strftime("%Y-%m-%dT%H:%M"),
-                                    class: "hc-input mt-1" %>
+            <%= form.text_field :purchased_at,
+                                value: purchased_at_field_value(receipt),
+                                placeholder: t("receipts.edit.form.purchased_at_placeholder"),
+                                inputmode: "numeric",
+                                autocomplete: "off",
+                                class: "hc-input mt-1" %>
           </div>
 
           <div>
@@ -95,6 +98,9 @@
           <div>
             <%= form.label :total_cents, t("receipts.edit.form.total_cents"), class: "hc-label" %>
             <%= form.number_field :total_cents,
+                                  value: receipt_integer_field_value(receipt.total_cents),
+                                  step: 1,
+                                  inputmode: "numeric",
                                   data: { receipt_validators_target: "receiptTotal" },
                                   class: "hc-input mt-1" %>
           </div>
@@ -102,6 +108,9 @@
           <div>
             <%= form.label :declared_article_count, t("receipts.edit.form.declared_article_count"), class: "hc-label" %>
             <%= form.number_field :declared_article_count,
+                                  value: receipt_integer_field_value(receipt.declared_article_count),
+                                  step: 1,
+                                  inputmode: "numeric",
                                   data: { receipt_validators_target: "declaredArticleCount" },
                                   class: "hc-input mt-1" %>
           </div>
