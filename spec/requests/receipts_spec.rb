@@ -27,6 +27,18 @@ RSpec.describe "Receipts", type: :request do
     create_listed_receipt(parser_status: "reviewed", purchased_at: Time.current, total_cents: 3_333)
   end
 
+  def expect_receipts_workbench(receipt)
+    expect(response.body).to include("hc-filter-block", "hc-table-block", "hc-table--dense")
+    expect(response.body).to include(I18n.t("receipts.index.workbench.heading"))
+    expect(response.body).to include(%(href="/source_documents/#{receipt.source_document.id}"))
+    expect(response.body).to include(%(href="/receipts/#{receipt.id}/edit"))
+  end
+
+  def expect_receipt_before(rows, first_receipt, second_receipt)
+    expect(rows.index { |row| row.include?(formatted_total(first_receipt)) })
+      .to be < rows.index { |row| row.include?(formatted_total(second_receipt)) }
+  end
+
   def create_review_receipt
     source_document = create(:source_document, store: store)
     text_extraction = create(:text_extraction, source_document: source_document, text: "RAW LINE\nTOTAL 12,34")
@@ -359,9 +371,9 @@ RSpec.describe "Receipts", type: :request do
 
     rows = receipt_rows
     expect(response).to have_http_status(:ok)
-    expect(rows.index { |row| row.include?(formatted_total(newer_receipt)) })
-      .to be < rows.index { |row| row.include?(formatted_total(older_receipt)) }
+    expect_receipt_before(rows, newer_receipt, older_receipt)
     expect(response.body).to include("E.Leclerc — Villeneuve sur Lot (physical)")
+    expect_receipts_workbench(newer_receipt)
   end
 
   it "filters receipts by parser status" do

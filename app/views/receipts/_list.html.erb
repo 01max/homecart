@@ -1,8 +1,22 @@
 <div id="<%= ReceiptIngestion::BroadcastProcessingStatusService.receipts_list_dom_id(selected_parser_status) %>">
-  <% if receipts.any? %>
-    <div class="hc-table-block">
+  <div class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("receipts.index.workbench.heading") %></h2>
+        <p class="hc-block-description">
+          <% if selected_parser_status %>
+            <%= t("receipts.index.workbench.filtered_description", status: parser_status_label(selected_parser_status)) %>
+          <% else %>
+            <%= t("receipts.index.workbench.description") %>
+          <% end %>
+        </p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t("receipts.index.workbench.count", count: receipts.size) %></p>
+    </div>
+
+    <% if receipts.any? %>
       <div class="hc-table-frame">
-        <table class="hc-table">
+        <table class="hc-table hc-table--dense min-w-[72rem]">
           <thead>
             <tr>
               <th><%= t("receipts.index.table.purchased_at") %></th>
@@ -10,6 +24,7 @@
               <th><%= t("receipts.index.table.parser_status") %></th>
               <th><%= t("receipts.index.table.total") %></th>
               <th><%= t("receipts.index.table.parser_format") %></th>
+              <th><%= t("receipts.index.table.source_document") %></th>
               <th><%= t("receipts.index.table.actions") %></th>
             </tr>
           </thead>
@@ -18,10 +33,10 @@
           </tbody>
         </table>
       </div>
-    </div>
-  <% else %>
-    <div class="hc-block hc-body text-sm">
-      <%= t("receipts.index.empty") %>
-    </div>
-  <% end %>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t("receipts.index.empty") %></p>
+      </div>
+    <% end %>
+  </div>
 </div>

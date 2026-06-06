@@ -137,7 +137,7 @@ class ReceiptsController < ApplicationController
   end
 
   def filtered_receipts
-    receipts = Receipt.includes(store: :retail_brand).recent_first
+    receipts = Receipt.includes(:source_document, store: :retail_brand).recent_first
     return receipts unless @selected_parser_status
 
     receipts.where(parser_status: @selected_parser_status)

@@ -29,9 +29,16 @@
   <td class="hc-code whitespace-nowrap"><%= receipt.parser_format_before_type_cast %></td>
   <td>
     <div class="hc-table-cell-actions">
-    <%= link_to t("receipts.index.review"),
-                edit_receipt_path(receipt),
-                class: "hc-link text-sm" %>
+      <%= link_to t("receipts.index.source_document"),
+                  source_document_path(receipt.source_document),
+                  class: "hc-link text-sm" %>
+    </div>
+  </td>
+  <td>
+    <div class="hc-table-cell-actions">
+      <%= link_to t("receipts.index.review"),
+                  edit_receipt_path(receipt),
+                  class: "hc-link text-sm" %>
     </div>
   </td>
 </tr>

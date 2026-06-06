@@ -36,17 +36,34 @@ en:
     index:
       eyebrow: "Receipts"
       title: "Receipts"
+      description: "Review parsed receipts, filter by parser status, and jump back to source evidence."
       parser_status_filter: "Parser status"
       all_statuses: "All statuses"
       empty: "No receipts found."
       empty_value: "Not available"
+      actions:
+        upload_receipt: "Upload receipt"
+      filters:
+        heading: "Receipt filters"
+        description: "Limit the workbench to receipts in a specific parser state."
+        apply: "Apply filter"
+        clear: "Clear filter"
+      workbench:
+        heading: "Receipt workbench"
+        description: "All parsed receipts ordered by purchase date."
+        filtered_description: "Receipts currently filtered to %{status}."
+        count:
+          one: "%{count} receipt"
+          other: "%{count} receipts"
       table:
         purchased_at: "Purchased"
         store: "Store"
         parser_status: "Status"
         total: "Total"
         parser_format: "Parser format"
+        source_document: "Source"
         actions: "Actions"
+      source_document: "Source"
       review: "Review"
     edit:
       eyebrow: "Receipt review"
