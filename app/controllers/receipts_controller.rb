@@ -61,7 +61,7 @@ class ReceiptsController < ApplicationController
 
   def load_receipt
     @receipt = Receipt
-               .includes(:text_extraction, :receipt_lines, :receipt_promotions, :receipt_payments, store: :retail_brand)
+               .includes(:source_document, :text_extraction, :receipt_lines, :receipt_promotions, :receipt_payments, store: :retail_brand)
                .find(params[:id])
   end
 

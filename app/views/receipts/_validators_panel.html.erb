@@ -1,5 +1,8 @@
 <section class="hc-validator-block">
-  <h3 class="hc-block-title"><%= t("receipts.edit.validators.heading") %></h3>
+  <div class="hc-block-heading">
+    <h3 class="hc-block-title"><%= t("receipts.edit.validators.heading") %></h3>
+    <p class="hc-block-description"><%= t("receipts.edit.validators.description") %></p>
+  </div>
 
   <div class="hc-validator-list md:grid-cols-3">
     <% %w[totals_sum article_count payments_sum].each do |validator| %>

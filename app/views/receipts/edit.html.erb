@@ -1,16 +1,21 @@
 <% content_for :title, t(".title") %>
 
-<section>
-  <div class="hc-page-header flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+<section class="hc-stack">
+  <div class="hc-page-toolbar">
     <div>
       <p class="hc-eyebrow"><%= t(".eyebrow") %></p>
       <h1 class="hc-heading-lg mt-2"><%= t(".title") %></h1>
-      <p class="hc-body mt-2 text-sm"><%= store_label(@receipt.store) %></p>
+      <p class="hc-body mt-2"><%= t(".description", store: store_label(@receipt.store)) %></p>
     </div>
 
-    <%= link_to t(".back_to_index"),
-                receipts_path(anchor: dom_id(@receipt)),
-                class: "hc-button hc-button--secondary" %>
+    <div class="hc-page-actions">
+      <%= link_to t(".actions.source_document"),
+                  source_document_path(@receipt.source_document),
+                  class: "hc-button hc-button--subtle" %>
+      <%= link_to t(".actions.back_to_index"),
+                  receipts_path(anchor: dom_id(@receipt)),
+                  class: "hc-button hc-button--secondary" %>
+    </div>
   </div>
 
   <%= turbo_frame_tag dom_id(@receipt, :review_form), class: "hc-review-frame" do %>
