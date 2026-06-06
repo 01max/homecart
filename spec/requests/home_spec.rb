@@ -34,7 +34,6 @@ RSpec.describe "Home", type: :request do
 
   def expect_dashboard_activity(receipt, source_document)
     expect(response.body).to include(I18n.t("home.index.metrics.needs_review.support", count: 1))
-    expect(response.body).to include(%(href="/source_documents"))
     expect(response.body).to include(%(href="/receipts"))
     expect(response.body).to include(%(href="/receipts?parser_status=needs_review"))
     expect(response.body).to include("Whole Foods Market")

@@ -54,7 +54,6 @@
         <nav class="hc-workspace-nav" aria-label="<%= t("app.nav.menu") %>">
           <%= workspace_nav_link t("app.nav.dashboard"), root_path, icon: "D", active: controller_name == "home" %>
           <%= workspace_nav_link t("app.nav.receipts"), receipts_path, icon: "R", active: controller_name == "receipts" %>
-          <%= workspace_nav_link t("app.nav.source_documents"), source_documents_path, icon: "S", active: controller_name == "source_documents" %>
         </nav>
 
         <div class="hc-workspace-sidebar-footer">
@@ -81,7 +80,6 @@
         <nav class="hc-mobile-nav-panel" aria-label="<%= t("app.nav.menu") %>">
           <%= workspace_nav_link t("app.nav.dashboard"), root_path, icon: "D", active: controller_name == "home" %>
           <%= workspace_nav_link t("app.nav.receipts"), receipts_path, icon: "R", active: controller_name == "receipts" %>
-          <%= workspace_nav_link t("app.nav.source_documents"), source_documents_path, icon: "S", active: controller_name == "source_documents" %>
           <%= link_to t("app.nav.upload_receipt"),
                       new_source_document_path,
                       class: "hc-button hc-button--primary" %>

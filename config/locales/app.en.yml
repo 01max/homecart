@@ -8,7 +8,6 @@ en:
       menu: "Menu"
       collapse: "Collapse navigation"
       receipts: "Receipts"
-      source_documents: "Sources"
       upload_receipt: "Upload receipt"
     pwa:
       description: "homecart is a grocery companion app that helps you manage your grocery shopping."

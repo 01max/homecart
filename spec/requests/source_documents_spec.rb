@@ -115,20 +115,6 @@ RSpec.describe "Source documents", type: :request do
     expect(response.body).to include(%(href="/receipts/#{receipt.id}"))
   end
 
-  def expect_source_documents_index(source_document, receipt)
-    expect(response).to have_http_status(:ok)
-    expect(response.body).to include(
-      I18n.t("source_documents.index.title"),
-      I18n.t("source_documents.index.workbench.heading"),
-      "hc-table-block",
-      "E.Leclerc — Villeneuve sur Lot (physical)",
-      "leclerc.paper.v1",
-      "application/pdf"
-    )
-    expect(response.body).to include(%(href="/source_documents/#{source_document.id}"))
-    expect(response.body).to include(%(href="/receipts/#{receipt.id}"))
-  end
-
   def create_showable_source_document
     source_document = create(:source_document, store: store)
     attach_original_file(source_document)
@@ -194,14 +180,6 @@ RSpec.describe "Source documents", type: :request do
     expect(Receipt::ProcessSourceDocumentJob).to have_received(:perform_later).with(source_document)
     expect(response).to redirect_to(source_document_path(source_document))
     expect(flash[:notice]).to eq(I18n.t("source_documents.create.success"))
-  end
-
-  it "lists source documents with extraction state and receipt links" do
-    source_document, receipt = create_showable_source_document
-
-    get source_documents_path
-
-    expect_source_documents_index(source_document, receipt)
   end
 
   it "redirects duplicate uploads to the existing source document without enqueueing processing" do

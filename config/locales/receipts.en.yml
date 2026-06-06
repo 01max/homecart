@@ -43,11 +43,9 @@ en:
       empty_value: "Not available"
       actions:
         upload_receipt: "Upload receipt"
-        view_source_documents: "View sources"
       filters:
         heading: "Receipt filters"
         description: "Limit the workbench to receipts in a specific parser state."
-        apply: "Apply filter"
         clear: "Clear filter"
       workbench:
         heading: "Receipt workbench"

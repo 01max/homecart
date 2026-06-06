@@ -2,6 +2,7 @@ require "rails_helper"
 
 RSpec.describe "evidence routes", type: :routing do
   it "does not expose source document mutation routes" do
+    expect(get: "/source_documents").not_to be_routable
     expect(get: "/source_documents/source-document-id/edit").not_to be_routable
     expect(patch: "/source_documents/source-document-id").not_to be_routable
     expect(put: "/source_documents/source-document-id").not_to be_routable

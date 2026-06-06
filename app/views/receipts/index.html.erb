@@ -11,7 +11,6 @@
 
     <div class="hc-page-actions">
       <%= link_to t(".actions.upload_receipt"), new_source_document_path, class: "hc-button hc-button--primary" %>
-      <%= link_to t(".actions.view_source_documents"), source_documents_path, class: "hc-button hc-button--secondary" %>
     </div>
   </div>
 
@@ -31,12 +30,11 @@
                         onchange: "this.form.requestSubmit()" %>
       </div>
 
-      <div class="hc-filter-actions">
-        <%= form.submit t(".filters.apply"), class: "hc-button hc-button--secondary" %>
-        <% if @selected_parser_status %>
+      <% if @selected_parser_status %>
+        <div class="hc-filter-actions">
           <%= link_to t(".filters.clear"), receipts_path, class: "hc-button hc-button--subtle" %>
-        <% end %>
-      </div>
+        </div>
+      <% end %>
     </div>
   <% end %>
 

@@ -11,11 +11,11 @@
   </div>
 
   <div class="hc-content-grid hc-content-grid--three">
-    <%= link_to source_documents_path, class: "hc-metric-block" do %>
+    <section class="hc-metric-block">
       <p class="hc-metric-label"><%= t(".metrics.source_documents.label") %></p>
       <p class="hc-metric-value hc-metric-value--primary"><%= number_with_delimiter(@source_document_count) %></p>
       <p class="hc-metric-support"><%= t(".metrics.source_documents.support") %></p>
-    <% end %>
+    </section>
 
     <%= link_to receipts_path, class: "hc-metric-block" do %>
       <p class="hc-metric-label"><%= t(".metrics.receipts.label") %></p>
