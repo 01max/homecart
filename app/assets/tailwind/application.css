@@ -212,9 +212,10 @@
   .hc-workspace-brand-mark {
     align-items: center;
     border-radius: var(--hc-radius);
-    background: var(--hc-primary);
-    color: var(--hc-on-primary);
+    background: var(--hc-focus-ring);
+    color: var(--hc-primary);
     display: inline-flex;
+    font-weight: 700;
     flex: 0 0 auto;
     height: 3rem;
     justify-content: center;

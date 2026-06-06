@@ -52,7 +52,6 @@
         </div>
 
         <nav class="hc-workspace-nav" aria-label="<%= t("app.nav.menu") %>">
-          <%= workspace_nav_link t("app.nav.dashboard"), root_path, icon: "D", active: controller_name == "home" %>
           <%= workspace_nav_link t("app.nav.receipts"), receipts_path, icon: "R", active: controller_name == "receipts" %>
         </nav>
 
