@@ -32,10 +32,25 @@ RSpec.describe Parser::Auchan::Paper::V1 do
 
       expect(result.lines.pluck(:raw_text)).not_to include("(Erreur de balisage)", "> Garantie légale 24 mois")
     end
+
+    it "keeps selfscan correction rows out of WAAOH promotions" do
+      result = described_class.new(text: cashier_text_with_scan_corrections).call
+
+      expect(result.promotions).to contain_exactly(cashier_waaoh_promotion)
+      expect(result.lines.pluck(:label)).not_to include("ARTICLE MANQUANT", "ARTICLE RETIRE")
+      expect(result.warnings).to contain_exactly(selfscan_warning("Nouveau scan incorrect"))
+    end
   end
 
   def parse_fixture(path)
     described_class.new(text: Rails.root.join("spec/fixtures/files", path).read).call
+  end
+
+  def cashier_text_with_scan_corrections
+    Rails.root.join("spec/fixtures/files/parser/auchan_paper_v1_cashier.txt").read.sub(
+      "TOT. ARTICLES ELIGIBLES TR",
+      "-ARTICLE MANQUANT 1,20\n+ARTICLE RETIRE 2,30\nNouveau scan incorrect\nTOT. ARTICLES ELIGIBLES TR"
+    )
   end
 
   def cashier_receipt_attributes

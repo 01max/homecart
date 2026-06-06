@@ -77,6 +77,8 @@ module Parser
           return true unless state.items_started?
           return true if state.items_finished?
           return true if line.match?(/Début Selfscan|Fin Selfscan|^Articles avec Remise$/)
+          return true if scan_warning_line?(line)
+          return true if scan_correction_line?(line)
           return true if line.match?(/\A(?:TOTAL REMISES|TVAS|Brut|Montant total des remises|Reçu |TOT\. |VOTRE COMPTE)/)
           return true if line.start_with?("(", ">")
 
@@ -157,8 +159,10 @@ module Parser
               next
             end
 
+            in_waaoh_section = false if scan_warning_line?(line)
             in_waaoh_section = false if line.match?(/\A(?:Reçu|TOT\.|Merci|TVAS|Brut|\d+ Articles|Total)(?:\b|\s)/)
             next unless in_waaoh_section
+            next if scan_correction_line?(line)
 
             line.match(WAAOH_CREDIT_PATTERN)
           end
@@ -193,6 +197,14 @@ module Parser
 
         def scan_warning_lines
           @scan_warning_lines ||= text_lines.grep(/Lecture partielle|Nouveau scan/i)
+        end
+
+        def scan_warning_line?(line)
+          line.match?(/Lecture partielle|Nouveau scan/i)
+        end
+
+        def scan_correction_line?(line)
+          line.match?(/\A[+-]\s*\S.*\s+\d+,\d{2}\z/)
         end
 
         def purchased_at
