@@ -8,10 +8,6 @@
       <p class="hc-body mt-2"><%= t(".description") %></p>
     </div>
 
-    <div class="hc-page-actions">
-      <%= link_to t(".actions.upload_receipt"), new_source_document_path, class: "hc-button hc-button--primary" %>
-      <%= link_to t(".actions.view_receipts"), receipts_path, class: "hc-button hc-button--secondary" %>
-    </div>
   </div>
 
   <div class="hc-content-grid hc-content-grid--three">
@@ -21,17 +17,17 @@
       <p class="hc-metric-support"><%= t(".metrics.source_documents.support") %></p>
     </section>
 
-    <section class="hc-metric-block">
+    <%= link_to receipts_path, class: "hc-metric-block" do %>
       <p class="hc-metric-label"><%= t(".metrics.receipts.label") %></p>
       <p class="hc-metric-value"><%= number_with_delimiter(@receipt_count) %></p>
       <p class="hc-metric-support"><%= t(".metrics.receipts.support") %></p>
-    </section>
+    <% end %>
 
-    <section class="hc-metric-block">
+    <%= link_to receipts_path(parser_status: "needs_review"), class: "hc-metric-block" do %>
       <p class="hc-metric-label"><%= t(".metrics.needs_review.label") %></p>
       <p class="hc-metric-value hc-metric-value--warning"><%= number_with_delimiter(@needs_review_count) %></p>
       <p class="hc-metric-support hc-metric-support--warning"><%= t(".metrics.needs_review.support", count: @needs_review_count) %></p>
-    </section>
+    <% end %>
   </div>
 
   <div class="hc-content-grid hc-content-grid--two">
@@ -41,7 +37,7 @@
           <h2 class="hc-block-title"><%= t(".recent_receipts.heading") %></h2>
           <p class="hc-block-description"><%= t(".recent_receipts.description") %></p>
         </div>
-        <div class="hc-block-actions">
+        <div class="hc-block-actions hc-block-actions--middle">
           <%= link_to t(".recent_receipts.action"), receipts_path, class: "hc-button hc-button--subtle" %>
         </div>
       </div>

@@ -40,6 +40,9 @@
     --hc-on-tertiary: #ffffff;
     --hc-tertiary-container: #ffbb54;
     --hc-on-tertiary-container: #734b00;
+    --hc-success: #2f7d32;
+    --hc-success-container: #c8f0c9;
+    --hc-on-success-container: #10451c;
     --hc-error: #ba1a1a;
     --hc-on-error: #ffffff;
     --hc-error-container: #ffdad6;
@@ -119,8 +122,17 @@
       grid-template-columns: 18rem minmax(0, 1fr);
     }
 
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) {
+      grid-template-columns: 5.5rem minmax(0, 1fr);
+    }
+
     .hc-workspace-shell--rail {
       grid-template-columns: 5.5rem minmax(0, 1fr);
+    }
+
+    body.hc-workspace-shell {
+      height: 100vh;
+      overflow: hidden;
     }
   }
 
@@ -137,8 +149,45 @@
     .hc-workspace-sidebar {
       display: flex;
       flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
       position: sticky;
       top: 0;
+    }
+  }
+
+  .hc-workspace-sidebar-header {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .hc-workspace-rail-button {
+    align-items: center;
+    border: 1px solid var(--hc-outline-variant);
+    border-radius: var(--hc-radius);
+    color: var(--hc-on-surface-variant);
+    cursor: pointer;
+    display: none;
+    flex: 0 0 auto;
+    font-size: 1.25rem;
+    font-weight: 700;
+    height: 2.25rem;
+    justify-content: center;
+    line-height: 1;
+    width: 2.25rem;
+  }
+
+  .hc-workspace-rail-button:hover {
+    background: var(--hc-surface-container-low);
+    color: var(--hc-primary);
+  }
+
+  @media (min-width: 64rem) {
+    .hc-workspace-rail-button {
+      display: inline-flex;
     }
   }
 
@@ -245,14 +294,18 @@
   }
 
   @media (min-width: 64rem) {
-    .hc-workspace-shell--rail .hc-workspace-sidebar-inner {
+    .hc-workspace-shell--rail .hc-workspace-sidebar-inner,
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) .hc-workspace-sidebar-inner {
       align-items: center;
       padding-inline: 0.75rem;
     }
 
     .hc-workspace-shell--rail .hc-workspace-brand-copy,
     .hc-workspace-shell--rail .hc-workspace-nav-label,
-    .hc-workspace-shell--rail .hc-workspace-sidebar-footer {
+    .hc-workspace-shell--rail .hc-workspace-sidebar-footer,
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) .hc-workspace-brand-copy,
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) .hc-workspace-nav-label,
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) .hc-workspace-sidebar-footer {
       clip: rect(0, 0, 0, 0);
       clip-path: inset(50%);
       height: 1px;
@@ -262,7 +315,8 @@
       width: 1px;
     }
 
-    .hc-workspace-shell--rail .hc-workspace-nav-link {
+    .hc-workspace-shell--rail .hc-workspace-nav-link,
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) .hc-workspace-nav-link {
       border-left-width: 0;
       border-radius: var(--hc-radius);
       justify-content: center;
@@ -271,8 +325,18 @@
     }
 
     .hc-workspace-shell--rail .hc-workspace-nav-link[aria-current="page"],
-    .hc-workspace-shell--rail .hc-workspace-nav-link--active {
+    .hc-workspace-shell--rail .hc-workspace-nav-link--active,
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) .hc-workspace-nav-link[aria-current="page"],
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) .hc-workspace-nav-link--active {
       box-shadow: inset 4px 0 0 var(--hc-primary);
+    }
+
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) .hc-workspace-sidebar-header {
+      flex-direction: column;
+    }
+
+    .hc-workspace-shell--sidebar:has(.hc-workspace-rail-toggle:checked) .hc-workspace-rail-button {
+      transform: rotate(180deg);
     }
   }
 
@@ -310,6 +374,14 @@
 
   .hc-workspace-main {
     min-width: 0;
+  }
+
+  @media (min-width: 64rem) {
+    .hc-workspace-main {
+      height: 100vh;
+      min-height: 0;
+      overflow-y: auto;
+    }
   }
 
   .hc-workspace-main-inner {
@@ -449,7 +521,7 @@
     gap: 0.75rem;
     justify-content: space-between;
     min-width: 0;
-    padding: 1.25rem 1.25rem 0;
+    padding: 1.25rem 1.25rem;
   }
 
   @media (min-width: 48rem) {
@@ -503,6 +575,10 @@
     }
   }
 
+  .hc-block-actions--middle {
+    align-self: center;
+  }
+
   .hc-block-body {
     padding: 1.25rem;
   }
@@ -520,6 +596,18 @@
     display: grid;
     gap: 0.75rem;
     padding: 1.25rem;
+  }
+
+  a.hc-metric-block {
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  }
+
+  a.hc-metric-block:hover {
+    border-color: var(--hc-primary);
+    box-shadow: var(--hc-shadow-lifted);
+    transform: translateY(-1px);
   }
 
   .hc-metric-label {
@@ -695,8 +783,8 @@
   }
 
   .hc-validator-block--pass {
-    border-color: var(--hc-primary-container);
-    background: color-mix(in srgb, var(--hc-primary-container) 18%, var(--hc-surface-container-lowest));
+    border-color: var(--hc-success-container);
+    background: color-mix(in srgb, var(--hc-success-container) 42%, var(--hc-surface-container-lowest));
   }
 
   .hc-validator-block--fail {
@@ -1032,8 +1120,8 @@
   .hc-badge--success,
   .hc-badge--pass,
   .hc-badge--complete {
-    background: var(--hc-primary-container);
-    color: var(--hc-on-primary-container);
+    background: var(--hc-success-container);
+    color: var(--hc-on-success-container);
   }
 
   .hc-badge--warning,
@@ -1141,8 +1229,8 @@
   }
 
   .hc-validator-card--pass {
-    border-color: var(--hc-primary-container);
-    background: color-mix(in srgb, var(--hc-primary-container) 28%, var(--hc-surface-container-lowest));
+    border-color: var(--hc-success-container);
+    background: color-mix(in srgb, var(--hc-success-container) 52%, var(--hc-surface-container-lowest));
   }
 
   .hc-validator-card--fail {
@@ -1169,9 +1257,9 @@
   }
 
   .hc-flash--notice {
-    border-color: var(--hc-primary-container);
-    background: color-mix(in srgb, var(--hc-primary-container) 28%, var(--hc-surface-container-lowest));
-    color: var(--hc-on-primary-container);
+    border-color: var(--hc-success-container);
+    background: color-mix(in srgb, var(--hc-success-container) 52%, var(--hc-surface-container-lowest));
+    color: var(--hc-on-success-container);
   }
 
   .hc-flash--alert {

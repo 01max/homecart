@@ -23,16 +23,33 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="hc-app-shell hc-workspace-shell hc-workspace-shell--sidebar antialiased">
+  <body class="hc-app-shell hc-workspace-shell hc-workspace-shell--sidebar antialiased"
+        data-controller="workspace-nav">
+    <input type="checkbox"
+           id="workspace_nav_collapsed"
+           class="hc-workspace-rail-toggle sr-only"
+           data-workspace-nav-target="toggle"
+           data-action="workspace-nav#save"
+           aria-label="<%= t("app.nav.collapse") %>">
+
     <aside class="hc-workspace-sidebar">
       <div class="hc-workspace-sidebar-inner">
-        <%= link_to root_path, class: "hc-workspace-brand" do %>
-          <span class="hc-workspace-brand-mark" aria-hidden="true">hc</span>
-          <span class="hc-workspace-brand-copy">
-            <span class="hc-workspace-brand-name"><%= t("app.title") %></span>
-            <span class="hc-workspace-brand-tagline"><%= t("app.nav.tagline") %></span>
-          </span>
-        <% end %>
+        <div class="hc-workspace-sidebar-header">
+          <%= link_to root_path, class: "hc-workspace-brand" do %>
+            <span class="hc-workspace-brand-mark" aria-hidden="true">hc</span>
+            <span class="hc-workspace-brand-copy">
+              <span class="hc-workspace-brand-name"><%= t("app.title") %></span>
+              <span class="hc-workspace-brand-tagline"><%= t("app.nav.tagline") %></span>
+            </span>
+          <% end %>
+
+          <label for="workspace_nav_collapsed"
+                 class="hc-workspace-rail-button"
+                 title="<%= t("app.nav.collapse") %>">
+            <span aria-hidden="true">&lsaquo;</span>
+            <span class="sr-only"><%= t("app.nav.collapse") %></span>
+          </label>
+        </div>
 
         <nav class="hc-workspace-nav" aria-label="<%= t("app.nav.menu") %>">
           <%= workspace_nav_link t("app.nav.dashboard"), root_path, icon: "D", active: controller_name == "home" %>
