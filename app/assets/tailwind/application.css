@@ -1159,6 +1159,7 @@
     color: var(--hc-on-surface);
     font-size: 0.875rem;
     min-width: 100%;
+    width: 100%;
   }
 
   .hc-table--fixed {
