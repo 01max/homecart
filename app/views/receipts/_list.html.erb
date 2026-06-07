@@ -1,3 +1,23 @@
+<% current_sort_column = local_assigns.fetch(:sort_column, "purchased_at") %>
+<% current_sort_direction = local_assigns.fetch(:sort_direction, "desc") %>
+<% sort_link_params = lambda do |column|
+     next_direction = current_sort_column == column && current_sort_direction == "asc" ? "desc" : "asc"
+     { parser_status: selected_parser_status, sort: column, direction: next_direction }.compact
+   end %>
+<% sort_indicator = lambda do |column|
+     next "" unless current_sort_column == column
+
+     current_sort_direction == "asc" ? "↑" : "↓"
+   end %>
+<% sort_label = lambda do |column, label|
+     next_direction = current_sort_column == column && current_sort_direction == "asc" ? "desc" : "asc"
+     t(
+       "receipts.index.sort.label",
+       column: label,
+       direction: t("receipts.index.sort.directions.#{next_direction}")
+     )
+   end %>
+
 <div id="<%= ReceiptIngestion::BroadcastProcessingStatusService.receipts_list_dom_id(selected_parser_status) %>">
   <div class="hc-table-block">
     <div class="hc-block-header">
@@ -19,11 +39,46 @@
         <table class="hc-table hc-table--dense min-w-[72rem]">
           <thead>
             <tr>
-              <th><%= t("receipts.index.table.purchased_at") %></th>
-              <th><%= t("receipts.index.table.store") %></th>
-              <th><%= t("receipts.index.table.parser_status") %></th>
-              <th><%= t("receipts.index.table.total") %></th>
-              <th><%= t("receipts.index.table.parser_format") %></th>
+              <th>
+                <%= link_to receipts_path(sort_link_params.call("purchased_at")),
+                            class: "hc-link whitespace-nowrap",
+                            aria: { label: sort_label.call("purchased_at", t("receipts.index.table.purchased_at")) } do %>
+                  <%= t("receipts.index.table.purchased_at") %>
+                  <span aria-hidden="true"><%= sort_indicator.call("purchased_at") %></span>
+                <% end %>
+              </th>
+              <th>
+                <%= link_to receipts_path(sort_link_params.call("store")),
+                            class: "hc-link whitespace-nowrap",
+                            aria: { label: sort_label.call("store", t("receipts.index.table.store")) } do %>
+                  <%= t("receipts.index.table.store") %>
+                  <span aria-hidden="true"><%= sort_indicator.call("store") %></span>
+                <% end %>
+              </th>
+              <th>
+                <%= link_to receipts_path(sort_link_params.call("parser_status")),
+                            class: "hc-link whitespace-nowrap",
+                            aria: { label: sort_label.call("parser_status", t("receipts.index.table.parser_status")) } do %>
+                  <%= t("receipts.index.table.parser_status") %>
+                  <span aria-hidden="true"><%= sort_indicator.call("parser_status") %></span>
+                <% end %>
+              </th>
+              <th>
+                <%= link_to receipts_path(sort_link_params.call("total")),
+                            class: "hc-link whitespace-nowrap",
+                            aria: { label: sort_label.call("total", t("receipts.index.table.total")) } do %>
+                  <%= t("receipts.index.table.total") %>
+                  <span aria-hidden="true"><%= sort_indicator.call("total") %></span>
+                <% end %>
+              </th>
+              <th>
+                <%= link_to receipts_path(sort_link_params.call("parser_format")),
+                            class: "hc-link whitespace-nowrap",
+                            aria: { label: sort_label.call("parser_format", t("receipts.index.table.parser_format")) } do %>
+                  <%= t("receipts.index.table.parser_format") %>
+                  <span aria-hidden="true"><%= sort_indicator.call("parser_format") %></span>
+                <% end %>
+              </th>
               <th><%= t("receipts.index.table.source_document") %></th>
               <th><%= t("receipts.index.table.actions") %></th>
             </tr>

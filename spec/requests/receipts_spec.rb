@@ -4,9 +4,10 @@ RSpec.describe "Receipts", type: :request do
   let(:retail_brand) { create(:retail_brand, slug: "leclerc").tap { |brand| brand.update!(name: "E.Leclerc") } }
   let(:store) { create(:store, retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
 
-  def create_listed_receipt(parser_status:, purchased_at:, total_cents: 1_234)
+  def create_listed_receipt(parser_status:, purchased_at:, total_cents: 1_234, listed_store: store, parser_format: "leclerc.paper.v1")
     create(:receipt,
-      store: store,
+      store: listed_store,
+      parser_format: parser_format,
       parser_status: parser_status,
       purchased_at: purchased_at,
       total_cents: total_cents
@@ -39,6 +40,81 @@ RSpec.describe "Receipts", type: :request do
   def expect_receipt_before(rows, first_receipt, second_receipt)
     expect(rows.index { |row| row.include?(formatted_total(first_receipt)) })
       .to be < rows.index { |row| row.include?(formatted_total(second_receipt)) }
+  end
+
+  def expect_receipts_in_order(rows, receipts)
+    row_positions = receipts.map do |receipt|
+      rows.index { |row| row.include?(formatted_total(receipt)) }
+    end
+
+    expect(row_positions).to all(be_present)
+    expect(row_positions).to eq(row_positions.sort)
+  end
+
+  def expect_default_receipts_index(newer_receipt:, older_receipt:)
+    rows = receipt_rows
+
+    expect(response).to have_http_status(:ok)
+    expect_receipt_before(rows, newer_receipt, older_receipt)
+    expect(response.body).to include("02/06/26 10:30")
+    expect(response.body).to include("E.Leclerc — Villeneuve sur Lot (physical)")
+    expect_default_sort_links
+    expect_receipts_workbench(newer_receipt)
+  end
+
+  def expect_default_sort_links
+    expect(response.body).to include(%(href="/receipts?direction=asc&amp;sort=purchased_at"))
+    expect(response.body).to include(%(href="/receipts?direction=asc&amp;sort=store"))
+    expect(response.body).to include(%(href="/receipts?direction=asc&amp;sort=parser_status"))
+    expect(response.body).to include(%(href="/receipts?direction=asc&amp;sort=total"))
+    expect(response.body).to include(%(href="/receipts?direction=asc&amp;sort=parser_format"))
+  end
+
+  def create_sortable_receipts
+    first_store = create(:store, retail_brand: create(:retail_brand, name: "Bravo Market", slug: "bravo-market"), location_name: "Central", channel: "physical")
+    second_store = create(:store, retail_brand: create(:retail_brand, name: "Auchan", slug: "auchan-sort"), location_name: "North", channel: "physical")
+    third_store = create(:store, retail_brand: create(:retail_brand, name: "Carrefour", slug: "carrefour-sort"), location_name: "South", channel: "drive")
+
+    {
+      first: create_listed_receipt(
+        parser_status: "parsed",
+        purchased_at: Time.zone.local(2026, 6, 1, 9, 15),
+        total_cents: 3_000,
+        listed_store: first_store,
+        parser_format: "u.paper.v2"
+      ),
+      second: create_listed_receipt(
+        parser_status: "needs_review",
+        purchased_at: Time.zone.local(2026, 6, 2, 10, 30),
+        total_cents: 1_000,
+        listed_store: second_store,
+        parser_format: "auchan.paper.v1"
+      ),
+      third: create_listed_receipt(
+        parser_status: "reviewed",
+        purchased_at: Time.zone.local(2026, 6, 3, 11, 45),
+        total_cents: 2_000,
+        listed_store: third_store,
+        parser_format: "leclerc.web.v1"
+      )
+    }
+  end
+
+  def expect_receipts_sorted_by(sort:, direction:, receipts:)
+    get receipts_path, params: { sort: sort, direction: direction }
+
+    expect_receipts_in_order(receipt_rows, receipts)
+  end
+
+  def expect_filtered_receipts_index
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(I18n.t("receipts.parser_statuses.needs_review"))
+    expect(response.body).to include("22,22 €")
+    expect(response.body).not_to include("11,11 €")
+    expect(response.body).not_to include("33,33 €")
+    expect(response.body).to include(%(value="total" type="hidden" name="sort"))
+    expect(response.body).to include(%(value="desc" type="hidden" name="direction"))
+    expect(response.body).to include(%(href="/receipts?direction=desc&amp;sort=total"))
   end
 
   def create_review_receipt
@@ -442,28 +518,30 @@ RSpec.describe "Receipts", type: :request do
   end
 
   it "lists receipts newest first" do
-    older_receipt = create_listed_receipt(parser_status: "parsed", purchased_at: 2.days.ago, total_cents: 1_111)
-    newer_receipt = create_listed_receipt(parser_status: "needs_review", purchased_at: 1.day.ago, total_cents: 2_222)
+    older_receipt = create_listed_receipt(parser_status: "parsed", purchased_at: Time.zone.local(2026, 6, 1, 9, 15), total_cents: 1_111)
+    newer_receipt = create_listed_receipt(parser_status: "needs_review", purchased_at: Time.zone.local(2026, 6, 2, 10, 30), total_cents: 2_222)
 
     get receipts_path
 
-    rows = receipt_rows
-    expect(response).to have_http_status(:ok)
-    expect_receipt_before(rows, newer_receipt, older_receipt)
-    expect(response.body).to include("E.Leclerc — Villeneuve sur Lot (physical)")
-    expect_receipts_workbench(newer_receipt)
+    expect_default_receipts_index(newer_receipt: newer_receipt, older_receipt: older_receipt)
+  end
+
+  it "orders receipts by each sortable index value column" do
+    receipts = create_sortable_receipts
+
+    expect_receipts_sorted_by(sort: "purchased_at", direction: "asc", receipts: receipts.values_at(:first, :second, :third))
+    expect_receipts_sorted_by(sort: "store", direction: "asc", receipts: receipts.values_at(:second, :first, :third))
+    expect_receipts_sorted_by(sort: "parser_status", direction: "asc", receipts: receipts.values_at(:second, :first, :third))
+    expect_receipts_sorted_by(sort: "total", direction: "desc", receipts: receipts.values_at(:first, :third, :second))
+    expect_receipts_sorted_by(sort: "parser_format", direction: "asc", receipts: receipts.values_at(:second, :third, :first))
   end
 
   it "filters receipts by parser status" do
     create_filterable_receipts
 
-    get receipts_path, params: { parser_status: "needs_review" }
+    get receipts_path, params: { parser_status: "needs_review", sort: "total", direction: "desc" }
 
-    expect(response).to have_http_status(:ok)
-    expect(response.body).to include(I18n.t("receipts.parser_statuses.needs_review"))
-    expect(response.body).to include("22,22 €")
-    expect(response.body).not_to include("11,11 €")
-    expect(response.body).not_to include("33,33 €")
+    expect_filtered_receipts_index
   end
 
   it "ignores unknown parser status filters" do
@@ -609,6 +687,6 @@ RSpec.describe "Receipts", type: :request do
   end
 
   def formatted_total(receipt)
-    "#{receipt.total_cents / 100},#{receipt.total_cents % 100} €"
+    format("%d,%02d €", receipt.total_cents / 100, receipt.total_cents % 100)
   end
 end

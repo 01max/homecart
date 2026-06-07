@@ -1,4 +1,7 @@
 en:
+  time:
+    formats:
+      receipt_index: "%d/%m/%y %H:%M"
   receipts:
     store_label: "%{brand} — %{location} (%{channel})"
     parser_statuses:
@@ -63,6 +66,11 @@ en:
         parser_format: "Parser format"
         source_document: "Source"
         actions: "Actions"
+      sort:
+        label: "Sort by %{column} %{direction}"
+        directions:
+          asc: "ascending"
+          desc: "descending"
       source_document: "Source"
       view: "View"
       review: "Review"
