@@ -298,6 +298,21 @@ CREATE TABLE public.categories (
 
 
 --
+-- Name: comparison_units; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comparison_units (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying NOT NULL,
+    symbol character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: manufacturers; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -529,6 +544,14 @@ ALTER TABLE ONLY public.categories
 
 
 --
+-- Name: comparison_units comparison_units_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comparison_units
+    ADD CONSTRAINT comparison_units_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: manufacturers manufacturers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -663,6 +686,27 @@ CREATE INDEX index_categories_on_parent_id ON public.categories USING btree (par
 --
 
 CREATE UNIQUE INDEX index_categories_on_slug ON public.categories USING btree (slug);
+
+
+--
+-- Name: index_comparison_units_on_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_comparison_units_on_normalized_name ON public.comparison_units USING btree (normalized_name);
+
+
+--
+-- Name: index_comparison_units_on_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_comparison_units_on_slug ON public.comparison_units USING btree (slug);
+
+
+--
+-- Name: index_comparison_units_on_symbol; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_comparison_units_on_symbol ON public.comparison_units USING btree (symbol);
 
 
 --
@@ -991,6 +1035,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260608120000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608121000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608122000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608123000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608124000');
 
 
 --
