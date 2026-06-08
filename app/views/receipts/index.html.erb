@@ -15,6 +15,9 @@
   </div>
 
   <%= form_with url: receipts_path, method: :get, local: true, class: "hc-filter-block" do |form| %>
+    <%= form.hidden_field :sort, value: @sort_column %>
+    <%= form.hidden_field :direction, value: @sort_direction %>
+
     <div class="hc-block-heading">
       <h2 class="hc-block-title"><%= t(".filters.heading") %></h2>
       <p class="hc-block-description"><%= t(".filters.description") %></p>
@@ -32,11 +35,17 @@
 
       <% if @selected_parser_status %>
         <div class="hc-filter-actions">
-          <%= link_to t(".filters.clear"), receipts_path, class: "hc-button hc-button--subtle" %>
+          <%= link_to t(".filters.clear"),
+                      receipts_path(sort: @sort_column, direction: @sort_direction),
+                      class: "hc-button hc-button--subtle" %>
         </div>
       <% end %>
     </div>
   <% end %>
 
-  <%= render "receipts/list", receipts: @receipts, selected_parser_status: @selected_parser_status %>
+  <%= render "receipts/list",
+             receipts: @receipts,
+             selected_parser_status: @selected_parser_status,
+             sort_column: @sort_column,
+             sort_direction: @sort_direction %>
 </section>

@@ -8,7 +8,7 @@
 
 <tr id="<%= dom_id(receipt) %>">
   <td class="whitespace-nowrap">
-    <%= receipt.purchased_at ? l(receipt.purchased_at, format: :short) : t("receipts.index.empty_value") %>
+    <%= receipt.purchased_at ? l(receipt.purchased_at, format: :receipt_index) : t("receipts.index.empty_value") %>
   </td>
   <td>
     <%= t(

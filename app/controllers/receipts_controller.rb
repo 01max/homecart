@@ -1,9 +1,51 @@
 # Lists parsed receipts for review and browsing.
 #
-# The index is intentionally query-only: it applies a parser-status filter when
-# the request carries one of the known enum values, then renders receipts newest
-# first by purchase time.
+# The index is intentionally query-only: it applies a parser-status filter and
+# whitelisted ordering when the request carries known values.
 class ReceiptsController < ApplicationController
+  INDEX_SORT_COLUMNS = {
+    "purchased_at" => {
+      default_direction: "desc",
+      joins: nil,
+      orders: {
+        "asc" => [ "receipts.purchased_at ASC NULLS LAST", "receipts.id ASC" ],
+        "desc" => [ "receipts.purchased_at DESC NULLS LAST", "receipts.id DESC" ]
+      }
+    },
+    "store" => {
+      default_direction: "asc",
+      joins: { store: :retail_brand },
+      orders: {
+        "asc" => [ "retail_brands.name ASC", "stores.location_name ASC", "stores.channel ASC", "receipts.id ASC" ],
+        "desc" => [ "retail_brands.name DESC", "stores.location_name DESC", "stores.channel DESC", "receipts.id DESC" ]
+      }
+    },
+    "parser_status" => {
+      default_direction: "asc",
+      joins: nil,
+      orders: {
+        "asc" => [ "receipts.parser_status::text ASC", "receipts.id ASC" ],
+        "desc" => [ "receipts.parser_status::text DESC", "receipts.id DESC" ]
+      }
+    },
+    "total" => {
+      default_direction: "asc",
+      joins: nil,
+      orders: {
+        "asc" => [ "receipts.total_cents ASC NULLS LAST", "receipts.id ASC" ],
+        "desc" => [ "receipts.total_cents DESC NULLS LAST", "receipts.id DESC" ]
+      }
+    },
+    "parser_format" => {
+      default_direction: "asc",
+      joins: nil,
+      orders: {
+        "asc" => [ "receipts.parser_format::text ASC", "receipts.id ASC" ],
+        "desc" => [ "receipts.parser_format::text DESC", "receipts.id DESC" ]
+      }
+    }
+  }.freeze
+
   VALIDATOR_LABEL_KEYS = {
     "validate_totals_sum" => "receipts.edit.validators.totals_sum.label",
     "validate_article_count" => "receipts.edit.validators.article_count.label",
@@ -21,6 +63,8 @@ class ReceiptsController < ApplicationController
   def index
     @parser_statuses = Receipt.parser_statuses.keys
     @selected_parser_status = selected_parser_status
+    @sort_column = receipt_index_sort_column
+    @sort_direction = receipt_index_sort_direction(@sort_column)
     @receipts = filtered_receipts
   end
 
@@ -146,15 +190,35 @@ class ReceiptsController < ApplicationController
   end
 
   def filtered_receipts
-    receipts = Receipt.includes(:source_document, store: :retail_brand).recent_first
-    return receipts unless @selected_parser_status
+    sort_config = INDEX_SORT_COLUMNS.fetch(@sort_column)
+    receipts = Receipt.includes(:source_document, store: :retail_brand)
+    receipts = receipts.joins(sort_config.fetch(:joins)) if sort_config.fetch(:joins)
+    receipts = receipts.where(parser_status: @selected_parser_status) if @selected_parser_status
 
-    receipts.where(parser_status: @selected_parser_status)
+    apply_index_sort(receipts, sort_config)
   end
 
   def selected_parser_status
     parser_status = params[:parser_status].presence
     parser_status if Receipt.parser_statuses.key?(parser_status)
+  end
+
+  def receipt_index_sort_column
+    sort_column = params[:sort].presence
+    INDEX_SORT_COLUMNS.key?(sort_column) ? sort_column : "purchased_at"
+  end
+
+  def receipt_index_sort_direction(sort_column)
+    direction = params[:direction].presence
+    return direction if %w[asc desc].include?(direction)
+
+    INDEX_SORT_COLUMNS.fetch(sort_column).fetch(:default_direction)
+  end
+
+  def apply_index_sort(receipts, sort_config)
+    order_fragments = sort_config.fetch(:orders).fetch(@sort_direction)
+
+    receipts.order(*order_fragments.map { |fragment| Arel.sql(fragment) })
   end
 
   def parser_status_label(parser_status)
