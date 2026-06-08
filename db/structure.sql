@@ -284,6 +284,20 @@ CREATE TABLE public.ar_internal_metadata (
 
 
 --
+-- Name: manufacturers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.manufacturers (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: product_brands; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -493,6 +507,14 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 
 --
+-- Name: manufacturers manufacturers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.manufacturers
+    ADD CONSTRAINT manufacturers_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: product_brands product_brands_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -598,6 +620,20 @@ CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_b
 --
 
 CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
+
+
+--
+-- Name: index_manufacturers_on_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_manufacturers_on_normalized_name ON public.manufacturers USING btree (normalized_name);
+
+
+--
+-- Name: index_manufacturers_on_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_manufacturers_on_slug ON public.manufacturers USING btree (slug);
 
 
 --
@@ -904,6 +940,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260614130000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260615191000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608120000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608121000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608122000');
 
 
 --
