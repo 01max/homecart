@@ -282,6 +282,22 @@ CREATE TABLE public.ar_internal_metadata (
 
 
 --
+-- Name: categories; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.categories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    parent_id uuid,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT categories_parent_not_self CHECK (((parent_id IS NULL) OR (parent_id <> id)))
+);
+
+
+--
 -- Name: manufacturers; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -505,6 +521,14 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 
 --
+-- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.categories
+    ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: manufacturers manufacturers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -618,6 +642,27 @@ CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_b
 --
 
 CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
+
+
+--
+-- Name: index_categories_on_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_categories_on_normalized_name ON public.categories USING btree (normalized_name);
+
+
+--
+-- Name: index_categories_on_parent_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_categories_on_parent_id ON public.categories USING btree (parent_id);
+
+
+--
+-- Name: index_categories_on_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_categories_on_slug ON public.categories USING btree (slug);
 
 
 --
@@ -845,6 +890,14 @@ ALTER TABLE ONLY public.receipt_lines
 
 
 --
+-- Name: categories fk_rails_82f48f7407; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.categories
+    ADD CONSTRAINT fk_rails_82f48f7407 FOREIGN KEY (parent_id) REFERENCES public.categories(id);
+
+
+--
 -- Name: text_extractions fk_rails_848b654367; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -937,6 +990,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260606200500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608120000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608121000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608122000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608123000');
 
 
 --
