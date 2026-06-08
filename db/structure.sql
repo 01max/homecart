@@ -284,6 +284,21 @@ CREATE TABLE public.ar_internal_metadata (
 
 
 --
+-- Name: product_brands; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_brands (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    retail_brand_id uuid,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: receipt_lines; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -478,6 +493,14 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 
 --
+-- Name: product_brands product_brands_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_brands
+    ADD CONSTRAINT product_brands_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: receipt_lines receipt_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -575,6 +598,27 @@ CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_b
 --
 
 CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
+
+
+--
+-- Name: index_product_brands_on_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_brands_on_normalized_name ON public.product_brands USING btree (normalized_name);
+
+
+--
+-- Name: index_product_brands_on_retail_brand_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_product_brands_on_retail_brand_id ON public.product_brands USING btree (retail_brand_id);
+
+
+--
+-- Name: index_product_brands_on_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_brands_on_slug ON public.product_brands USING btree (slug);
 
 
 --
@@ -791,6 +835,14 @@ ALTER TABLE ONLY public.active_storage_attachments
 
 
 --
+-- Name: product_brands fk_rails_c55d12d216; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_brands
+    ADD CONSTRAINT fk_rails_c55d12d216 FOREIGN KEY (retail_brand_id) REFERENCES public.retail_brands(id);
+
+
+--
 -- Name: receipt_promotions fk_rails_e0f65dc69f; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -851,6 +903,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260606200500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260614130000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260615191000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608120000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608121000');
 
 
 --
