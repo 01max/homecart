@@ -82,6 +82,17 @@ CREATE TYPE public.parser_format AS ENUM (
 
 
 --
+-- Name: product_alternative_equivalence; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.product_alternative_equivalence AS ENUM (
+    'equivalent',
+    'comparable_size',
+    'different_size'
+);
+
+
+--
 -- Name: receipt_line_kind; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -323,6 +334,33 @@ CREATE TABLE public.manufacturers (
     name character varying NOT NULL,
     normalized_name character varying NOT NULL,
     slug character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: product_alternative_group_memberships; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_alternative_group_memberships (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    product_alternative_group_id uuid NOT NULL,
+    product_variant_id uuid NOT NULL,
+    equivalence public.product_alternative_equivalence NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: product_alternative_groups; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_alternative_groups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    category_id uuid NOT NULL,
+    name character varying NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -600,6 +638,22 @@ ALTER TABLE ONLY public.manufacturers
 
 
 --
+-- Name: product_alternative_group_memberships product_alternative_group_memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_alternative_group_memberships
+    ADD CONSTRAINT product_alternative_group_memberships_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: product_alternative_groups product_alternative_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_alternative_groups
+    ADD CONSTRAINT product_alternative_groups_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: product_brands product_brands_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -724,6 +778,27 @@ CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.ac
 
 
 --
+-- Name: index_alt_group_memberships_on_group_and_variant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_alt_group_memberships_on_group_and_variant ON public.product_alternative_group_memberships USING btree (product_alternative_group_id, product_variant_id);
+
+
+--
+-- Name: index_alt_group_memberships_on_group_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alt_group_memberships_on_group_id ON public.product_alternative_group_memberships USING btree (product_alternative_group_id);
+
+
+--
+-- Name: index_alt_group_memberships_on_variant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alt_group_memberships_on_variant_id ON public.product_alternative_group_memberships USING btree (product_variant_id);
+
+
+--
 -- Name: index_categories_on_normalized_name; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -777,6 +852,20 @@ CREATE UNIQUE INDEX index_manufacturers_on_normalized_name ON public.manufacture
 --
 
 CREATE UNIQUE INDEX index_manufacturers_on_slug ON public.manufacturers USING btree (slug);
+
+
+--
+-- Name: index_product_alternative_groups_on_category_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_product_alternative_groups_on_category_id ON public.product_alternative_groups USING btree (category_id);
+
+
+--
+-- Name: index_product_alternative_groups_on_category_id_and_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_alternative_groups_on_category_id_and_name ON public.product_alternative_groups USING btree (category_id, name);
 
 
 --
@@ -1043,6 +1132,14 @@ ALTER TABLE ONLY public.products
 
 
 --
+-- Name: product_alternative_group_memberships fk_rails_23ff1e1723; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_alternative_group_memberships
+    ADD CONSTRAINT fk_rails_23ff1e1723 FOREIGN KEY (product_alternative_group_id) REFERENCES public.product_alternative_groups(id);
+
+
+--
 -- Name: products fk_rails_33082c31de; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1115,6 +1212,14 @@ ALTER TABLE ONLY public.active_storage_variant_records
 
 
 --
+-- Name: product_alternative_group_memberships fk_rails_b05436b857; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_alternative_group_memberships
+    ADD CONSTRAINT fk_rails_b05436b857 FOREIGN KEY (product_variant_id) REFERENCES public.product_variants(id);
+
+
+--
 -- Name: active_storage_attachments fk_rails_c3b3935057; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1136,6 +1241,14 @@ ALTER TABLE ONLY public.product_brands
 
 ALTER TABLE ONLY public.product_variants
     ADD CONSTRAINT fk_rails_dae52f850b FOREIGN KEY (product_id) REFERENCES public.products(id);
+
+
+--
+-- Name: product_alternative_groups fk_rails_df07e520b6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_alternative_groups
+    ADD CONSTRAINT fk_rails_df07e520b6 FOREIGN KEY (category_id) REFERENCES public.categories(id);
 
 
 --
@@ -1213,6 +1326,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260608123000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608124000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608125000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609090000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609091000');
 
 
 --
