@@ -342,6 +342,23 @@ CREATE TABLE public.product_brands (
 
 
 --
+-- Name: products; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.products (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    product_brand_id uuid NOT NULL,
+    manufacturer_id uuid,
+    category_id uuid NOT NULL,
+    name character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: receipt_lines; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -568,6 +585,14 @@ ALTER TABLE ONLY public.product_brands
 
 
 --
+-- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT products_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: receipt_lines receipt_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -745,6 +770,41 @@ CREATE UNIQUE INDEX index_product_brands_on_slug ON public.product_brands USING 
 
 
 --
+-- Name: index_products_on_brand_category_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_products_on_brand_category_normalized_name ON public.products USING btree (product_brand_id, category_id, normalized_name);
+
+
+--
+-- Name: index_products_on_brand_category_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_products_on_brand_category_slug ON public.products USING btree (product_brand_id, category_id, slug);
+
+
+--
+-- Name: index_products_on_category_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_products_on_category_id ON public.products USING btree (category_id);
+
+
+--
+-- Name: index_products_on_manufacturer_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_products_on_manufacturer_id ON public.products USING btree (manufacturer_id);
+
+
+--
+-- Name: index_products_on_product_brand_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_products_on_product_brand_id ON public.products USING btree (product_brand_id);
+
+
+--
 -- Name: index_receipt_lines_on_receipt_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -902,6 +962,22 @@ ALTER TABLE ONLY public.receipts
 
 
 --
+-- Name: products fk_rails_1ac0ad410f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT fk_rails_1ac0ad410f FOREIGN KEY (product_brand_id) REFERENCES public.product_brands(id);
+
+
+--
+-- Name: products fk_rails_33082c31de; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT fk_rails_33082c31de FOREIGN KEY (manufacturer_id) REFERENCES public.manufacturers(id);
+
+
+--
 -- Name: source_documents fk_rails_479c8da4db; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -990,6 +1066,14 @@ ALTER TABLE ONLY public.receipt_promotions
 
 
 --
+-- Name: products fk_rails_fb915499a4; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT fk_rails_fb915499a4 FOREIGN KEY (category_id) REFERENCES public.categories(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
@@ -1036,6 +1120,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260608121000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608122000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608123000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608124000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608125000');
 
 
 --
