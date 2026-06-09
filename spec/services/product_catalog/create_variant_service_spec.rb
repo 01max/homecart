@@ -43,6 +43,15 @@ RSpec.describe ProductCatalog::CreateVariantService do
     )
   end
 
+  def call_normalized_duplicate_service
+    described_class.call(
+      product_brand_name: "BIO Villagé",
+      product_name: "Compotés Pomme",
+      variant_name: "12 X 90G",
+      category_name: "Compotés"
+    )
+  end
+
   def expect_full_catalogue_chain(result, retail_brand)
     expect(result.product_brand).to have_attributes(name: "Bio Village", retail_brand: retail_brand)
     expect(result.manufacturer).to have_attributes(name: "Compotes Co")
@@ -74,6 +83,16 @@ RSpec.describe ProductCatalog::CreateVariantService do
       second_result = call_service(comparison_unit_name: "Gram", comparison_unit_symbol: "g")
 
       expect_reused_catalogue_chain(second_result, first_result)
+    end.not_to change(ProductVariant, :count)
+  end
+
+  it "prevents duplicates when names normalize to existing catalogue records" do
+    first_result = call_service
+
+    expect do
+      duplicate_result = call_normalized_duplicate_service
+
+      expect_reused_catalogue_chain(duplicate_result, first_result)
     end.not_to change(ProductVariant, :count)
   end
 
