@@ -3,6 +3,7 @@
 # This is separate from future product/manufacturer brands so receipt queries can
 # group by retailer without overloading product identity.
 class RetailBrand < ApplicationRecord
+  has_many :product_brands, inverse_of: :retail_brand, dependent: :restrict_with_exception
   has_many :stores, inverse_of: :retail_brand, dependent: :restrict_with_exception
 
   validates :name, presence: true
