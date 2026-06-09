@@ -4,7 +4,7 @@ FactoryBot.define do
     manufacturer { nil }
     association :product_brand
     sequence(:name) { |number| "Product #{number}" }
-    normalized_name { name.downcase }
+    normalized_name { ProductCatalog::NormalizeTextService.call(name) }
     slug { name.parameterize }
 
     trait :with_manufacturer do

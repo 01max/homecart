@@ -3,7 +3,7 @@ FactoryBot.define do
     association :comparison_unit
     association :product
     sequence(:name) { |number| "Product Variant #{number}" }
-    normalized_name { name.downcase }
+    normalized_name { ProductCatalog::NormalizeTextService.call(name) }
     slug { name.parameterize }
     package_count { 1 }
     quantity_value { 1.0 }

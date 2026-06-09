@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :category do
     sequence(:name) { |number| "Category #{number}" }
-    normalized_name { name.downcase }
+    normalized_name { ProductCatalog::NormalizeTextService.call(name) }
     slug { name.parameterize }
 
     trait :with_parent do
