@@ -199,6 +199,47 @@ CREATE TYPE public.store_channel AS ENUM (
 
 
 --
+-- Name: prevent_category_cycle(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.prevent_category_cycle() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  cycle_exists boolean;
+BEGIN
+  IF NEW.parent_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  WITH RECURSIVE ancestors(id, parent_id) AS (
+    SELECT categories.id, categories.parent_id
+    FROM categories
+    WHERE categories.id = NEW.parent_id
+
+    UNION ALL
+
+    SELECT categories.id, categories.parent_id
+    FROM categories
+    INNER JOIN ancestors ON categories.id = ancestors.parent_id
+  )
+  SELECT true
+  INTO cycle_exists
+  FROM ancestors
+  WHERE ancestors.id = NEW.id
+  LIMIT 1;
+
+  IF COALESCE(cycle_exists, false) THEN
+    RAISE EXCEPTION 'categories cannot contain cycles'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: prevent_source_document_evidence_update(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1086,6 +1127,13 @@ CREATE INDEX index_text_extractions_on_source_document_id ON public.text_extract
 
 
 --
+-- Name: categories categories_prevent_cycle; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER categories_prevent_cycle AFTER INSERT OR UPDATE OF parent_id ON public.categories FOR EACH ROW EXECUTE FUNCTION public.prevent_category_cycle();
+
+
+--
 -- Name: source_documents source_documents_evidence_immutable; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -1327,6 +1375,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260608124000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608125000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609090000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609091000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609092000');
 
 
 --
