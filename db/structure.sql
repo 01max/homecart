@@ -342,6 +342,27 @@ CREATE TABLE public.product_brands (
 
 
 --
+-- Name: product_variants; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_variants (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    product_id uuid NOT NULL,
+    name character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    package_count integer,
+    quantity_value numeric(10,3),
+    comparison_unit_id uuid,
+    barcode character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT product_variants_package_count_positive CHECK (((package_count IS NULL) OR (package_count > 0))),
+    CONSTRAINT product_variants_quantity_value_positive CHECK (((quantity_value IS NULL) OR (quantity_value > (0)::numeric)))
+);
+
+
+--
 -- Name: products; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -585,6 +606,14 @@ ALTER TABLE ONLY public.product_brands
 
 
 --
+-- Name: product_variants product_variants_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_variants
+    ADD CONSTRAINT product_variants_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -767,6 +796,48 @@ CREATE INDEX index_product_brands_on_retail_brand_id ON public.product_brands US
 --
 
 CREATE UNIQUE INDEX index_product_brands_on_slug ON public.product_brands USING btree (slug);
+
+
+--
+-- Name: index_product_variants_on_barcode; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_variants_on_barcode ON public.product_variants USING btree (barcode) WHERE (barcode IS NOT NULL);
+
+
+--
+-- Name: index_product_variants_on_comparison_unit_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_product_variants_on_comparison_unit_id ON public.product_variants USING btree (comparison_unit_id);
+
+
+--
+-- Name: index_product_variants_on_normalized_name_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_product_variants_on_normalized_name_trgm ON public.product_variants USING gin (normalized_name public.gin_trgm_ops);
+
+
+--
+-- Name: index_product_variants_on_product_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_product_variants_on_product_id ON public.product_variants USING btree (product_id);
+
+
+--
+-- Name: index_product_variants_on_product_id_and_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_variants_on_product_id_and_normalized_name ON public.product_variants USING btree (product_id, normalized_name);
+
+
+--
+-- Name: index_product_variants_on_product_id_and_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_variants_on_product_id_and_slug ON public.product_variants USING btree (product_id, slug);
 
 
 --
@@ -1010,6 +1081,14 @@ ALTER TABLE ONLY public.receipt_lines
 
 
 --
+-- Name: product_variants fk_rails_6d98312429; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_variants
+    ADD CONSTRAINT fk_rails_6d98312429 FOREIGN KEY (comparison_unit_id) REFERENCES public.comparison_units(id);
+
+
+--
 -- Name: categories fk_rails_82f48f7407; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1047,6 +1126,14 @@ ALTER TABLE ONLY public.active_storage_attachments
 
 ALTER TABLE ONLY public.product_brands
     ADD CONSTRAINT fk_rails_c55d12d216 FOREIGN KEY (retail_brand_id) REFERENCES public.retail_brands(id);
+
+
+--
+-- Name: product_variants fk_rails_dae52f850b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_variants
+    ADD CONSTRAINT fk_rails_dae52f850b FOREIGN KEY (product_id) REFERENCES public.products(id);
 
 
 --
@@ -1121,6 +1208,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260608122000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608123000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608124000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260608125000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609090000');
 
 
 --
