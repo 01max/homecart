@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resources :source_documents, only: %i[new create show] do
     get :status, on: :member
   end
+  resources :categories, only: %i[create update destroy]
   resources :receipts, only: %i[index show edit update destroy] do
     patch :mark_reviewed, on: :member
     patch :rerun_parser, on: :member

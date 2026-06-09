@@ -1,0 +1,13 @@
+en:
+  product_catalog:
+    categories:
+      errors:
+        in_use: "Move or remove dependent categories, products, or alternative groups before deleting this category."
+        invalid_tree: "The category tree could not be updated."
+  categories:
+    create:
+      success: "Created category %{name}."
+    update:
+      success: "Updated category %{name}."
+    destroy:
+      success: "Deleted category %{name}."
