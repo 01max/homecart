@@ -481,6 +481,25 @@ CREATE TABLE public.products (
 
 
 --
+-- Name: receipt_line_matches; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.receipt_line_matches (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    receipt_line_id uuid NOT NULL,
+    product_variant_id uuid,
+    status public.receipt_line_match_status NOT NULL,
+    source public.receipt_line_match_source NOT NULL,
+    confidence numeric(5,4),
+    label_snapshot text NOT NULL,
+    decided_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT receipt_line_matches_confidence_probability CHECK (((confidence IS NULL) OR ((confidence >= (0)::numeric) AND (confidence <= (1)::numeric))))
+);
+
+
+--
 -- Name: receipt_lines; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -736,6 +755,14 @@ ALTER TABLE ONLY public.product_variants
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT products_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: receipt_line_matches receipt_line_matches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_line_matches
+    ADD CONSTRAINT receipt_line_matches_pkey PRIMARY KEY (id);
 
 
 --
@@ -1028,6 +1055,34 @@ CREATE INDEX index_products_on_product_brand_id ON public.products USING btree (
 
 
 --
+-- Name: index_receipt_line_matches_on_product_variant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_line_matches_on_product_variant_id ON public.receipt_line_matches USING btree (product_variant_id);
+
+
+--
+-- Name: index_receipt_line_matches_on_product_variant_id_and_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_line_matches_on_product_variant_id_and_status ON public.receipt_line_matches USING btree (product_variant_id, status);
+
+
+--
+-- Name: index_receipt_line_matches_on_receipt_line_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_line_matches_on_receipt_line_id ON public.receipt_line_matches USING btree (receipt_line_id);
+
+
+--
+-- Name: index_receipt_line_matches_on_receipt_line_id_and_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_line_matches_on_receipt_line_id_and_status ON public.receipt_line_matches USING btree (receipt_line_id, status);
+
+
+--
 -- Name: index_receipt_lines_on_receipt_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1248,6 +1303,14 @@ ALTER TABLE ONLY public.receipt_lines
 
 
 --
+-- Name: receipt_line_matches fk_rails_695792acf1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_line_matches
+    ADD CONSTRAINT fk_rails_695792acf1 FOREIGN KEY (receipt_line_id) REFERENCES public.receipt_lines(id);
+
+
+--
 -- Name: product_variants fk_rails_6d98312429; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1301,6 +1364,14 @@ ALTER TABLE ONLY public.active_storage_attachments
 
 ALTER TABLE ONLY public.product_brands
     ADD CONSTRAINT fk_rails_c55d12d216 FOREIGN KEY (retail_brand_id) REFERENCES public.retail_brands(id);
+
+
+--
+-- Name: receipt_line_matches fk_rails_c564eea3b7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_line_matches
+    ADD CONSTRAINT fk_rails_c564eea3b7 FOREIGN KEY (product_variant_id) REFERENCES public.product_variants(id);
 
 
 --
@@ -1395,6 +1466,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260609090000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609091000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609092000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609093000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609094000');
 
 
 --
