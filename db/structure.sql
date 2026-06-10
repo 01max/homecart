@@ -104,6 +104,28 @@ CREATE TYPE public.receipt_line_kind AS ENUM (
 
 
 --
+-- Name: receipt_line_match_source; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.receipt_line_match_source AS ENUM (
+    'user',
+    'heuristic'
+);
+
+
+--
+-- Name: receipt_line_match_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.receipt_line_match_status AS ENUM (
+    'suggested',
+    'confirmed',
+    'rejected',
+    'ignored'
+);
+
+
+--
 -- Name: receipt_line_unit_of_measure; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -1376,6 +1398,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260608125000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609090000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609091000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609092000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609093000');
 
 
 --
