@@ -1085,6 +1085,13 @@ CREATE INDEX index_receipt_line_matches_on_receipt_line_id_and_status ON public.
 
 
 --
+-- Name: index_receipt_line_matches_on_terminal_decision; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_receipt_line_matches_on_terminal_decision ON public.receipt_line_matches USING btree (receipt_line_id) WHERE (status = ANY (ARRAY['confirmed'::public.receipt_line_match_status, 'ignored'::public.receipt_line_match_status]));
+
+
+--
 -- Name: index_receipt_lines_on_receipt_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1471,6 +1478,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260609091000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609092000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609093000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609094000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609095000');
 
 
 --
