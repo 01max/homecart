@@ -495,7 +495,8 @@ CREATE TABLE public.receipt_line_matches (
     decided_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    CONSTRAINT receipt_line_matches_confidence_probability CHECK (((confidence IS NULL) OR ((confidence >= (0)::numeric) AND (confidence <= (1)::numeric))))
+    CONSTRAINT receipt_line_matches_confidence_probability CHECK (((confidence IS NULL) OR ((confidence >= (0)::numeric) AND (confidence <= (1)::numeric)))),
+    CONSTRAINT receipt_line_matches_product_variant_presence CHECK ((((status = 'ignored'::public.receipt_line_match_status) AND (product_variant_id IS NULL)) OR ((status = ANY (ARRAY['suggested'::public.receipt_line_match_status, 'confirmed'::public.receipt_line_match_status, 'rejected'::public.receipt_line_match_status])) AND (product_variant_id IS NOT NULL))))
 );
 
 
@@ -1475,6 +1476,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260609092000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609093000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609094000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609095000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609100000');
 
 
 --
