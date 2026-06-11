@@ -82,6 +82,15 @@ CREATE TYPE public.parser_format AS ENUM (
 
 
 --
+-- Name: price_observation_source; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.price_observation_source AS ENUM (
+    'receipt_line'
+);
+
+
+--
 -- Name: product_alternative_equivalence; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -397,6 +406,34 @@ CREATE TABLE public.manufacturers (
     slug character varying NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: price_observations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.price_observations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    receipt_line_match_id uuid NOT NULL,
+    receipt_line_id uuid NOT NULL,
+    product_variant_id uuid NOT NULL,
+    store_id uuid NOT NULL,
+    observed_at timestamp(6) without time zone NOT NULL,
+    purchased_quantity numeric(10,3) NOT NULL,
+    purchased_unit public.receipt_line_unit_of_measure NOT NULL,
+    total_cents integer NOT NULL,
+    pack_unit_price_cents integer NOT NULL,
+    comparison_unit_id uuid,
+    comparison_unit_price_cents integer,
+    source public.price_observation_source NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT price_observations_comparison_unit_pairing CHECK ((((comparison_unit_id IS NULL) AND (comparison_unit_price_cents IS NULL)) OR ((comparison_unit_id IS NOT NULL) AND (comparison_unit_price_cents IS NOT NULL)))),
+    CONSTRAINT price_observations_comparison_unit_price_non_negative CHECK (((comparison_unit_price_cents IS NULL) OR (comparison_unit_price_cents >= 0))),
+    CONSTRAINT price_observations_pack_unit_price_non_negative CHECK ((pack_unit_price_cents >= 0)),
+    CONSTRAINT price_observations_purchased_quantity_positive CHECK ((purchased_quantity > (0)::numeric)),
+    CONSTRAINT price_observations_total_cents_non_negative CHECK ((total_cents >= 0))
 );
 
 
@@ -719,6 +756,14 @@ ALTER TABLE ONLY public.manufacturers
 
 
 --
+-- Name: price_observations price_observations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT price_observations_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: product_alternative_group_memberships product_alternative_group_memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -941,6 +986,55 @@ CREATE UNIQUE INDEX index_manufacturers_on_normalized_name ON public.manufacture
 --
 
 CREATE UNIQUE INDEX index_manufacturers_on_slug ON public.manufacturers USING btree (slug);
+
+
+--
+-- Name: index_price_observations_on_comparison_unit_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_price_observations_on_comparison_unit_id ON public.price_observations USING btree (comparison_unit_id);
+
+
+--
+-- Name: index_price_observations_on_product_variant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_price_observations_on_product_variant_id ON public.price_observations USING btree (product_variant_id);
+
+
+--
+-- Name: index_price_observations_on_receipt_line_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_price_observations_on_receipt_line_id ON public.price_observations USING btree (receipt_line_id);
+
+
+--
+-- Name: index_price_observations_on_receipt_line_match_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_price_observations_on_receipt_line_match_id ON public.price_observations USING btree (receipt_line_match_id);
+
+
+--
+-- Name: index_price_observations_on_store_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_price_observations_on_store_id ON public.price_observations USING btree (store_id);
+
+
+--
+-- Name: index_price_observations_on_store_observed_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_price_observations_on_store_observed_at ON public.price_observations USING btree (store_id, observed_at);
+
+
+--
+-- Name: index_price_observations_on_variant_store_observed_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_price_observations_on_variant_store_observed_at ON public.price_observations USING btree (product_variant_id, store_id, observed_at);
 
 
 --
@@ -1263,6 +1357,14 @@ ALTER TABLE ONLY public.products
 
 
 --
+-- Name: price_observations fk_rails_1d21289250; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT fk_rails_1d21289250 FOREIGN KEY (receipt_line_id) REFERENCES public.receipt_lines(id);
+
+
+--
 -- Name: product_alternative_group_memberships fk_rails_23ff1e1723; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1284,6 +1386,14 @@ ALTER TABLE ONLY public.products
 
 ALTER TABLE ONLY public.source_documents
     ADD CONSTRAINT fk_rails_479c8da4db FOREIGN KEY (store_id) REFERENCES public.stores(id);
+
+
+--
+-- Name: price_observations fk_rails_4dabc178e7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT fk_rails_4dabc178e7 FOREIGN KEY (store_id) REFERENCES public.stores(id);
 
 
 --
@@ -1327,6 +1437,14 @@ ALTER TABLE ONLY public.product_variants
 
 
 --
+-- Name: price_observations fk_rails_822332e720; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT fk_rails_822332e720 FOREIGN KEY (product_variant_id) REFERENCES public.product_variants(id);
+
+
+--
 -- Name: categories fk_rails_82f48f7407; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1348,6 +1466,22 @@ ALTER TABLE ONLY public.text_extractions
 
 ALTER TABLE ONLY public.active_storage_variant_records
     ADD CONSTRAINT fk_rails_993965df05 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
+-- Name: price_observations fk_rails_a0cce9a33a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT fk_rails_a0cce9a33a FOREIGN KEY (receipt_line_match_id) REFERENCES public.receipt_line_matches(id);
+
+
+--
+-- Name: price_observations fk_rails_a1d6cd6649; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT fk_rails_a1d6cd6649 FOREIGN KEY (comparison_unit_id) REFERENCES public.comparison_units(id);
 
 
 --
@@ -1477,6 +1611,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260609093000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609094000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609095000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609100000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609101000');
 
 
 --

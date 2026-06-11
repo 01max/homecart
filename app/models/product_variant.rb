@@ -7,6 +7,8 @@ class ProductVariant < ApplicationRecord
            inverse_of: :product_variant,
            dependent: :restrict_with_exception
   has_many :product_alternative_groups, through: :product_alternative_group_memberships
+  has_many :receipt_line_matches, inverse_of: :product_variant, dependent: :restrict_with_exception
+  has_many :price_observations, inverse_of: :product_variant, dependent: :restrict_with_exception
 
   validates :name, :normalized_name, :slug, presence: true
   validates :barcode, uniqueness: true, allow_nil: true
