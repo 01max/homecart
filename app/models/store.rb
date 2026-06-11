@@ -12,6 +12,7 @@ class Store < ApplicationRecord
   belongs_to :retail_brand, inverse_of: :stores
   has_many :source_documents, inverse_of: :store, dependent: :restrict_with_exception
   has_many :receipts, inverse_of: :store, dependent: :restrict_with_exception
+  has_many :price_observations, inverse_of: :store, dependent: :restrict_with_exception
 
   validates :location_name, presence: true
   validates :channel, presence: true

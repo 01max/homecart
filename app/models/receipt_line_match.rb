@@ -1,0 +1,33 @@
+# Product-identification decision recorded separately from receipt evidence.
+class ReceiptLineMatch < ApplicationRecord
+  enum :status, {
+    suggested: "suggested",
+    confirmed: "confirmed",
+    rejected: "rejected",
+    ignored: "ignored"
+  }, validate: true
+
+  enum :source, {
+    user: "user",
+    heuristic: "heuristic"
+  }, prefix: true, validate: true
+
+  belongs_to :receipt_line, inverse_of: :receipt_line_matches
+  belongs_to :product_variant, inverse_of: :receipt_line_matches, optional: true
+
+  has_one :price_observation, inverse_of: :receipt_line_match, dependent: :restrict_with_exception
+
+  validates :status, :source, :label_snapshot, presence: true
+  validates :confidence, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 1 }, allow_nil: true
+  validates :product_variant, presence: true, unless: :ignored?
+  validates :product_variant, absence: true, if: :ignored?
+  validates :receipt_line_id,
+            uniqueness: { conditions: -> { terminal_decisions } },
+            if: :terminal_decision?
+
+  scope :terminal_decisions, -> { where(status: %w[ confirmed ignored ]) }
+
+  def terminal_decision?
+    confirmed? || ignored?
+  end
+end

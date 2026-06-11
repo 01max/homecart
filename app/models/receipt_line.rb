@@ -19,6 +19,8 @@ class ReceiptLine < ApplicationRecord
 
   belongs_to :receipt, inverse_of: :receipt_lines
   has_many :receipt_promotions, foreign_key: :linked_line_id, inverse_of: :linked_line, dependent: :restrict_with_exception
+  has_many :receipt_line_matches, inverse_of: :receipt_line, dependent: :restrict_with_exception
+  has_one :price_observation, inverse_of: :receipt_line, dependent: :restrict_with_exception
 
   validates :position, presence: true, numericality: { only_integer: true, greater_than: 0 }
   validates :position, uniqueness: { scope: :receipt_id }
