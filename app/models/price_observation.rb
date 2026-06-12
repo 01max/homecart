@@ -32,6 +32,8 @@ class PriceObservation < ApplicationRecord
 
   scope :for_variant, ->(variant) { where(product_variant: variant) }
   scope :for_store, ->(store) { where(store: store) }
+  scope :observed_on, ->(date) { where(observed_at: date.all_day) }
   scope :recent_first, -> { order(observed_at: :desc, id: :desc) }
-  scope :variant_store_history, ->(variant, store) { for_variant(variant).for_store(store).recent_first }
+  scope :variant_history, ->(variant) { for_variant(variant).recent_first }
+  scope :variant_store_history, ->(variant, store) { variant_history(variant).for_store(store) }
 end
