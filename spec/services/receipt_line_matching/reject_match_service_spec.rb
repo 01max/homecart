@@ -13,4 +13,10 @@ RSpec.describe ReceiptLineMatching::RejectMatchService do
     expect(ReceiptLineMatching::SuggestMatchesService.call(receipt_line: receipt_line).map(&:product_variant))
       .not_to include(variant)
   end
+
+  it "does not create a price observation" do
+    expect do
+      described_class.call(receipt_line: receipt_line, product_variant: variant)
+    end.not_to change(PriceObservation, :count)
+  end
 end

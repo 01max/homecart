@@ -16,6 +16,10 @@ RSpec.describe ReceiptLineMatching::IgnoreLineService do
     expect(ReceiptLineMatching::QueueService.call.flat_map(&:receipt_lines)).not_to include(receipt_line)
   end
 
+  it "does not create a price observation for a newly ignored line" do
+    expect { match }.not_to change(PriceObservation, :count)
+  end
+
   it "removes a previous confirmed price observation when a line is ignored" do
     variant = create(:product_variant)
     confirmed = ReceiptLineMatching::ConfirmMatchService.call(receipt_line: receipt_line, product_variant: variant)
