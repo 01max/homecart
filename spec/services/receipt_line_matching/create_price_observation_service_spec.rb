@@ -11,6 +11,19 @@ RSpec.describe ReceiptLineMatching::CreatePriceObservationService do
     expect(observation).to have_attributes(price_attributes)
   end
 
+  it "computes comparison-unit price when variant quantity fields are present" do
+    comparison_unit = create(:comparison_unit, name: "Liter", symbol: "L")
+    product_variant.update!(comparison_unit: comparison_unit, package_count: 6, quantity_value: 1)
+
+    expect(observation).to have_attributes(comparison_unit: comparison_unit, comparison_unit_price_cents: 42)
+  end
+
+  it "leaves comparison-unit price blank without variant quantity fields" do
+    product_variant.update!(comparison_unit: nil, package_count: nil, quantity_value: nil)
+
+    expect(observation).to have_attributes(comparison_unit: nil, comparison_unit_price_cents: nil)
+  end
+
   it "updates the existing observation for the match" do
     existing_observation = create(:price_observation, receipt_line_match: receipt_line_match)
 
