@@ -83,6 +83,13 @@ RSpec.describe PriceObservation do
         .to eq(history.fetch(:observations))
     end
 
+    it "filters variant and store price history by observed date" do
+      new_observation = history.fetch(:observations).first
+
+      expect(described_class.variant_store_history(history.fetch(:variant), history.fetch(:store)).observed_on(new_observation.observed_at.to_date))
+        .to eq([ new_observation ])
+    end
+
     def create_history_observation(variant, store, line, observed_at)
       match = create(:receipt_line_match, receipt_line: line, product_variant: variant)
       create(:price_observation, receipt_line_match: match, receipt_line: line, product_variant: variant, store: store, observed_at: observed_at)
