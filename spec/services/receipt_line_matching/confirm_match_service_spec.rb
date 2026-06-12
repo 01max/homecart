@@ -17,6 +17,10 @@ RSpec.describe ReceiptLineMatching::ConfirmMatchService do
     expect(result.price_observation).to have_attributes(receipt_line: receipt_line, pack_unit_price_cents: 250)
   end
 
+  it "creates one price observation for the confirmed match" do
+    expect { result }.to change(PriceObservation, :count).by(1)
+  end
+
   it "replaces a prior terminal decision safely" do
     first_result = result
     second_variant = create(:product_variant)
@@ -27,5 +31,16 @@ RSpec.describe ReceiptLineMatching::ConfirmMatchService do
     expect(receipt_line.receipt_line_matches.terminal_decisions.count).to eq(1)
     expect(second_result.receipt_line_match.reload.product_variant).to eq(second_variant)
     expect(second_result.price_observation.reload.product_variant).to eq(second_variant)
+  end
+
+  it "updates the existing price observation when the confirmed variant changes" do
+    first_observation = result.price_observation
+    second_variant = create(:product_variant)
+
+    second_result = described_class.call(receipt_line: receipt_line, product_variant: second_variant)
+
+    expect(second_result.price_observation).to eq(first_observation)
+    expect(PriceObservation.where(receipt_line: receipt_line).count).to eq(1)
+    expect(first_observation.reload.product_variant).to eq(second_variant)
   end
 end
