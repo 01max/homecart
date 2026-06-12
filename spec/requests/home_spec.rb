@@ -8,6 +8,10 @@ RSpec.describe "Home", type: :request do
     expect(response.body).to include(%(data-action="workspace-nav#save"))
     expect(response.body).to include(%(href="/receipts"))
     expect(response.body).to include("Receipts")
+    expect(response.body).to include(%(href="/catalogue"))
+    expect(response.body).to include("Catalogue")
+    expect(response.body).to include(%(href="/matching"))
+    expect(response.body).to include("Matching")
     expect(response.body).to include(%(href="/source_documents/new"))
     expect(response.body).to include("Upload receipt")
   end

@@ -1,0 +1,7 @@
+en:
+  matching:
+    queue:
+      index:
+        eyebrow: "Matching"
+        title: "Matching queue"
+        description: "Match receipt-line observations to catalogue variants and keep ignored lines out of the queue."
