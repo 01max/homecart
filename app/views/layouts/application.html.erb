@@ -64,7 +64,10 @@
         </div>
 
         <nav class="hc-workspace-nav" aria-label="<%= t("app.nav.menu") %>">
+          <%= workspace_nav_link t("app.nav.dashboard"), root_path, icon: "D", active: controller_name == "home" %>
           <%= workspace_nav_link t("app.nav.receipts"), receipts_path, icon: "R", active: controller_name == "receipts" %>
+          <%= workspace_nav_link t("app.nav.catalogue"), catalogue_root_path, icon: "C", active: controller_path.start_with?("catalogue/") %>
+          <%= workspace_nav_link t("app.nav.matching"), matching_root_path, icon: "M", active: controller_path.start_with?("matching/") %>
         </nav>
 
         <div class="hc-workspace-sidebar-footer">
@@ -99,8 +102,6 @@
         </summary>
 
         <nav class="hc-mobile-nav-panel" aria-label="<%= t("app.nav.menu") %>">
-          <%= workspace_nav_link t("app.nav.dashboard"), root_path, icon: "D", active: controller_name == "home" %>
-          <%= workspace_nav_link t("app.nav.receipts"), receipts_path, icon: "R", active: controller_name == "receipts" %>
           <label class="hc-theme-toggle">
             <input type="checkbox"
                    class="hc-theme-toggle-input sr-only"
@@ -110,6 +111,11 @@
             <span class="hc-theme-toggle-control" aria-hidden="true"></span>
             <span class="hc-theme-toggle-label"><%= t("app.nav.dark_mode") %></span>
           </label>
+          <%= workspace_nav_link t("app.nav.dashboard"), root_path, icon: "D", active: controller_name == "home" %>
+          <%= workspace_nav_link t("app.nav.receipts"), receipts_path, icon: "R", active: controller_name == "receipts" %>
+          <%= workspace_nav_link t("app.nav.catalogue"), catalogue_root_path, icon: "C", active: controller_path.start_with?("catalogue/") %>
+          <%= workspace_nav_link t("app.nav.matching"), matching_root_path, icon: "M", active: controller_path.start_with?("matching/") %>
+
           <%= link_to t("app.nav.upload_receipt"),
                       new_source_document_path,
                       class: "hc-button hc-button--primary" %>

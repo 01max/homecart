@@ -1,5 +1,10 @@
 en:
   product_catalog:
+    dashboard:
+      index:
+        eyebrow: "Catalogue"
+        title: "Catalogue"
+        description: "Manage product brands, categories, variants, comparison units, and substitutions."
     categories:
       errors:
         in_use: "Move or remove dependent categories, products, or alternative groups before deleting this category."

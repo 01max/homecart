@@ -10,6 +10,25 @@ Rails.application.routes.draw do
     patch :rerun_parser, on: :member
   end
 
+  namespace :catalogue do
+    root "dashboard#index"
+
+    resources :categories, only: %i[index new]
+    resources :product_brands, only: %i[index show new]
+    resources :manufacturers, only: %i[index show new]
+    resources :comparison_units, only: %i[index show new]
+    resources :products, only: %i[index show new]
+    resources :product_variants, only: %i[index show new]
+    resources :product_alternative_groups, only: %i[index show new]
+  end
+
+  namespace :matching do
+    root "queue#index"
+    get "queue", to: "queue#index", as: :queue
+
+    resources :receipts, only: %i[show]
+  end
+
   post "hotwire/ping", to: "home#ping", as: :hotwire_ping
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
