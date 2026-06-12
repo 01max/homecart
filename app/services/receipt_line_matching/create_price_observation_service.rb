@@ -26,8 +26,8 @@ module ReceiptLineMatching
         observation.purchased_unit = receipt_line.unit_of_measure
         observation.total_cents = receipt_line.total_cents
         observation.pack_unit_price_cents = pack_unit_price_cents
-        observation.comparison_unit = nil
-        observation.comparison_unit_price_cents = nil
+        observation.comparison_unit = comparison_unit
+        observation.comparison_unit_price_cents = comparison_unit_price_cents
         observation.source = "receipt_line"
         observation.save!
       end
@@ -43,6 +43,26 @@ module ReceiptLineMatching
 
     def pack_unit_price_cents
       (receipt_line.total_cents.to_d / receipt_line.quantity).round
+    end
+
+    def comparison_unit
+      product_variant.comparison_unit if comparison_quantity
+    end
+
+    def comparison_unit_price_cents
+      return unless comparison_quantity
+
+      (receipt_line.total_cents.to_d / comparison_quantity).round
+    end
+
+    def comparison_quantity
+      return unless product_variant.comparison_unit && product_variant.quantity_value
+
+      receipt_line.quantity * package_count * product_variant.quantity_value
+    end
+
+    def package_count
+      product_variant.package_count || 1
     end
   end
 end
