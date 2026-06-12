@@ -14,7 +14,7 @@ module ReceiptLineMatching
       ApplicationRecord.transaction do
         receipt_line.with_lock do
           match = confirmed_match
-          price_observation = upsert_price_observation(match)
+          price_observation = CreatePriceObservationService.call(receipt_line_match: match)
 
           Result.new(receipt_line_match: match, price_observation: price_observation)
         end
@@ -43,28 +43,6 @@ module ReceiptLineMatching
 
     def suggested_match
       receipt_line.receipt_line_matches.suggested.find_by(product_variant: product_variant)
-    end
-
-    def upsert_price_observation(match)
-      (match.price_observation || PriceObservation.find_or_initialize_by(receipt_line: receipt_line)).tap do |observation|
-        observation.receipt_line_match = match
-        observation.receipt_line = receipt_line
-        observation.product_variant = product_variant
-        observation.store = receipt_line.receipt.store
-        observation.observed_at = receipt_line.receipt.purchased_at
-        observation.purchased_quantity = receipt_line.quantity
-        observation.purchased_unit = receipt_line.unit_of_measure
-        observation.total_cents = receipt_line.total_cents
-        observation.pack_unit_price_cents = pack_unit_price_cents
-        observation.comparison_unit = nil
-        observation.comparison_unit_price_cents = nil
-        observation.source = "receipt_line"
-        observation.save!
-      end
-    end
-
-    def pack_unit_price_cents
-      (receipt_line.total_cents.to_d / receipt_line.quantity).round
     end
   end
 end
