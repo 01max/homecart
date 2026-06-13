@@ -1,0 +1,44 @@
+<% content_for :title, @product_variant.name %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.product_variants.show.eyebrow"),
+             title: catalogue_product_variant_label(@product_variant),
+             description: t("product_catalog.product_variants.show.description"),
+             actions: safe_join([
+               link_to(t("product_catalog.actions.back_to_index"), catalogue_product_variants_path, class: "hc-button hc-button--subtle"),
+               link_to(t("product_catalog.actions.edit"), edit_catalogue_product_variant_path(@product_variant), class: "hc-button hc-button--secondary")
+             ]) %>
+
+  <section class="hc-detail-block hc-block text-sm">
+    <div class="hc-block-heading">
+      <h2 class="hc-block-title"><%= t("product_catalog.product_variants.show.details.heading") %></h2>
+    </div>
+    <dl class="hc-detail-grid mt-4">
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("product_catalog.product_variants.show.details.product") %></dt>
+        <dd class="hc-detail-value"><%= link_to catalogue_product_label(@product_variant.product), catalogue_product_path(@product_variant.product), class: "hc-link" %></dd>
+      </div>
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("product_catalog.product_variants.show.details.brand") %></dt>
+        <dd class="hc-detail-value"><%= catalogue_product_brand_label(@product_variant.product.product_brand) %></dd>
+      </div>
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("product_catalog.product_variants.show.details.category") %></dt>
+        <dd class="hc-detail-value"><%= catalogue_category_label(@product_variant.product.category) %></dd>
+      </div>
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("product_catalog.product_variants.show.details.manufacturer") %></dt>
+        <dd class="hc-detail-value"><%= @product_variant.product.manufacturer&.name || t("product_catalog.labels.empty_value") %></dd>
+      </div>
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("product_catalog.product_variants.show.details.quantity") %></dt>
+        <dd class="hc-detail-value"><%= t("product_catalog.labels.variant_quantity", package_count: @product_variant.package_count || t("product_catalog.labels.empty_value"), quantity_value: @product_variant.quantity_value || t("product_catalog.labels.empty_value"), unit: @product_variant.comparison_unit&.symbol || t("product_catalog.labels.empty_value")) %></dd>
+      </div>
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("product_catalog.product_variants.show.details.barcode") %></dt>
+        <dd class="hc-detail-value"><%= @product_variant.barcode.presence || t("product_catalog.labels.empty_value") %></dd>
+      </div>
+    </dl>
+  </section>
+</section>

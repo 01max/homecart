@@ -6,9 +6,18 @@ RSpec.describe "Catalogue", type: :request do
       get catalogue_root_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(I18n.t("product_catalog.dashboard.index.title"))
-      expect(response.body).to include(%(href="/catalogue/categories"))
-      expect(response.body).to include(%(href="/matching"))
+      expect_catalogue_entry_links
     end
+  end
+
+  def expect_catalogue_entry_links
+    expect(response.body).to include(
+      I18n.t("product_catalog.dashboard.index.title"),
+      %(href="/catalogue/categories"),
+      %(href="/catalogue/product_brands"),
+      %(href="/catalogue/products"),
+      %(href="/catalogue/product_variants"),
+      %(href="/matching")
+    )
   end
 end

@@ -1,0 +1,45 @@
+<%= form_with model: [ :catalogue, product ], class: "hc-block" do |form| %>
+  <div class="hc-block-heading">
+    <h2 class="hc-block-title"><%= title %></h2>
+    <p class="hc-block-description"><%= description %></p>
+  </div>
+
+  <div class="hc-filter-row mt-4">
+    <div class="hc-filter-group">
+      <%= form.label :name, t("product_catalog.products.form.name"), class: "hc-label" %>
+      <%= form.text_field :name, class: "hc-input", required: true %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :product_brand_id, t("product_catalog.products.form.product_brand"), class: "hc-label" %>
+      <%= form.select :product_brand_id,
+                      @product_brands.map { |brand| [ catalogue_product_brand_label(brand), brand.id ] },
+                      { include_blank: t("product_catalog.products.form.select_product_brand") },
+                      class: "hc-select",
+                      required: true %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :category_id, t("product_catalog.products.form.category"), class: "hc-label" %>
+      <%= form.select :category_id,
+                      category_parent_options(@categories),
+                      { include_blank: t("product_catalog.products.form.select_category") },
+                      class: "hc-select",
+                      required: true %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :manufacturer_id, t("product_catalog.products.form.manufacturer"), class: "hc-label" %>
+      <%= form.collection_select :manufacturer_id,
+                                 @manufacturers,
+                                 :id,
+                                 :name,
+                                 { include_blank: t("product_catalog.products.form.no_manufacturer") },
+                                 class: "hc-select" %>
+    </div>
+
+    <div class="hc-filter-actions">
+      <%= form.submit submit_label, class: "hc-button hc-button--primary" %>
+    </div>
+  </div>
+<% end %>

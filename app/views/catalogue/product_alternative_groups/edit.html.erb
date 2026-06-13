@@ -1,0 +1,15 @@
+<% content_for :title, t("product_catalog.product_alternative_groups.edit.title", name: @product_alternative_group.name) %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.product_alternative_groups.edit.eyebrow"),
+             title: t("product_catalog.product_alternative_groups.edit.title", name: @product_alternative_group.name),
+             description: t("product_catalog.product_alternative_groups.edit.description"),
+             actions: link_to(t("product_catalog.actions.back_to_detail"), catalogue_product_alternative_group_path(@product_alternative_group), class: "hc-button hc-button--subtle") %>
+
+  <%= render "form",
+             product_alternative_group: @product_alternative_group,
+             title: t("product_catalog.product_alternative_groups.edit.form_heading"),
+             description: t("product_catalog.product_alternative_groups.edit.form_description"),
+             submit_label: t("product_catalog.product_alternative_groups.form.update") %>
+</section>

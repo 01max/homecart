@@ -1,0 +1,49 @@
+<% content_for :title, @manufacturer.name %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.manufacturers.show.eyebrow"),
+             title: @manufacturer.name,
+             description: t("product_catalog.manufacturers.show.description"),
+             actions: safe_join([
+               link_to(t("product_catalog.actions.back_to_index"), catalogue_manufacturers_path, class: "hc-button hc-button--subtle"),
+               link_to(t("product_catalog.actions.edit"), edit_catalogue_manufacturer_path(@manufacturer), class: "hc-button hc-button--secondary")
+             ]) %>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("product_catalog.manufacturers.show.products.heading") %></h2>
+        <p class="hc-block-description"><%= t("product_catalog.manufacturers.show.products.description") %></p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t("product_catalog.counts.products", count: @products.size) %></p>
+    </div>
+
+    <% if @products.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[44rem]">
+          <thead>
+            <tr>
+              <th><%= t("product_catalog.products.index.table.name") %></th>
+              <th><%= t("product_catalog.products.index.table.brand") %></th>
+              <th><%= t("product_catalog.products.index.table.category") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @products.each do |product| %>
+              <tr>
+                <td><%= link_to product.name, catalogue_product_path(product), class: "hc-link" %></td>
+                <td><%= catalogue_product_brand_label(product.product_brand) %></td>
+                <td><%= catalogue_category_label(product.category) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t("product_catalog.manufacturers.show.products.empty") %></p>
+      </div>
+    <% end %>
+  </section>
+</section>

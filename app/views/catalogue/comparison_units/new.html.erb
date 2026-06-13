@@ -1,0 +1,15 @@
+<% content_for :title, t("product_catalog.comparison_units.new.title") %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.comparison_units.new.eyebrow"),
+             title: t("product_catalog.comparison_units.new.title"),
+             description: t("product_catalog.comparison_units.new.description"),
+             actions: link_to(t("product_catalog.actions.back_to_index"), catalogue_comparison_units_path, class: "hc-button hc-button--subtle") %>
+
+  <%= render "form",
+             comparison_unit: @comparison_unit,
+             title: t("product_catalog.comparison_units.new.form_heading"),
+             description: t("product_catalog.comparison_units.new.form_description"),
+             submit_label: t("product_catalog.comparison_units.form.create") %>
+</section>

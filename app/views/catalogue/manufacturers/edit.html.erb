@@ -1,0 +1,15 @@
+<% content_for :title, t("product_catalog.manufacturers.edit.title", name: @manufacturer.name) %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.manufacturers.edit.eyebrow"),
+             title: t("product_catalog.manufacturers.edit.title", name: @manufacturer.name),
+             description: t("product_catalog.manufacturers.edit.description"),
+             actions: link_to(t("product_catalog.actions.back_to_detail"), catalogue_manufacturer_path(@manufacturer), class: "hc-button hc-button--subtle") %>
+
+  <%= render "form",
+             manufacturer: @manufacturer,
+             title: t("product_catalog.manufacturers.edit.form_heading"),
+             description: t("product_catalog.manufacturers.edit.form_description"),
+             submit_label: t("product_catalog.manufacturers.form.update") %>
+</section>
