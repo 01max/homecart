@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe ReceiptLineMatching::IgnoreLineService do
   subject(:match) { described_class.call(receipt_line: receipt_line) }
 
-  let(:receipt_line) { create(:receipt_line, label: "Ignore this line") }
+  let(:receipt_line) { create(:receipt_line, receipt: create(:receipt, :reviewed), label: "Ignore this line") }
 
   it "records an ignored terminal decision without a product variant" do
     expect(match).to have_attributes(

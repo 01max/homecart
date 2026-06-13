@@ -180,9 +180,10 @@ RSpec.describe "Matching", type: :request do
     it "confirms the previewed line count" do
       variant = create(:product_variant)
       create_lait_lines
+      preview = ReceiptLineMatching::BulkConfirmService.preview(normalized_label: "Lait demi ecreme")
 
       expect do
-        post_bulk_confirmation("Lait demi ecreme", variant, expected_count: 2)
+        post_bulk_confirmation("Lait demi ecreme", variant, receipt_line_ids: preview.receipt_line_ids)
       end.to change(ReceiptLineMatch.confirmed, :count).by(2)
 
       expect(response).to redirect_to(matching_queue_path)
@@ -194,7 +195,7 @@ RSpec.describe "Matching", type: :request do
       create_line(label: "Lait demi ecreme")
 
       expect do
-        post_bulk_confirmation("Lait demi ecreme", variant, expected_count: 2)
+        post_bulk_confirmation("Lait demi ecreme", variant, receipt_line_ids: [ SecureRandom.uuid ])
       end.not_to change(ReceiptLineMatch.confirmed, :count)
 
       expect(response).to redirect_to(matching_queue_path)
@@ -205,10 +206,11 @@ RSpec.describe "Matching", type: :request do
   describe "POST /matching/ignored_groups" do
     it "ignores all currently eligible lines in the group without creating variants" do
       create_lait_lines
+      preview = ReceiptLineMatching::BulkConfirmService.preview(normalized_label: "Lait demi ecreme")
       counts = catalogue_and_price_counts
 
       expect do
-        post_ignored_group("Lait demi ecreme", expected_count: 2)
+        post_ignored_group("Lait demi ecreme", receipt_line_ids: preview.receipt_line_ids)
       end.to change(ReceiptLineMatch.ignored, :count).by(2)
 
       expect_group_ignore_success(counts)
@@ -218,7 +220,7 @@ RSpec.describe "Matching", type: :request do
       create_line(label: "Lait demi ecreme")
 
       expect do
-        post_ignored_group("Lait demi ecreme", expected_count: 2)
+        post_ignored_group("Lait demi ecreme", receipt_line_ids: [ SecureRandom.uuid ])
       end.not_to change(ReceiptLineMatch.ignored, :count)
 
       expect(response).to redirect_to(matching_queue_path)
@@ -228,7 +230,7 @@ RSpec.describe "Matching", type: :request do
 
   def create_line(
     store: create(:store),
-    receipt: create(:receipt, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12)),
+    receipt: create(:receipt, :reviewed, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12)),
     label:,
     kind: "item",
     total_cents: 123,
@@ -288,23 +290,23 @@ RSpec.describe "Matching", type: :request do
          params: { inline_product_variant: inline_variant_params(category: category, retail_brand: retail_brand) }
   end
 
-  def post_bulk_confirmation(normalized_label, variant, expected_count:)
+  def post_bulk_confirmation(normalized_label, variant, receipt_line_ids:)
     post matching_bulk_confirmations_path,
          params: {
            bulk_confirmation: {
              normalized_label: normalized_label,
              product_variant_id: variant.id,
-             expected_count: expected_count
+             receipt_line_ids: receipt_line_ids
            }
          }
   end
 
-  def post_ignored_group(normalized_label, expected_count:)
+  def post_ignored_group(normalized_label, receipt_line_ids:)
     post matching_ignored_groups_path,
          params: {
            ignored_group: {
              normalized_label: normalized_label,
-             expected_count: expected_count
+             receipt_line_ids: receipt_line_ids
            }
          }
   end

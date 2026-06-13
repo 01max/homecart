@@ -75,7 +75,7 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
     expect(ReceiptLineMatch.confirmed.exists?(receipt_line: records.fetch(:line))).to be(false)
   end
 
-  def create_line(label:, receipt: create(:receipt, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12)))
+  def create_line(label:, receipt: create(:receipt, :reviewed, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12)))
     create(:receipt_line, receipt: receipt, label: label, quantity: 1, total_cents: 123, unit_price_cents: 123)
   end
 

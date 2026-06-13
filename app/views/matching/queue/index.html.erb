@@ -59,7 +59,7 @@
                                       params: {
                                         ignored_group: {
                                           normalized_label: group.normalized_label,
-                                          expected_count: group.line_count
+                                          receipt_line_ids: group.receipt_lines.map(&:id)
                                         }
                                       },
                                       class: "hc-button hc-button--warning",
@@ -154,7 +154,9 @@
                                       class: "hc-table-cell-actions mt-4 justify-start" do |form| %>
                           <%= form.hidden_field :normalized_label, value: entry.bulk_preview.normalized_label %>
                           <%= form.hidden_field :product_variant_id, value: entry.bulk_preview_variant.id %>
-                          <%= form.hidden_field :expected_count, value: entry.bulk_preview.affected_count %>
+                          <% entry.bulk_preview.receipt_line_ids.each do |receipt_line_id| %>
+                            <%= form.hidden_field :receipt_line_ids, multiple: true, value: receipt_line_id %>
+                          <% end %>
                           <%= form.submit t(".bulk.confirm", count: entry.bulk_preview.affected_count), class: "hc-button hc-button--primary" %>
                         <% end %>
                       </div>

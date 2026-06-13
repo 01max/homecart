@@ -2,7 +2,7 @@ module Matching
   # Applies an ignore decision to every currently eligible line in a queue group.
   class IgnoredGroupsController < ApplicationController
     def create
-      ensure_expected_count!
+      ensure_expected_receipt_line_ids!
 
       current_preview.receipt_lines.each do |receipt_line|
         ReceiptLineMatching::IgnoreLineService.call(receipt_line: receipt_line)
@@ -21,7 +21,7 @@ module Matching
     private
 
     def ignored_group_params
-      params.require(:ignored_group).permit(:normalized_label, :expected_count)
+      params.require(:ignored_group).permit(:normalized_label, receipt_line_ids: [])
     end
 
     def current_preview
@@ -30,10 +30,18 @@ module Matching
       )
     end
 
-    def ensure_expected_count!
-      return if ignored_group_params[:expected_count].to_i == current_preview.affected_count
+    def ensure_expected_receipt_line_ids!
+      return if expected_receipt_line_ids.present? && expected_receipt_line_ids == current_receipt_line_ids
 
       raise ArgumentError
+    end
+
+    def expected_receipt_line_ids
+      @expected_receipt_line_ids ||= Array(ignored_group_params[:receipt_line_ids]).filter_map(&:presence).map(&:to_s).sort
+    end
+
+    def current_receipt_line_ids
+      current_preview.receipt_line_ids.map(&:to_s).sort
     end
   end
 end

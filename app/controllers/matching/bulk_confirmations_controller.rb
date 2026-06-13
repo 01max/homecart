@@ -5,7 +5,7 @@ module Matching
       result = ReceiptLineMatching::BulkConfirmService.call(
         normalized_label: bulk_confirmation_params[:normalized_label],
         product_variant: product_variant,
-        expected_count: bulk_confirmation_params[:expected_count]
+        expected_receipt_line_ids: bulk_confirmation_params[:receipt_line_ids]
       )
 
       redirect_to matching_queue_path,
@@ -21,7 +21,7 @@ module Matching
     private
 
     def bulk_confirmation_params
-      params.require(:bulk_confirmation).permit(:normalized_label, :product_variant_id, :expected_count)
+      params.require(:bulk_confirmation).permit(:normalized_label, :product_variant_id, receipt_line_ids: [])
     end
 
     def product_variant

@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe ReceiptLineMatching::RejectMatchService do
   let(:variant) { create(:product_variant) }
-  let(:receipt_line) { create(:receipt_line, label: "compote bio village") }
+  let(:receipt_line) { create(:receipt_line, receipt: create(:receipt, :reviewed), label: "compote bio village") }
   let!(:suggestion) { create(:receipt_line_match, :suggested, receipt_line: receipt_line, product_variant: variant) }
 
   it "records a rejected suggestion and suppresses it for that line" do

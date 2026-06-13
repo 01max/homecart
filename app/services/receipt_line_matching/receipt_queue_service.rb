@@ -14,6 +14,8 @@ module ReceiptLineMatching
     end
 
     def call
+      return [] unless receipt.reviewed?
+
       unmatched_item_lines.map do |receipt_line|
         Entry.new(
           receipt_line: receipt_line,

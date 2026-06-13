@@ -79,6 +79,8 @@ en:
           quantities: "quantities %{values}"
           units: "units %{values}"
     receipt_lines:
+      errors:
+        receipt_not_reviewed: "Review the receipt before matching its lines."
       confirm:
         success: "Confirmed %{label}."
       create_variant:
@@ -99,6 +101,8 @@ en:
         actions:
           back_to_receipt: "Back to receipt"
           global_queue: "Global queue"
+        errors:
+          receipt_not_reviewed: "Review the receipt before matching its lines."
         lines:
           heading: "Unmatched item lines"
           description: "Only this receipt's unmatched item lines are shown. Fees, discounts, confirmed lines, and ignored lines are excluded."

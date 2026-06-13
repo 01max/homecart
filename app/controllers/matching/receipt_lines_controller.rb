@@ -2,6 +2,7 @@ module Matching
   # Handles one-line matching decisions from the matching queue.
   class ReceiptLinesController < ApplicationController
     before_action :load_receipt_line
+    before_action :ensure_receipt_reviewed
     before_action :load_product_variant, only: %i[confirm reject]
 
     def confirm
@@ -57,6 +58,12 @@ module Matching
 
     def load_product_variant
       @product_variant = ProductVariant.find(params.require(:product_variant_id))
+    end
+
+    def ensure_receipt_reviewed
+      return if @receipt_line.receipt.reviewed?
+
+      redirect_to decision_redirect_path, alert: t("matching.receipt_lines.errors.receipt_not_reviewed")
     end
 
     def inline_product_variant_params
