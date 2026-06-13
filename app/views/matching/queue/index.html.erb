@@ -1,11 +1,55 @@
 <% content_for :title, t(".title") %>
 
 <section class="hc-stack">
-  <div class="hc-page-toolbar">
-    <div>
-      <p class="hc-eyebrow"><%= t(".eyebrow") %></p>
-      <h1 class="hc-heading-lg mt-2"><%= t(".title") %></h1>
-      <p class="hc-body mt-2"><%= t(".description") %></p>
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t(".eyebrow"),
+             title: t(".title"),
+             description: t(".description"),
+             actions: link_to(t(".actions.catalogue"), catalogue_root_path, class: "hc-button hc-button--secondary") %>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t(".queue.heading") %></h2>
+        <p class="hc-block-description"><%= t(".queue.description") %></p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t(".queue.count", count: @line_count) %></p>
     </div>
-  </div>
+
+    <% if @groups.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[72rem]">
+          <thead>
+            <tr>
+              <th><%= t(".table.label") %></th>
+              <th><%= t(".table.lines") %></th>
+              <th><%= t(".table.stores") %></th>
+              <th><%= t(".table.dates") %></th>
+              <th><%= t(".table.prices") %></th>
+              <th><%= t(".table.quantities") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @groups.each do |group| %>
+              <tr>
+                <td>
+                  <span class="font-semibold"><%= group.representative_label %></span>
+                  <span class="mt-1 block text-xs text-[var(--hc-on-surface-variant)]"><%= group.normalized_label %></span>
+                </td>
+                <td class="whitespace-nowrap"><%= t(".table.line_count", count: group.line_count) %></td>
+                <td><%= matching_queue_store_list(group.stores) %></td>
+                <td class="whitespace-nowrap"><%= matching_queue_date_range(group) %></td>
+                <td><%= matching_queue_price_context(group.price_context) %></td>
+                <td><%= matching_queue_quantity_context(group.price_context) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t(".queue.empty") %></p>
+      </div>
+    <% end %>
+  </section>
 </section>
