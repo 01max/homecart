@@ -5,10 +5,41 @@ en:
         eyebrow: "Catalogue"
         title: "Catalogue"
         description: "Manage product brands, categories, variants, comparison units, and substitutions."
+        actions:
+          categories: "Manage categories"
     categories:
+      breadcrumb_separator: " > "
       errors:
         in_use: "Move or remove dependent categories, products, or alternative groups before deleting this category."
         invalid_tree: "The category tree could not be updated."
+      form:
+        name: "Name"
+        parent: "Parent category"
+        root_parent: "No parent"
+        create: "Create category"
+        update: "Save category"
+        delete: "Delete"
+        delete_confirm: "Delete %{name}?"
+      index:
+        eyebrow: "Catalogue"
+        title: "Categories"
+        description: "Create, rename, move, and delete product categories in a curated tree."
+        empty: "No categories have been created yet."
+        actions:
+          back_to_catalogue: "Back to catalogue"
+        create:
+          heading: "Create category"
+          description: "Add a root category or place a new category under an existing parent."
+        tree:
+          heading: "Category tree"
+          description: "Each category shows its breadcrumb, usage, and move controls."
+          usage: "%{children_count} child categories, %{products_count} products"
+      create:
+        success: "Created category %{name}."
+      update:
+        success: "Updated category %{name}."
+      destroy:
+        success: "Deleted category %{name}."
   categories:
     create:
       success: "Created category %{name}."
