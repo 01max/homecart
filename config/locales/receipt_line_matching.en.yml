@@ -5,3 +5,30 @@ en:
         eyebrow: "Matching"
         title: "Matching queue"
         description: "Match receipt-line observations to catalogue variants and keep ignored lines out of the queue."
+        empty_value: "Not available"
+        date_range: "%{first} to %{last}"
+        actions:
+          catalogue: "Catalogue"
+        queue:
+          heading: "Unmatched item labels"
+          description: "Item receipt lines grouped by normalized label. Fees, discounts, confirmed lines, and ignored lines are left out."
+          empty: "No unmatched item lines are waiting for product matching."
+          count:
+            one: "%{count} line"
+            other: "%{count} lines"
+        table:
+          label: "Receipt label"
+          lines: "Lines"
+          stores: "Stores"
+          dates: "Dates"
+          prices: "Prices"
+          quantities: "Quantities"
+          line_count:
+            one: "%{count} line"
+            other: "%{count} lines"
+        price_context:
+          total: "totals %{values}"
+          unit: "unit prices %{values}"
+        quantity_context:
+          quantities: "quantities %{values}"
+          units: "units %{values}"
