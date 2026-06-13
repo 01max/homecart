@@ -85,6 +85,9 @@ en:
         back_to_index: "Back to receipts"
         source_document: "Source document"
         review_receipt: "Review receipt"
+        match_receipt:
+          one: "Match this receipt (%{count})"
+          other: "Match this receipt (%{count})"
         delete_receipt: "Delete receipt"
         delete_confirm: "Delete this receipt and its parsed lines, promotions, and payments?"
       details:

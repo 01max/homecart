@@ -72,7 +72,9 @@ class ReceiptsController < ApplicationController
     prepare_review_form
   end
 
-  def show; end
+  def show
+    @matching_queue_entry_count = receipt_matching_queue_entry_count if @receipt.reviewed?
+  end
 
   def update
     if @receipt.update(receipt_params)
@@ -123,6 +125,10 @@ class ReceiptsController < ApplicationController
     @receipt.receipt_lines.build(position: next_receipt_line_position) unless @receipt.receipt_lines.any?(&:new_record?)
     @receipt.receipt_promotions.build unless @receipt.receipt_promotions.any?(&:new_record?)
     @receipt.receipt_payments.build(position: next_receipt_payment_position) unless @receipt.receipt_payments.any?(&:new_record?)
+  end
+
+  def receipt_matching_queue_entry_count
+    ReceiptLineMatching::ReceiptQueueService.call(receipt: @receipt, persist_suggestions: false).size
   end
 
   def next_receipt_line_position

@@ -7,7 +7,7 @@ module Matching
     def confirm
       ReceiptLineMatching::ConfirmMatchService.call(receipt_line: @receipt_line, product_variant: @product_variant)
 
-      redirect_to matching_queue_path,
+      redirect_to decision_redirect_path,
                   notice: t("matching.receipt_lines.confirm.success", label: @receipt_line.label)
     end
 
@@ -26,26 +26,26 @@ module Matching
       )
       ReceiptLineMatching::ConfirmMatchService.call(receipt_line: @receipt_line, product_variant: result.variant)
 
-      redirect_to matching_queue_path,
+      redirect_to decision_redirect_path,
                   notice: t("matching.receipt_lines.create_variant.success", variant: result.variant.name, label: @receipt_line.label)
     rescue ActiveRecord::RecordInvalid => e
-      redirect_to matching_queue_path, alert: e.record.errors.full_messages.to_sentence
+      redirect_to decision_redirect_path, alert: e.record.errors.full_messages.to_sentence
     rescue ActiveRecord::RecordNotFound
-      redirect_to matching_queue_path,
+      redirect_to decision_redirect_path,
                   alert: t("matching.receipt_lines.create_variant.errors.category_required")
     end
 
     def ignore
       ReceiptLineMatching::IgnoreLineService.call(receipt_line: @receipt_line)
 
-      redirect_to matching_queue_path,
+      redirect_to decision_redirect_path,
                   notice: t("matching.receipt_lines.ignore.success", label: @receipt_line.label)
     end
 
     def reject
       ReceiptLineMatching::RejectMatchService.call(receipt_line: @receipt_line, product_variant: @product_variant)
 
-      redirect_to matching_queue_path,
+      redirect_to decision_redirect_path,
                   notice: t("matching.receipt_lines.reject.success", label: @receipt_line.label)
     end
 
@@ -94,6 +94,10 @@ module Matching
 
     def blank_to_nil(value)
       value.presence
+    end
+
+    def decision_redirect_path
+      url_from(params[:return_to]) || matching_queue_path
     end
   end
 end

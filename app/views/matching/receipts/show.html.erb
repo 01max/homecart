@@ -1,0 +1,92 @@
+<% content_for :title, t(".title") %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t(".eyebrow"),
+             title: t(".title"),
+             description: t(".description", store: store_label(@receipt.store)),
+             actions: safe_join([
+               link_to(t(".actions.back_to_receipt"), receipt_path(@receipt), class: "hc-button hc-button--secondary"),
+               link_to(t(".actions.global_queue"), matching_queue_path, class: "hc-button hc-button--subtle")
+             ]) %>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t(".lines.heading") %></h2>
+        <p class="hc-block-description"><%= t(".lines.description") %></p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t(".lines.count", count: @entries.size) %></p>
+    </div>
+
+    <% if @entries.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[76rem]">
+          <thead>
+            <tr>
+              <th><%= t(".table.position") %></th>
+              <th><%= t(".table.label") %></th>
+              <th><%= t(".table.quantity") %></th>
+              <th><%= t(".table.total") %></th>
+              <th><%= t(".table.suggestions") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @entries.each do |entry| %>
+              <% line = entry.receipt_line %>
+              <tr>
+                <td class="whitespace-nowrap"><%= line.position %></td>
+                <td>
+                  <span class="font-semibold"><%= line.label %></span>
+                  <span class="mt-1 block text-xs text-[var(--hc-on-surface-variant)]"><%= line.section_label.presence || t(".empty_value") %></span>
+                </td>
+                <td class="whitespace-nowrap">
+                  <%= t(".quantity", quantity: matching_queue_quantity_value(line), unit: t("receipts.unit_of_measures.#{line.unit_of_measure}")) %>
+                </td>
+                <td class="whitespace-nowrap"><%= matching_queue_money_label(line.total_cents) %></td>
+                <td>
+                  <% if entry.suggestions.any? %>
+                    <div class="hc-stack-sm">
+                      <% entry.suggestions.each do |suggestion| %>
+                        <div class="hc-action-block hc-block--flat">
+                          <p class="font-semibold"><%= catalogue_product_variant_label(suggestion.product_variant) %></p>
+                          <p class="mt-1 text-xs text-[var(--hc-on-surface-variant)]">
+                            <%= t("matching.queue.index.suggestions.metadata",
+                                  reason: matching_queue_suggestion_reason(suggestion.reason),
+                                  confidence: matching_queue_confidence_label(suggestion.confidence)) %>
+                          </p>
+                          <div class="hc-table-cell-actions mt-3 justify-start">
+                            <%= button_to t(".suggestions.confirm"),
+                                          confirm_matching_receipt_line_path(line),
+                                          params: {
+                                            product_variant_id: suggestion.product_variant.id,
+                                            return_to: matching_receipt_path(@receipt)
+                                          },
+                                          class: "hc-button hc-button--primary" %>
+                            <%= button_to t(".suggestions.reject"),
+                                          reject_matching_receipt_line_path(line),
+                                          params: {
+                                            product_variant_id: suggestion.product_variant.id,
+                                            return_to: matching_receipt_path(@receipt)
+                                          },
+                                          class: "hc-button hc-button--subtle" %>
+                          </div>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <p class="hc-body text-sm"><%= t(".suggestions.empty") %></p>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t(".lines.empty") %></p>
+      </div>
+    <% end %>
+  </section>
+</section>
