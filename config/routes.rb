@@ -18,7 +18,9 @@ Rails.application.routes.draw do
     resources :manufacturers, only: %i[index show new create edit update]
     resources :comparison_units, only: %i[index show new create edit update]
     resources :products, only: %i[index show new create edit update]
-    resources :product_variants, only: %i[index show new create edit update]
+    resources :product_variants, only: %i[index show new create edit update] do
+      post :inline_product, on: :collection
+    end
     resources :product_alternative_groups, only: %i[index show new create edit update] do
       resources :memberships, module: :product_alternative_groups, only: %i[create destroy]
     end

@@ -1,0 +1,15 @@
+<div class="hc-category-picker">
+  <div class="hc-filter-group">
+    <%= form.label field, label, class: "hc-label" %>
+    <%= form.select field,
+                    category_parent_options(categories),
+                    { include_blank: include_blank },
+                    class: "hc-select",
+                    required: required,
+                    aria: { describedby: describedby } %>
+    <p id="<%= describedby %>" class="hc-body text-sm">
+      <%= description %>
+      <%= link_to manage_label, catalogue_categories_path, class: "hc-link" %>
+    </p>
+  </div>
+</div>

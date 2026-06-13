@@ -43,6 +43,11 @@ en:
       variant: "%{product} — %{variant}"
       comparison_unit: "%{name} (%{symbol})"
       variant_quantity: "%{package_count} x %{quantity_value} %{unit}"
+    category_picker:
+      product_description: "Choose the category this product belongs to."
+      inline_variant_description: "Choose a category before creating the new product and variant."
+      alternative_group_description: "Choose the category this alternative group belongs to."
+      manage_categories: "Manage categories"
     categories:
       breadcrumb_separator: " > "
       errors:
@@ -297,6 +302,19 @@ en:
         description: "Create a concrete purchasable form for an existing product."
         form_heading: "Variant"
         form_description: "Barcode and comparison quantity are optional."
+      inline_product:
+        form_heading: "Create product and variant"
+        form_description: "Use this path when the product does not exist yet; category selection is required before the variant can be created."
+        product_brand_name: "Product brand"
+        product_name: "Product name"
+        category: "Category"
+        select_category: "Select a category"
+        manufacturer_name: "Manufacturer"
+        variant_name: "Variant name"
+        create: "Create product and variant"
+        success: "Created variant %{name}."
+        errors:
+          category_required: "Select a category before creating a product and variant."
       edit:
         eyebrow: "Catalogue"
         title: "Edit %{name}"

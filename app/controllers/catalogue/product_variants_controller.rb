@@ -27,6 +27,28 @@ module Catalogue
       end
     end
 
+    def inline_product
+      result = ProductCatalog::CreateVariantService.call(
+        product_brand_name: inline_product_variant_params[:product_brand_name],
+        product_name: inline_product_variant_params[:product_name],
+        variant_name: inline_product_variant_params[:variant_name],
+        category: inline_category,
+        manufacturer_name: inline_product_variant_params[:manufacturer_name],
+        comparison_unit: inline_comparison_unit,
+        package_count: blank_to_nil(inline_product_variant_params[:package_count]),
+        quantity_value: blank_to_nil(inline_product_variant_params[:quantity_value]),
+        barcode: blank_to_nil(inline_product_variant_params[:barcode])
+      )
+
+      redirect_to catalogue_product_variant_path(result.variant),
+                  notice: t("product_catalog.product_variants.inline_product.success", name: result.variant.name)
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to new_catalogue_product_variant_path, alert: e.record.errors.full_messages.to_sentence
+    rescue ActiveRecord::RecordNotFound
+      redirect_to new_catalogue_product_variant_path,
+                  alert: t("product_catalog.product_variants.inline_product.errors.category_required")
+    end
+
     def edit
     end
 
@@ -50,12 +72,39 @@ module Catalogue
 
     def load_form_options
       @products = Product.includes(:category, :product_brand).order(:normalized_name)
+      @categories = Category.includes(:parent).order(:normalized_name)
       @comparison_units = ComparisonUnit.order(:normalized_name)
     end
 
     def product_variant_params
       params.require(:product_variant)
         .permit(:name, :product_id, :comparison_unit_id, :package_count, :quantity_value, :barcode)
+    end
+
+    def inline_product_variant_params
+      params.require(:inline_product_variant).permit(
+        :product_brand_name,
+        :product_name,
+        :variant_name,
+        :category_id,
+        :manufacturer_name,
+        :comparison_unit_id,
+        :package_count,
+        :quantity_value,
+        :barcode
+      )
+    end
+
+    def inline_category
+      raise ActiveRecord::RecordNotFound if inline_product_variant_params[:category_id].blank?
+
+      Category.find(inline_product_variant_params[:category_id])
+    end
+
+    def inline_comparison_unit
+      return if inline_product_variant_params[:comparison_unit_id].blank?
+
+      ComparisonUnit.find(inline_product_variant_params[:comparison_unit_id])
     end
   end
 end

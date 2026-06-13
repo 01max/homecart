@@ -19,14 +19,16 @@
                       required: true %>
     </div>
 
-    <div class="hc-filter-group">
-      <%= form.label :category_id, t("product_catalog.products.form.category"), class: "hc-label" %>
-      <%= form.select :category_id,
-                      category_parent_options(@categories),
-                      { include_blank: t("product_catalog.products.form.select_category") },
-                      class: "hc-select",
-                      required: true %>
-    </div>
+    <%= render "catalogue/shared/category_picker",
+               form: form,
+               field: :category_id,
+               categories: @categories,
+               label: t("product_catalog.products.form.category"),
+               include_blank: t("product_catalog.products.form.select_category"),
+               required: true,
+               describedby: "product_category_picker_hint",
+               description: t("product_catalog.category_picker.product_description"),
+               manage_label: t("product_catalog.category_picker.manage_categories") %>
 
     <div class="hc-filter-group">
       <%= form.label :manufacturer_id, t("product_catalog.products.form.manufacturer"), class: "hc-label" %>
