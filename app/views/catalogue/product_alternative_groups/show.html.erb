@@ -1,0 +1,92 @@
+<% content_for :title, @product_alternative_group.name %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.product_alternative_groups.show.eyebrow"),
+             title: @product_alternative_group.name,
+             description: t("product_catalog.product_alternative_groups.show.description", category: catalogue_category_label(@product_alternative_group.category)),
+             actions: safe_join([
+               link_to(t("product_catalog.actions.back_to_index"), catalogue_product_alternative_groups_path, class: "hc-button hc-button--subtle"),
+               link_to(t("product_catalog.actions.edit"), edit_catalogue_product_alternative_group_path(@product_alternative_group), class: "hc-button hc-button--secondary")
+             ]) %>
+
+  <section class="hc-block">
+    <div class="hc-block-heading">
+      <h2 class="hc-block-title"><%= t("product_catalog.product_alternative_groups.show.add_member.heading") %></h2>
+      <p class="hc-block-description"><%= t("product_catalog.product_alternative_groups.show.add_member.description") %></p>
+    </div>
+
+    <%= form_with scope: :product_alternative_group_membership,
+                  url: catalogue_product_alternative_group_memberships_path(@product_alternative_group),
+                  class: "hc-filter-row mt-4" do |form| %>
+      <div class="hc-filter-group">
+        <%= form.label :product_variant_id, t("product_catalog.product_alternative_group_memberships.form.product_variant"), class: "hc-label" %>
+        <%= form.select :product_variant_id,
+                        catalogue_variant_options(@product_variants),
+                        { include_blank: t("product_catalog.product_alternative_group_memberships.form.select_product_variant") },
+                        class: "hc-select",
+                        required: true %>
+      </div>
+
+      <div class="hc-filter-group">
+        <%= form.label :equivalence, t("product_catalog.product_alternative_group_memberships.form.equivalence"), class: "hc-label" %>
+        <%= form.select :equivalence,
+                        ProductAlternativeGroupMembership.equivalences.keys.map { |equivalence| [ t("product_catalog.product_alternative_group_memberships.equivalences.#{equivalence}"), equivalence ] },
+                        {},
+                        class: "hc-select",
+                        required: true %>
+      </div>
+
+      <div class="hc-filter-actions">
+        <%= form.submit t("product_catalog.product_alternative_group_memberships.form.create"), class: "hc-button hc-button--primary" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("product_catalog.product_alternative_groups.show.members.heading") %></h2>
+        <p class="hc-block-description"><%= t("product_catalog.product_alternative_groups.show.members.description") %></p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t("product_catalog.counts.memberships", count: @memberships.size) %></p>
+    </div>
+
+    <% if @memberships.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[56rem]">
+          <thead>
+            <tr>
+              <th><%= t("product_catalog.product_alternative_groups.show.members.variant") %></th>
+              <th><%= t("product_catalog.product_alternative_groups.show.members.product") %></th>
+              <th><%= t("product_catalog.product_alternative_groups.show.members.equivalence") %></th>
+              <th><%= t("product_catalog.product_alternative_groups.show.members.actions") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @memberships.each do |membership| %>
+              <tr>
+                <td><%= link_to membership.product_variant.name, catalogue_product_variant_path(membership.product_variant), class: "hc-link" %></td>
+                <td><%= catalogue_product_label(membership.product_variant.product) %></td>
+                <td><%= t("product_catalog.product_alternative_group_memberships.equivalences.#{membership.equivalence}") %></td>
+                <td>
+                  <div class="hc-table-cell-actions">
+                    <%= button_to t("product_catalog.actions.remove"),
+                                  catalogue_product_alternative_group_membership_path(@product_alternative_group, membership),
+                                  method: :delete,
+                                  class: "hc-button hc-button--danger",
+                                  form: { data: { turbo_confirm: t("product_catalog.product_alternative_group_memberships.form.delete_confirm") } } %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t("product_catalog.product_alternative_groups.show.members.empty") %></p>
+      </div>
+    <% end %>
+  </section>
+</section>

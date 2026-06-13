@@ -14,12 +14,14 @@ Rails.application.routes.draw do
     root "dashboard#index"
 
     resources :categories, only: %i[index new create update destroy]
-    resources :product_brands, only: %i[index show new]
-    resources :manufacturers, only: %i[index show new]
-    resources :comparison_units, only: %i[index show new]
-    resources :products, only: %i[index show new]
-    resources :product_variants, only: %i[index show new]
-    resources :product_alternative_groups, only: %i[index show new]
+    resources :product_brands, only: %i[index show new create edit update]
+    resources :manufacturers, only: %i[index show new create edit update]
+    resources :comparison_units, only: %i[index show new create edit update]
+    resources :products, only: %i[index show new create edit update]
+    resources :product_variants, only: %i[index show new create edit update]
+    resources :product_alternative_groups, only: %i[index show new create edit update] do
+      resources :memberships, module: :product_alternative_groups, only: %i[create destroy]
+    end
   end
 
   namespace :matching do

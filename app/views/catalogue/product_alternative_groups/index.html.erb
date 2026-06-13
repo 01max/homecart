@@ -1,0 +1,55 @@
+<% content_for :title, t("product_catalog.product_alternative_groups.index.title") %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.product_alternative_groups.index.eyebrow"),
+             title: t("product_catalog.product_alternative_groups.index.title"),
+             description: t("product_catalog.product_alternative_groups.index.description"),
+             actions: safe_join([
+               link_to(t("product_catalog.actions.back_to_catalogue"), catalogue_root_path, class: "hc-button hc-button--subtle"),
+               link_to(t("product_catalog.product_alternative_groups.index.actions.new"), new_catalogue_product_alternative_group_path, class: "hc-button hc-button--primary")
+             ]) %>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("product_catalog.product_alternative_groups.index.table.heading") %></h2>
+        <p class="hc-block-description"><%= t("product_catalog.product_alternative_groups.index.table.description") %></p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t("product_catalog.counts.product_alternative_groups", count: @product_alternative_groups.size) %></p>
+    </div>
+
+    <% if @product_alternative_groups.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[44rem]">
+          <thead>
+            <tr>
+              <th><%= t("product_catalog.product_alternative_groups.index.table.name") %></th>
+              <th><%= t("product_catalog.product_alternative_groups.index.table.category") %></th>
+              <th><%= t("product_catalog.product_alternative_groups.index.table.variants") %></th>
+              <th><%= t("product_catalog.product_alternative_groups.index.table.actions") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @product_alternative_groups.each do |group| %>
+              <tr>
+                <td><%= link_to group.name, catalogue_product_alternative_group_path(group), class: "hc-link" %></td>
+                <td><%= catalogue_category_label(group.category) %></td>
+                <td><%= group.product_variants.size %></td>
+                <td>
+                  <div class="hc-table-cell-actions">
+                    <%= link_to t("product_catalog.actions.edit"), edit_catalogue_product_alternative_group_path(group), class: "hc-link text-sm" %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t("product_catalog.product_alternative_groups.index.empty") %></p>
+      </div>
+    <% end %>
+  </section>
+</section>

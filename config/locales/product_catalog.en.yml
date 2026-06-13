@@ -7,6 +7,42 @@ en:
         description: "Manage product brands, categories, variants, comparison units, and substitutions."
         actions:
           categories: "Manage categories"
+          product_brands: "Product brands"
+          products: "Products"
+          product_variants: "Variants"
+          reference_data: "Reference data"
+        sections:
+          manage:
+            heading: "Catalogue workbench"
+            description: "Maintain the reusable catalogue records used by receipt-line matching."
+            product_brands: "National and private-label product identities."
+            manufacturers: "Optional manufacturer enrichment for products."
+            comparison_units: "Consumer units such as grams, slices, rolls, or capsules."
+            products: "Shopper-facing products tied to brands and categories."
+            product_variants: "Concrete pack sizes, flavours, and barcodes."
+            product_alternative_groups: "Variant-level substitution groups."
+    actions:
+      back_to_catalogue: "Back to catalogue"
+      back_to_index: "Back to list"
+      back_to_detail: "Back to detail"
+      edit: "Edit"
+      remove: "Remove"
+      view: "View"
+    counts:
+      product_brands: "%{count} product brands"
+      manufacturers: "%{count} manufacturers"
+      comparison_units: "%{count} comparison units"
+      products: "%{count} products"
+      product_variants: "%{count} variants"
+      product_alternative_groups: "%{count} alternative groups"
+      memberships: "%{count} variants"
+    labels:
+      empty_value: "Not set"
+      private_label_brand: "%{name} (%{retail_brand} private label)"
+      product: "%{brand} — %{product} — %{category}"
+      variant: "%{product} — %{variant}"
+      comparison_unit: "%{name} (%{symbol})"
+      variant_quantity: "%{package_count} x %{quantity_value} %{unit}"
     categories:
       breadcrumb_separator: " > "
       errors:
@@ -40,6 +76,314 @@ en:
         success: "Updated category %{name}."
       destroy:
         success: "Deleted category %{name}."
+    product_brands:
+      form:
+        name: "Name"
+        retail_brand: "Retail brand"
+        no_retail_brand: "National brand"
+        create: "Create product brand"
+        update: "Save product brand"
+      index:
+        eyebrow: "Catalogue"
+        title: "Product brands"
+        description: "Maintain product brands independently from retail brands."
+        empty: "No product brands have been created yet."
+        actions:
+          new: "New product brand"
+        table:
+          heading: "Product brand list"
+          description: "Private-label product brands can optionally point at the retailer that owns them."
+          name: "Name"
+          retail_brand: "Retail brand"
+          products: "Products"
+          actions: "Actions"
+      new:
+        eyebrow: "Catalogue"
+        title: "New product brand"
+        description: "Create a national brand or link a private label to a retail brand."
+        form_heading: "Product brand"
+        form_description: "The product brand is the name printed on the product, not the store where it was bought."
+      edit:
+        eyebrow: "Catalogue"
+        title: "Edit %{name}"
+        description: "Update the product brand name or private-label owner."
+        form_heading: "Product brand"
+        form_description: "Changing the brand keeps existing products attached."
+      show:
+        eyebrow: "Product brand"
+        description: "Products under this brand are available to the matching workflow."
+        details:
+          heading: "Brand details"
+          retail_brand: "Retail brand"
+          products: "Products"
+        products:
+          heading: "Products"
+          description: "Products currently attached to this brand."
+          empty: "No products are attached to this brand yet."
+      create:
+        success: "Created product brand %{name}."
+      update:
+        success: "Updated product brand %{name}."
+    manufacturers:
+      form:
+        name: "Name"
+        create: "Create manufacturer"
+        update: "Save manufacturer"
+      index:
+        eyebrow: "Catalogue"
+        title: "Manufacturers"
+        description: "Maintain optional manufacturer enrichment records."
+        empty: "No manufacturers have been created yet."
+        actions:
+          new: "New manufacturer"
+        table:
+          heading: "Manufacturer list"
+          description: "Manufacturers are optional and never block product creation."
+          name: "Name"
+          products: "Products"
+          actions: "Actions"
+      new:
+        eyebrow: "Catalogue"
+        title: "New manufacturer"
+        description: "Add a manufacturer when the producer is useful to track."
+        form_heading: "Manufacturer"
+        form_description: "Manufacturer data is enrichment; products can still be created without one."
+      edit:
+        eyebrow: "Catalogue"
+        title: "Edit %{name}"
+        description: "Update this manufacturer while keeping linked products attached."
+        form_heading: "Manufacturer"
+        form_description: "Linked products remain connected after the rename."
+      show:
+        eyebrow: "Manufacturer"
+        description: "Products linked to this optional manufacturer."
+        products:
+          heading: "Products"
+          description: "Products currently attached to this manufacturer."
+          empty: "No products are attached to this manufacturer yet."
+      create:
+        success: "Created manufacturer %{name}."
+      update:
+        success: "Updated manufacturer %{name}."
+    comparison_units:
+      form:
+        name: "Name"
+        symbol: "Symbol"
+        create: "Create comparison unit"
+        update: "Save comparison unit"
+      index:
+        eyebrow: "Catalogue"
+        title: "Comparison units"
+        description: "Maintain consumer comparison units for product variants."
+        empty: "No comparison units have been created yet."
+        actions:
+          new: "New comparison unit"
+        table:
+          heading: "Comparison unit list"
+          description: "Use units beyond receipt units, such as slices, rolls, doses, or capsules."
+          name: "Name"
+          symbol: "Symbol"
+          variants: "Variants"
+          actions: "Actions"
+      new:
+        eyebrow: "Catalogue"
+        title: "New comparison unit"
+        description: "Add a unit used to compare variant quantities."
+        form_heading: "Comparison unit"
+        form_description: "The symbol is shown beside structured variant quantities."
+      edit:
+        eyebrow: "Catalogue"
+        title: "Edit %{name}"
+        description: "Update this comparison unit."
+        form_heading: "Comparison unit"
+        form_description: "Linked variants remain connected after the update."
+      show:
+        eyebrow: "Comparison unit"
+        description: "Variants using this comparison unit."
+        variants:
+          heading: "Variants"
+          description: "Product variants currently measured with this unit."
+          empty: "No variants use this comparison unit yet."
+      create:
+        success: "Created comparison unit %{name}."
+      update:
+        success: "Updated comparison unit %{name}."
+    products:
+      form:
+        name: "Name"
+        product_brand: "Product brand"
+        select_product_brand: "Select a product brand"
+        category: "Category"
+        select_category: "Select a category"
+        manufacturer: "Manufacturer"
+        no_manufacturer: "No manufacturer"
+        create: "Create product"
+        update: "Save product"
+      index:
+        eyebrow: "Catalogue"
+        title: "Products"
+        description: "Maintain shopper-facing products under brands and categories."
+        empty: "No products have been created yet."
+        actions:
+          new: "New product"
+        table:
+          heading: "Product list"
+          description: "Products group concrete purchasable variants."
+          name: "Name"
+          brand: "Brand"
+          category: "Category"
+          manufacturer: "Manufacturer"
+          variants: "Variants"
+          actions: "Actions"
+      new:
+        eyebrow: "Catalogue"
+        title: "New product"
+        description: "Create a product under a product brand and category."
+        form_heading: "Product"
+        form_description: "Manufacturer is optional; category and product brand are required."
+      edit:
+        eyebrow: "Catalogue"
+        title: "Edit %{name}"
+        description: "Update this product's brand, category, manufacturer, or name."
+        form_heading: "Product"
+        form_description: "Existing variants remain attached to this product."
+      show:
+        eyebrow: "Product"
+        description: "Variants under this product can be matched to receipt lines."
+        details:
+          heading: "Product details"
+          brand: "Brand"
+          category: "Category"
+          manufacturer: "Manufacturer"
+        variants:
+          heading: "Variants"
+          description: "Concrete purchasable variants attached to this product."
+          empty: "No variants are attached to this product yet."
+      create:
+        success: "Created product %{name}."
+      update:
+        success: "Updated product %{name}."
+    product_variants:
+      form:
+        product: "Product"
+        select_product: "Select a product"
+        name: "Variant name"
+        package_count: "Package count"
+        quantity_value: "Quantity value"
+        comparison_unit: "Comparison unit"
+        no_comparison_unit: "No comparison unit"
+        barcode: "Barcode"
+        create: "Create variant"
+        update: "Save variant"
+      index:
+        eyebrow: "Catalogue"
+        title: "Product variants"
+        description: "Maintain concrete purchasable sizes, flavours, and barcodes."
+        empty: "No product variants have been created yet."
+        actions:
+          new: "New variant"
+        table:
+          heading: "Variant list"
+          description: "Receipt-line matches point at product variants."
+          variant: "Variant"
+          product: "Product"
+          category: "Category"
+          quantity: "Quantity"
+          barcode: "Barcode"
+          actions: "Actions"
+      new:
+        eyebrow: "Catalogue"
+        title: "New product variant"
+        description: "Create a concrete purchasable form for an existing product."
+        form_heading: "Variant"
+        form_description: "Barcode and comparison quantity are optional."
+      edit:
+        eyebrow: "Catalogue"
+        title: "Edit %{name}"
+        description: "Update this concrete purchasable variant."
+        form_heading: "Variant"
+        form_description: "Existing match decisions remain attached to this variant."
+      show:
+        eyebrow: "Variant"
+        description: "This is the concrete item receipt lines can match to."
+        details:
+          heading: "Variant details"
+          product: "Product"
+          brand: "Brand"
+          category: "Category"
+          manufacturer: "Manufacturer"
+          quantity: "Quantity"
+          barcode: "Barcode"
+      create:
+        success: "Created variant %{name}."
+      update:
+        success: "Updated variant %{name}."
+    product_alternative_groups:
+      form:
+        name: "Name"
+        category: "Category"
+        select_category: "Select a category"
+        create: "Create alternative group"
+        update: "Save alternative group"
+      index:
+        eyebrow: "Catalogue"
+        title: "Alternative groups"
+        description: "Maintain explicit variant-level substitution groups."
+        empty: "No alternative groups have been created yet."
+        actions:
+          new: "New alternative group"
+        table:
+          heading: "Alternative group list"
+          description: "Groups are category-scoped and contain product variants."
+          name: "Name"
+          category: "Category"
+          variants: "Variants"
+          actions: "Actions"
+      new:
+        eyebrow: "Catalogue"
+        title: "New alternative group"
+        description: "Create a group for variants that can substitute for each other."
+        form_heading: "Alternative group"
+        form_description: "Add variants from the group detail page after creating it."
+      edit:
+        eyebrow: "Catalogue"
+        title: "Edit %{name}"
+        description: "Update the group name or category."
+        form_heading: "Alternative group"
+        form_description: "Group members remain attached after this update."
+      show:
+        eyebrow: "Alternative group"
+        description: "Category: %{category}"
+        add_member:
+          heading: "Add variant"
+          description: "Attach a concrete product variant and choose how closely it substitutes."
+        members:
+          heading: "Members"
+          description: "Variants explicitly marked as alternatives in this group."
+          empty: "No variants have been added to this group yet."
+          variant: "Variant"
+          product: "Product"
+          equivalence: "Equivalence"
+          actions: "Actions"
+      create:
+        success: "Created alternative group %{name}."
+      update:
+        success: "Updated alternative group %{name}."
+    product_alternative_group_memberships:
+      form:
+        product_variant: "Product variant"
+        select_product_variant: "Select a product variant"
+        equivalence: "Equivalence"
+        create: "Add variant"
+        delete_confirm: "Remove this variant from the group?"
+      equivalences:
+        equivalent: "Equivalent"
+        comparable_size: "Comparable size"
+        different_size: "Different size"
+      create:
+        success: "Added variant to the alternative group."
+      destroy:
+        success: "Removed variant from the alternative group."
   categories:
     create:
       success: "Created category %{name}."

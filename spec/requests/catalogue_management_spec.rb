@@ -1,0 +1,163 @@
+require "rails_helper"
+
+RSpec.describe "Catalogue management", type: :request do
+  describe "catalogue dashboard" do
+    it "links to the catalogue management screens" do
+      get catalogue_root_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(%(href="/catalogue/product_brands"))
+      expect(response.body).to include(%(href="/catalogue/products"))
+      expect(response.body).to include(%(href="/catalogue/product_variants"))
+      expect(response.body).to include(%(href="/catalogue/product_alternative_groups"))
+    end
+  end
+
+  describe "index pages" do
+    it "renders each catalogue index without missing translations" do
+      catalogue_index_paths.each { |path| expect_index_to_render(path) }
+    end
+  end
+
+  describe "product brands" do
+    it "creates a private-label product brand linked to a retail brand" do
+      retail_brand = create(:retail_brand, name: "E.Leclerc")
+
+      expect { post_private_label_product_brand(retail_brand) }.to change(ProductBrand, :count).by(1)
+
+      product_brand = ProductBrand.find_by!(name: "Bio Village")
+      expect(product_brand.retail_brand).to eq(retail_brand)
+      expect_redirected_body_to_include("Bio Village")
+    end
+  end
+
+  describe "reference records" do
+    it "creates a manufacturer" do
+      expect do
+        post catalogue_manufacturers_path, params: { manufacturer: { name: "Andros SNC" } }
+      end.to change(Manufacturer, :count).by(1)
+
+      follow_redirect!
+      expect(response.body).to include("Andros SNC")
+    end
+
+    it "creates a comparison unit" do
+      expect do
+        post catalogue_comparison_units_path, params: { comparison_unit: { name: "Slice", symbol: "slice" } }
+      end.to change(ComparisonUnit, :count).by(1)
+
+      follow_redirect!
+      expect(response.body).to include("Slice")
+      expect(response.body).to include("slice")
+    end
+  end
+
+  describe "products and variants" do
+    it "creates a product without a manufacturer" do
+      category = create(:category, name: "Compotes")
+      product_brand = create(:product_brand, name: "Bio Village")
+
+      expect { post_product_without_manufacturer(category, product_brand) }.to change(Product, :count).by(1)
+
+      product = Product.find_by!(name: "Compotes pomme")
+      expect(product.manufacturer).to be_nil
+      expect_redirected_body_to_include("Compotes pomme", "Not set")
+    end
+
+    it "creates a product variant without a barcode" do
+      product = create(:product, name: "Compotes pomme")
+      comparison_unit = create(:comparison_unit, name: "Gram", symbol: "g")
+
+      expect { post_variant_without_barcode(product, comparison_unit) }.to change(ProductVariant, :count).by(1)
+
+      variant = ProductVariant.find_by!(name: "12 x 90g")
+      expect(variant.barcode).to be_nil
+      expect_redirected_body_to_include("12 x 90g", "12 x 90.0 g")
+    end
+  end
+
+  describe "alternative groups" do
+    it "creates a group and adds a variant member" do
+      category = create(:category, name: "Jambon")
+      variant = create(:product_variant, product: create(:product, category: category), name: "4 slices")
+
+      expect { post_alternative_group(category) }.to change(ProductAlternativeGroup, :count).by(1)
+
+      group = ProductAlternativeGroup.find_by!(name: "Jambon blanc tranches")
+      expect { post_alternative_group_membership(group, variant) }
+        .to change(ProductAlternativeGroupMembership, :count).by(1)
+      expect_redirected_body_to_include("4 slices", "Equivalent")
+    end
+  end
+
+  def catalogue_index_paths
+    [
+      catalogue_product_brands_path,
+      catalogue_manufacturers_path,
+      catalogue_comparison_units_path,
+      catalogue_products_path,
+      catalogue_product_variants_path,
+      catalogue_product_alternative_groups_path
+    ]
+  end
+
+  def expect_index_to_render(path)
+    get path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include("translation missing")
+  end
+
+  def post_private_label_product_brand(retail_brand)
+    post catalogue_product_brands_path,
+         params: { product_brand: { name: "Bio Village", retail_brand_id: retail_brand.id } }
+  end
+
+  def post_product_without_manufacturer(category, product_brand)
+    post catalogue_products_path,
+         params: {
+           product: {
+             name: "Compotes pomme",
+             product_brand_id: product_brand.id,
+             category_id: category.id,
+             manufacturer_id: ""
+           }
+         }
+  end
+
+  def post_variant_without_barcode(product, comparison_unit)
+    post catalogue_product_variants_path,
+         params: {
+           product_variant: {
+             product_id: product.id,
+             name: "12 x 90g",
+             package_count: "12",
+             quantity_value: "90",
+             comparison_unit_id: comparison_unit.id,
+             barcode: ""
+           }
+         }
+  end
+
+  def post_alternative_group(category)
+    post catalogue_product_alternative_groups_path,
+         params: { product_alternative_group: { name: "Jambon blanc tranches", category_id: category.id } }
+  end
+
+  def post_alternative_group_membership(group, variant)
+    post catalogue_product_alternative_group_memberships_path(group),
+         params: {
+           product_alternative_group_membership: {
+             product_variant_id: variant.id,
+             equivalence: "equivalent"
+           }
+         }
+  end
+
+  def expect_redirected_body_to_include(*snippets)
+    follow_redirect!
+
+    expect(response.body).to include(*snippets)
+    expect(response.body).not_to include("translation missing")
+  end
+end
