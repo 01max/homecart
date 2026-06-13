@@ -50,6 +50,17 @@ RSpec.describe "Matching", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include_variant_search_result
     end
+
+    it "renders inline catalogue creation controls" do
+      create(:category, name: "Compotes")
+      create(:retail_brand, name: "E.Leclerc")
+      create_line(label: "Compote pomme")
+
+      get matching_root_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include_inline_catalogue_form
+    end
   end
 
   describe "POST /matching/receipt_lines/:id/confirm" do
@@ -80,6 +91,32 @@ RSpec.describe "Matching", type: :request do
     end
   end
 
+  describe "POST /matching/receipt_lines/:id/create_variant" do
+    it "creates an inline private-label variant and confirms the receipt line" do
+      records = create_inline_catalogue_records
+      line = create_line(label: "Compote pomme")
+
+      expect do
+        post_create_inline_variant(line, **records)
+      end.to change(ProductVariant, :count).by(1)
+        .and change(ReceiptLineMatch.confirmed, :count).by(1)
+
+      expect(response).to redirect_to(matching_queue_path)
+      expect_inline_private_label_confirmation(line, records.fetch(:retail_brand))
+    end
+
+    it "rejects inline creation without a category" do
+      line = create_line(label: "Compote pomme")
+
+      expect do
+        post_create_inline_variant(line, category: nil)
+      end.not_to change(ProductVariant, :count)
+
+      expect(response).to redirect_to(matching_queue_path)
+      expect(flash[:alert]).to eq(I18n.t("matching.receipt_lines.create_variant.errors.category_required"))
+    end
+  end
+
   def create_line(store: create(:store), label:, kind: "item", total_cents: 123, unit_price_cents: total_cents)
     create(
       :receipt_line,
@@ -97,6 +134,42 @@ RSpec.describe "Matching", type: :request do
     product = create(:product, product_brand: product_brand, name: product_name)
 
     create(:product_variant, product: product, name: variant_name)
+  end
+
+  def create_inline_catalogue_records
+    {
+      category: create(:category, name: "Compotes"),
+      retail_brand: create(:retail_brand, name: "E.Leclerc")
+    }
+  end
+
+  def post_create_inline_variant(line, category:, retail_brand: nil)
+    post create_variant_matching_receipt_line_path(line),
+         params: { inline_product_variant: inline_variant_params(category: category, retail_brand: retail_brand) }
+  end
+
+  def inline_variant_params(category:, retail_brand:)
+    {
+      product_brand_name: "Bio Village",
+      retail_brand_id: retail_brand&.id,
+      product_name: "Compotes pomme",
+      category_id: category&.id,
+      manufacturer_name: "",
+      variant_name: "12 x 90g",
+      package_count: "12",
+      quantity_value: "90",
+      comparison_unit_id: "",
+      barcode: ""
+    }
+  end
+
+  def expect_inline_private_label_confirmation(line, retail_brand)
+    variant = ProductVariant.last
+
+    expect(variant.product.product_brand).to have_attributes(name: "Bio Village", retail_brand: retail_brand)
+    expect(variant.product).to have_attributes(name: "Compotes pomme", manufacturer: nil)
+    expect(variant).to have_attributes(name: "12 x 90g", package_count: 12)
+    expect(line.receipt_line_matches.confirmed.last.product_variant).to eq(variant)
   end
 
   def create_lait_lines
@@ -139,5 +212,13 @@ RSpec.describe "Matching", type: :request do
     include("Bio Village")
       .and include("12 x 90g")
       .and include(I18n.t("matching.queue.index.search.confirm"))
+  end
+
+  def include_inline_catalogue_form
+    include(I18n.t("matching.queue.index.inline_catalogue.heading"))
+      .and include(I18n.t("matching.queue.index.inline_catalogue.product_brand_name"))
+      .and include(I18n.t("matching.queue.index.inline_catalogue.no_retail_brand"))
+      .and include("E.Leclerc")
+      .and include("Compotes")
   end
 end

@@ -32,6 +32,7 @@ Rails.application.routes.draw do
 
     resources :receipt_lines, only: [] do
       post :confirm, on: :member
+      post :create_variant, on: :member
       post :reject, on: :member
     end
     resources :receipts, only: %i[show]
