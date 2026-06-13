@@ -41,6 +41,15 @@ en:
           submit: "Search"
           confirm: "Confirm"
           empty: "No existing variants matched this search."
+        bulk:
+          preview_action: "Preview bulk"
+          heading: "Bulk confirmation preview"
+          description:
+            one: "%{count} line will be confirmed as %{variant}."
+            other: "%{count} lines will be confirmed as %{variant}."
+          confirm:
+            one: "Confirm %{count} line"
+            other: "Confirm %{count} lines"
         inline_catalogue:
           heading: "Create and confirm"
           description: "Create a missing catalogue variant and confirm this receipt line in one step."
@@ -68,3 +77,10 @@ en:
           category_required: "Select a category before creating a product and variant."
       reject:
         success: "Rejected suggestion for %{label}."
+    bulk_confirmations:
+      create:
+        success:
+          one: "Confirmed %{count} line for %{label}."
+          other: "Confirmed %{count} lines for %{label}."
+        errors:
+          stale_preview: "The matching queue changed. Preview the bulk confirmation again before applying it."

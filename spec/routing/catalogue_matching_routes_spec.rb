@@ -15,6 +15,7 @@ RSpec.describe "catalogue and matching routes", type: :routing do
   end
 
   it "routes matching receipt-line decision actions" do
+    expect(post: "/matching/bulk_confirmations").to route_to("matching/bulk_confirmations#create")
     expect(post: "/matching/receipt_lines/line-id/confirm").to route_to("matching/receipt_lines#confirm", id: "line-id")
     expect(post: "/matching/receipt_lines/line-id/create_variant").to route_to("matching/receipt_lines#create_variant", id: "line-id")
     expect(post: "/matching/receipt_lines/line-id/reject").to route_to("matching/receipt_lines#reject", id: "line-id")

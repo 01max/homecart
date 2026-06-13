@@ -59,6 +59,12 @@
                                           confirm_matching_receipt_line_path(entry.receipt_line),
                                           params: { product_variant_id: suggestion.product_variant.id },
                                           class: "hc-button hc-button--primary" %>
+                            <%= link_to t(".bulk.preview_action"),
+                                        matching_queue_path(
+                                          bulk_preview_label: group.normalized_label,
+                                          bulk_preview_variant_id: suggestion.product_variant.id
+                                        ),
+                                        class: "hc-button hc-button--secondary" %>
                             <%= button_to t(".suggestions.reject"),
                                           reject_matching_receipt_line_path(entry.receipt_line),
                                           params: { product_variant_id: suggestion.product_variant.id },
@@ -95,6 +101,12 @@
                                               confirm_matching_receipt_line_path(entry.receipt_line),
                                               params: { product_variant_id: product_variant.id },
                                               class: "hc-button hc-button--primary" %>
+                                <%= link_to t(".bulk.preview_action"),
+                                            matching_queue_path(
+                                              bulk_preview_label: group.normalized_label,
+                                              bulk_preview_variant_id: product_variant.id
+                                            ),
+                                            class: "hc-button hc-button--secondary" %>
                               </div>
                             </div>
                           <% end %>
@@ -103,6 +115,28 @@
                         <p class="hc-body mt-3 text-sm"><%= t(".search.empty") %></p>
                       <% end %>
                     </div>
+
+                    <% if entry.bulk_preview && entry.bulk_preview_variant %>
+                      <div class="hc-action-block hc-block--flat">
+                        <div class="hc-block-heading">
+                          <h3 class="hc-block-title"><%= t(".bulk.heading") %></h3>
+                          <p class="hc-block-description">
+                            <%= t(".bulk.description",
+                                  count: entry.bulk_preview.affected_count,
+                                  variant: catalogue_product_variant_label(entry.bulk_preview_variant)) %>
+                          </p>
+                        </div>
+
+                        <%= form_with scope: :bulk_confirmation,
+                                      url: matching_bulk_confirmations_path,
+                                      class: "hc-table-cell-actions mt-4 justify-start" do |form| %>
+                          <%= form.hidden_field :normalized_label, value: entry.bulk_preview.normalized_label %>
+                          <%= form.hidden_field :product_variant_id, value: entry.bulk_preview_variant.id %>
+                          <%= form.hidden_field :expected_count, value: entry.bulk_preview.affected_count %>
+                          <%= form.submit t(".bulk.confirm", count: entry.bulk_preview.affected_count), class: "hc-button hc-button--primary" %>
+                        <% end %>
+                      </div>
+                    <% end %>
 
                     <%= render "inline_catalogue_form",
                                entry: entry,
