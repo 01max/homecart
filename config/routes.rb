@@ -30,6 +30,7 @@ Rails.application.routes.draw do
     root "queue#index"
     get "queue", to: "queue#index", as: :queue
 
+    resources :bulk_confirmations, only: %i[create]
     resources :receipt_lines, only: [] do
       post :confirm, on: :member
       post :create_variant, on: :member

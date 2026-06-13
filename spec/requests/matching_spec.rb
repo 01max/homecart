@@ -51,6 +51,16 @@ RSpec.describe "Matching", type: :request do
       expect(response.body).to include_variant_search_result
     end
 
+    it "renders a bulk confirmation preview with the affected line count" do
+      variant = create_variant(product_brand_name: "Bio Village", product_name: "Compotes pomme", variant_name: "12 x 90g")
+      create_lait_lines
+
+      get matching_root_path, params: bulk_preview_params("Lait demi ecreme", variant)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include_bulk_preview
+    end
+
     it "renders inline catalogue creation controls" do
       create(:category, name: "Compotes")
       create(:retail_brand, name: "E.Leclerc")
@@ -117,6 +127,32 @@ RSpec.describe "Matching", type: :request do
     end
   end
 
+  describe "POST /matching/bulk_confirmations" do
+    it "confirms the previewed line count" do
+      variant = create(:product_variant)
+      create_lait_lines
+
+      expect do
+        post_bulk_confirmation("Lait demi ecreme", variant, expected_count: 2)
+      end.to change(ReceiptLineMatch.confirmed, :count).by(2)
+
+      expect(response).to redirect_to(matching_queue_path)
+      expect(flash[:notice]).to include("Confirmed 2 lines")
+    end
+
+    it "rejects stale bulk confirmations" do
+      variant = create(:product_variant)
+      create_line(label: "Lait demi ecreme")
+
+      expect do
+        post_bulk_confirmation("Lait demi ecreme", variant, expected_count: 2)
+      end.not_to change(ReceiptLineMatch.confirmed, :count)
+
+      expect(response).to redirect_to(matching_queue_path)
+      expect(flash[:alert]).to eq(I18n.t("matching.bulk_confirmations.create.errors.stale_preview"))
+    end
+  end
+
   def create_line(store: create(:store), label:, kind: "item", total_cents: 123, unit_price_cents: total_cents)
     create(
       :receipt_line,
@@ -146,6 +182,17 @@ RSpec.describe "Matching", type: :request do
   def post_create_inline_variant(line, category:, retail_brand: nil)
     post create_variant_matching_receipt_line_path(line),
          params: { inline_product_variant: inline_variant_params(category: category, retail_brand: retail_brand) }
+  end
+
+  def post_bulk_confirmation(normalized_label, variant, expected_count:)
+    post matching_bulk_confirmations_path,
+         params: {
+           bulk_confirmation: {
+             normalized_label: normalized_label,
+             product_variant_id: variant.id,
+             expected_count: expected_count
+           }
+         }
   end
 
   def inline_variant_params(category:, retail_brand:)
@@ -192,6 +239,13 @@ RSpec.describe "Matching", type: :request do
     }
   end
 
+  def bulk_preview_params(label, variant)
+    {
+      bulk_preview_label: ProductCatalog::NormalizeTextService.call(label),
+      bulk_preview_variant_id: variant.id
+    }
+  end
+
   def include_matching_queue_group
     include("Lait demi écrémé")
       .and include("lait demi ecreme")
@@ -212,6 +266,12 @@ RSpec.describe "Matching", type: :request do
     include("Bio Village")
       .and include("12 x 90g")
       .and include(I18n.t("matching.queue.index.search.confirm"))
+  end
+
+  def include_bulk_preview
+    include(I18n.t("matching.queue.index.bulk.heading"))
+      .and include(I18n.t("matching.queue.index.bulk.confirm", count: 2))
+      .and include("2 lines will be confirmed")
   end
 
   def include_inline_catalogue_form
