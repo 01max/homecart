@@ -7,6 +7,11 @@
              description: t("product_catalog.product_variants.new.description"),
              actions: link_to(t("product_catalog.actions.back_to_index"), catalogue_product_variants_path, class: "hc-button hc-button--subtle") %>
 
+  <%= render "catalogue/shared/variant_search",
+             search_path: new_catalogue_product_variant_path,
+             query: @catalogue_search_query,
+             results: @catalogue_variant_search_results %>
+
   <%= render "form",
              product_variant: @product_variant,
              title: t("product_catalog.product_variants.new.form_heading"),

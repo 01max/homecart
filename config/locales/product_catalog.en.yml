@@ -48,6 +48,22 @@ en:
       inline_variant_description: "Choose a category before creating the new product and variant."
       alternative_group_description: "Choose the category this alternative group belongs to."
       manage_categories: "Manage categories"
+    search:
+      heading: "Find existing variants"
+      description: "Search the catalogue before creating a new product or variant."
+      query: "Search catalogue"
+      placeholder: "Brand, product, or variant name"
+      submit: "Search"
+      no_query: "Search first to avoid creating a duplicate variant."
+      empty: "No existing variants matched this search."
+      choose_existing: "Use existing variant"
+      table:
+        variant: "Variant"
+        product: "Product"
+        category: "Category"
+        quantity: "Quantity"
+        barcode: "Barcode"
+        actions: "Actions"
     categories:
       breadcrumb_separator: " > "
       errors:

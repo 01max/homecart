@@ -63,6 +63,16 @@ RSpec.describe "Catalogue management", type: :request do
       expect(response.body).to include(I18n.t("product_catalog.category_picker.manage_categories"))
     end
 
+    it "shows matching existing variants before product creation" do
+      variant = create_compote_variant
+      create_ham_variant
+
+      get new_catalogue_product_path, params: { catalogue_search_query: "epicerie compote bio village" }
+
+      expect_search_results_to_include(variant)
+      expect(response.body).not_to include("4 tranches")
+    end
+
     it "creates a product without a manufacturer" do
       category = create(:category, name: "Compotes")
       product_brand = create(:product_brand, name: "Bio Village")
@@ -89,6 +99,14 @@ RSpec.describe "Catalogue management", type: :request do
       variant = ProductVariant.find_by!(name: "12 x 90g")
       expect(variant.barcode).to be_nil
       expect_redirected_body_to_include("12 x 90g", "12 x 90.0 g")
+    end
+
+    it "shows matching existing variants before variant creation" do
+      variant = create_compote_variant
+
+      get new_catalogue_product_variant_path, params: { catalogue_search_query: "compote bio" }
+
+      expect_search_results_to_include(variant)
     end
 
     it "creates a product and variant through the inline variant form" do
@@ -207,6 +225,36 @@ RSpec.describe "Catalogue management", type: :request do
       comparison_unit_id: "",
       barcode: ""
     }
+  end
+
+  def create_catalogue_variant(product_brand_name:, product_name:, variant_name:)
+    product_brand = create(:product_brand, name: product_brand_name)
+    product = create(:product, product_brand: product_brand, name: product_name)
+
+    create(:product_variant, product: product, name: variant_name)
+  end
+
+  def create_compote_variant
+    create_catalogue_variant(
+      product_brand_name: "Bio Village",
+      product_name: "Compotes pomme",
+      variant_name: "12 x 90g"
+    )
+  end
+
+  def create_ham_variant
+    create_catalogue_variant(
+      product_brand_name: "Maison Dupont",
+      product_name: "Jambon blanc",
+      variant_name: "4 tranches"
+    )
+  end
+
+  def expect_search_results_to_include(variant)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(variant.name)
+    expect(response.body).to include(catalogue_product_variant_path(variant))
+    expect(response.body).to include(I18n.t("product_catalog.search.choose_existing"))
   end
 
   def post_alternative_group(category)
