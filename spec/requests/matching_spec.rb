@@ -61,6 +61,15 @@ RSpec.describe "Matching", type: :request do
       expect(response.body).to include_bulk_preview
     end
 
+    it "renders ignore actions for one line and the current group" do
+      create_lait_lines
+
+      get matching_root_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include_ignore_actions
+    end
+
     it "renders inline catalogue creation controls" do
       create(:category, name: "Compotes")
       create(:retail_brand, name: "E.Leclerc")
@@ -84,6 +93,21 @@ RSpec.describe "Matching", type: :request do
 
       expect(response).to redirect_to(matching_queue_path)
       expect(line.receipt_line_matches.confirmed.last.product_variant).to eq(variant)
+    end
+  end
+
+  describe "POST /matching/receipt_lines/:id/ignore" do
+    it "ignores one line without creating catalogue data or price observations" do
+      line = create_line(label: "Do not match")
+      counts = catalogue_and_price_counts
+
+      expect do
+        post ignore_matching_receipt_line_path(line)
+      end.to change(ReceiptLineMatch.ignored, :count).by(1)
+
+      expect(response).to redirect_to(matching_queue_path)
+      expect_catalogue_and_price_counts(counts)
+      expect(ReceiptLineMatching::QueueService.call.flat_map(&:receipt_lines)).not_to include(line)
     end
   end
 
@@ -153,6 +177,30 @@ RSpec.describe "Matching", type: :request do
     end
   end
 
+  describe "POST /matching/ignored_groups" do
+    it "ignores all currently eligible lines in the group without creating variants" do
+      create_lait_lines
+      counts = catalogue_and_price_counts
+
+      expect do
+        post_ignored_group("Lait demi ecreme", expected_count: 2)
+      end.to change(ReceiptLineMatch.ignored, :count).by(2)
+
+      expect_group_ignore_success(counts)
+    end
+
+    it "rejects stale grouped ignores" do
+      create_line(label: "Lait demi ecreme")
+
+      expect do
+        post_ignored_group("Lait demi ecreme", expected_count: 2)
+      end.not_to change(ReceiptLineMatch.ignored, :count)
+
+      expect(response).to redirect_to(matching_queue_path)
+      expect(flash[:alert]).to eq(I18n.t("matching.ignored_groups.create.errors.stale_preview"))
+    end
+  end
+
   def create_line(store: create(:store), label:, kind: "item", total_cents: 123, unit_price_cents: total_cents)
     create(
       :receipt_line,
@@ -193,6 +241,39 @@ RSpec.describe "Matching", type: :request do
              expected_count: expected_count
            }
          }
+  end
+
+  def post_ignored_group(normalized_label, expected_count:)
+    post matching_ignored_groups_path,
+         params: {
+           ignored_group: {
+             normalized_label: normalized_label,
+             expected_count: expected_count
+           }
+         }
+  end
+
+  def catalogue_and_price_counts
+    {
+      product_variants: ProductVariant.count,
+      price_observations: PriceObservation.count
+    }
+  end
+
+  def expect_catalogue_and_price_counts(counts)
+    expect_catalogue_counts(counts)
+    expect(PriceObservation.count).to eq(counts.fetch(:price_observations))
+  end
+
+  def expect_catalogue_counts(counts)
+    expect(ProductVariant.count).to eq(counts.fetch(:product_variants))
+  end
+
+  def expect_group_ignore_success(counts)
+    expect(response).to redirect_to(matching_queue_path)
+    expect_catalogue_counts(counts)
+    expect(flash[:notice]).to include("Ignored 2 lines")
+    expect(ReceiptLineMatching::QueueService.call.flat_map(&:receipt_lines)).to be_empty
   end
 
   def inline_variant_params(category:, retail_brand:)
@@ -272,6 +353,12 @@ RSpec.describe "Matching", type: :request do
     include(I18n.t("matching.queue.index.bulk.heading"))
       .and include(I18n.t("matching.queue.index.bulk.confirm", count: 2))
       .and include("2 lines will be confirmed")
+  end
+
+  def include_ignore_actions
+    include(I18n.t("matching.queue.index.ignore.heading"))
+      .and include(I18n.t("matching.queue.index.ignore.line_action"))
+      .and include(I18n.t("matching.queue.index.ignore.group_action", count: 2))
   end
 
   def include_inline_catalogue_form

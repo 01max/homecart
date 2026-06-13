@@ -50,6 +50,16 @@ en:
           confirm:
             one: "Confirm %{count} line"
             other: "Confirm %{count} lines"
+        ignore:
+          heading: "Ignore"
+          description: "Remove receipt lines that should not map to a product variant."
+          line_action: "Ignore line"
+          group_action:
+            one: "Ignore %{count} line"
+            other: "Ignore %{count} lines"
+          group_confirm:
+            one: "Ignore %{count} line in this group?"
+            other: "Ignore %{count} lines in this group?"
         inline_catalogue:
           heading: "Create and confirm"
           description: "Create a missing catalogue variant and confirm this receipt line in one step."
@@ -75,6 +85,8 @@ en:
         success: "Created %{variant} and confirmed %{label}."
         errors:
           category_required: "Select a category before creating a product and variant."
+      ignore:
+        success: "Ignored %{label}."
       reject:
         success: "Rejected suggestion for %{label}."
     bulk_confirmations:
@@ -84,3 +96,10 @@ en:
           other: "Confirmed %{count} lines for %{label}."
         errors:
           stale_preview: "The matching queue changed. Preview the bulk confirmation again before applying it."
+    ignored_groups:
+      create:
+        success:
+          one: "Ignored %{count} line for %{label}."
+          other: "Ignored %{count} lines for %{label}."
+        errors:
+          stale_preview: "The matching queue changed. Reload the group before ignoring it."
