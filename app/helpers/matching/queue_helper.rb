@@ -32,6 +32,16 @@ module Matching
       ].compact.to_sentence.presence || t("matching.queue.index.empty_value")
     end
 
+    def matching_queue_suggestion_reason(reason)
+      t("matching.queue.index.suggestions.reasons.#{reason}")
+    end
+
+    def matching_queue_confidence_label(confidence)
+      return t("matching.queue.index.empty_value") if confidence.blank?
+
+      number_to_percentage(confidence * 100, precision: 0)
+    end
+
     private
 
     def matching_queue_date_label(value)

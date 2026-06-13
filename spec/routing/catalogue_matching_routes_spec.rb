@@ -12,5 +12,7 @@ RSpec.describe "catalogue and matching routes", type: :routing do
     expect(get: "/matching").to route_to("matching/queue#index")
     expect(get: "/matching/queue").to route_to("matching/queue#index")
     expect(get: "/matching/receipts/receipt-id").to route_to("matching/receipts#show", id: "receipt-id")
+    expect(post: "/matching/receipt_lines/line-id/confirm").to route_to("matching/receipt_lines#confirm", id: "line-id")
+    expect(post: "/matching/receipt_lines/line-id/reject").to route_to("matching/receipt_lines#reject", id: "line-id")
   end
 end
