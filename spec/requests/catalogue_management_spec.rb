@@ -20,6 +20,14 @@ RSpec.describe "Catalogue management", type: :request do
   end
 
   describe "product brands" do
+    it "creates a national product brand without a retail-brand owner" do
+      expect { post_national_product_brand }.to change(ProductBrand, :count).by(1)
+
+      product_brand = ProductBrand.find_by!(name: "Maison Dupont")
+      expect(product_brand.retail_brand).to be_nil
+      expect_redirected_body_to_include("Maison Dupont", I18n.t("product_catalog.labels.empty_value"))
+    end
+
     it "creates a private-label product brand linked to a retail brand" do
       retail_brand = create(:retail_brand, name: "E.Leclerc")
 
@@ -158,6 +166,11 @@ RSpec.describe "Catalogue management", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).not_to include("translation missing")
+  end
+
+  def post_national_product_brand
+    post catalogue_product_brands_path,
+         params: { product_brand: { name: "Maison Dupont", retail_brand_id: "" } }
   end
 
   def post_private_label_product_brand(retail_brand)
