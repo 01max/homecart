@@ -3,6 +3,7 @@ module Catalogue
   class ProductsController < BaseController
     before_action :load_product, only: %i[show edit update]
     before_action :load_form_options, only: %i[new edit create update]
+    before_action :load_catalogue_variant_search_results, only: %i[new]
 
     def index
       @products = Product.includes(:category, :manufacturer, :product_brand, :product_variants).order(:normalized_name)

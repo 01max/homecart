@@ -13,6 +13,16 @@ module Catalogue
       value.presence
     end
 
+    def load_catalogue_variant_search_results
+      @catalogue_search_query = params[:catalogue_search_query].to_s.strip
+      @catalogue_variant_search_results = []
+      return if @catalogue_search_query.blank?
+
+      @catalogue_variant_search_results = ProductCatalog::SearchService
+        .call(query: @catalogue_search_query, limit: 20)
+        .select { |result| result.record_type == :product_variant }
+    end
+
     def redirect_with_record_errors(path, record)
       redirect_to path, alert: record.errors.full_messages.to_sentence
     end

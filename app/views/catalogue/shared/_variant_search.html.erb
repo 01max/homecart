@@ -1,0 +1,70 @@
+<section class="hc-table-block">
+  <div class="hc-block-header">
+    <div class="hc-block-heading">
+      <h2 class="hc-block-title"><%= t("product_catalog.search.heading") %></h2>
+      <p class="hc-block-description"><%= t("product_catalog.search.description") %></p>
+    </div>
+  </div>
+
+  <div class="hc-block-body">
+    <%= form_with url: search_path, method: :get, local: true, class: "hc-filter-row" do |form| %>
+      <div class="hc-filter-group">
+        <%= form.label :catalogue_search_query, t("product_catalog.search.query"), class: "hc-label" %>
+        <%= form.search_field :catalogue_search_query,
+                              value: query,
+                              placeholder: t("product_catalog.search.placeholder"),
+                              class: "hc-input" %>
+      </div>
+
+      <div class="hc-filter-actions">
+        <%= form.submit t("product_catalog.search.submit"), class: "hc-button hc-button--secondary" %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if query.present? %>
+    <% if results.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[64rem]">
+          <thead>
+            <tr>
+              <th><%= t("product_catalog.search.table.variant") %></th>
+              <th><%= t("product_catalog.search.table.product") %></th>
+              <th><%= t("product_catalog.search.table.category") %></th>
+              <th><%= t("product_catalog.search.table.quantity") %></th>
+              <th><%= t("product_catalog.search.table.barcode") %></th>
+              <th><%= t("product_catalog.search.table.actions") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% results.each do |result| %>
+              <% product_variant = result.record %>
+              <tr>
+                <td><%= product_variant.name %></td>
+                <td><%= catalogue_product_label(product_variant.product) %></td>
+                <td><%= catalogue_category_label(product_variant.product.category) %></td>
+                <td><%= t("product_catalog.labels.variant_quantity", package_count: product_variant.package_count || t("product_catalog.labels.empty_value"), quantity_value: product_variant.quantity_value || t("product_catalog.labels.empty_value"), unit: product_variant.comparison_unit&.symbol || t("product_catalog.labels.empty_value")) %></td>
+                <td><%= product_variant.barcode.presence || t("product_catalog.labels.empty_value") %></td>
+                <td>
+                  <div class="hc-table-cell-actions">
+                    <%= link_to t("product_catalog.search.choose_existing"),
+                                catalogue_product_variant_path(product_variant),
+                                class: "hc-link text-sm" %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t("product_catalog.search.empty") %></p>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="hc-block-footer">
+      <%= t("product_catalog.search.no_query") %>
+    </div>
+  <% end %>
+</section>
