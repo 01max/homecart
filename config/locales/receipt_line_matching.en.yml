@@ -89,6 +89,33 @@ en:
         success: "Ignored %{label}."
       reject:
         success: "Rejected suggestion for %{label}."
+    receipts:
+      show:
+        eyebrow: "Receipt matching"
+        title: "Match this receipt"
+        description: "Review unmatched item lines from %{store}; suggestions are shown for confirmation but never auto-applied."
+        empty_value: "Not available"
+        quantity: "%{quantity} %{unit}"
+        actions:
+          back_to_receipt: "Back to receipt"
+          global_queue: "Global queue"
+        lines:
+          heading: "Unmatched item lines"
+          description: "Only this receipt's unmatched item lines are shown. Fees, discounts, confirmed lines, and ignored lines are excluded."
+          empty: "This receipt has no unmatched item lines."
+          count:
+            one: "%{count} line"
+            other: "%{count} lines"
+        table:
+          position: "#"
+          label: "Label"
+          quantity: "Qty"
+          total: "Total"
+          suggestions: "Suggestions"
+        suggestions:
+          empty: "No prior-label suggestions yet."
+          confirm: "Confirm"
+          reject: "Reject"
     bulk_confirmations:
       create:
         success:

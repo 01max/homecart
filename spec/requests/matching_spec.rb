@@ -82,6 +82,19 @@ RSpec.describe "Matching", type: :request do
     end
   end
 
+  describe "GET /matching/receipts/:id" do
+    it "renders only one receipt's unmatched item lines with prior-label suggestions" do
+      records = create_receipt_specific_matching_records
+
+      get matching_receipt_path(records.fetch(:receipt))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include_receipt_matching_page(records.fetch(:line), records.fetch(:variant))
+      expect_receipt_matching_page_to_exclude_other_lines
+      expect(ReceiptLineMatch.confirmed.exists?(receipt_line: records.fetch(:line))).to be(false)
+    end
+  end
+
   describe "POST /matching/receipt_lines/:id/confirm" do
     it "confirms the selected variant for one receipt line" do
       variant = create(:product_variant)
@@ -93,6 +106,18 @@ RSpec.describe "Matching", type: :request do
 
       expect(response).to redirect_to(matching_queue_path)
       expect(line.receipt_line_matches.confirmed.last.product_variant).to eq(variant)
+    end
+  end
+
+  describe "POST /matching/receipt_lines/:id/confirm with return_to" do
+    it "returns to the receipt-specific matching page" do
+      variant = create(:product_variant)
+      line = create_line(label: "Compote pomme")
+
+      post confirm_matching_receipt_line_path(line),
+           params: { product_variant_id: variant.id, return_to: matching_receipt_path(line.receipt) }
+
+      expect(response).to redirect_to(matching_receipt_path(line.receipt))
     end
   end
 
@@ -201,10 +226,17 @@ RSpec.describe "Matching", type: :request do
     end
   end
 
-  def create_line(store: create(:store), label:, kind: "item", total_cents: 123, unit_price_cents: total_cents)
+  def create_line(
+    store: create(:store),
+    receipt: create(:receipt, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12)),
+    label:,
+    kind: "item",
+    total_cents: 123,
+    unit_price_cents: total_cents
+  )
     create(
       :receipt_line,
-      receipt: create(:receipt, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12)),
+      receipt: receipt,
       label: label,
       kind: kind,
       quantity: 1,
@@ -218,6 +250,30 @@ RSpec.describe "Matching", type: :request do
     product = create(:product, product_brand: product_brand, name: product_name)
 
     create(:product_variant, product: product, name: variant_name)
+  end
+
+  def create_prior_confirmation(label:)
+    variant = create_variant(product_brand_name: "Maison Dupont", product_name: "Jambon blanc", variant_name: "4 tranches")
+    prior_line = create_line(label: label)
+
+    ReceiptLineMatching::ConfirmMatchService.call(receipt_line: prior_line, product_variant: variant)
+    variant
+  end
+
+  def create_receipt_specific_exclusions(receipt)
+    create_line(receipt: receipt, label: "Service fee", kind: "fee")
+    ignored_line = create_line(receipt: receipt, label: "Ignored item")
+    create(:receipt_line_match, :ignored, receipt_line: ignored_line)
+  end
+
+  def create_receipt_specific_matching_records
+    receipt = create(:receipt, parser_status: "reviewed")
+    variant = create_prior_confirmation(label: "Jambon blanc 4 tranches")
+    line = create_line(receipt: receipt, label: "JAMBON BLANC 4 TRANCHES")
+    create_receipt_specific_exclusions(receipt)
+    create_line(label: "Other receipt line")
+
+    { receipt: receipt, variant: variant, line: line }
   end
 
   def create_inline_catalogue_records
@@ -307,10 +363,7 @@ RSpec.describe "Matching", type: :request do
   end
 
   def create_prior_jambon_confirmation
-    variant = create_variant(product_brand_name: "Maison Dupont", product_name: "Jambon blanc", variant_name: "4 tranches")
-    prior_line = create_line(label: "Jambon blanc 4 tranches")
-
-    ReceiptLineMatching::ConfirmMatchService.call(receipt_line: prior_line, product_variant: variant)
+    create_prior_confirmation(label: "Jambon blanc 4 tranches")
   end
 
   def variant_search_params(label, query)
@@ -361,11 +414,37 @@ RSpec.describe "Matching", type: :request do
       .and include(I18n.t("matching.queue.index.ignore.group_action", count: 2))
   end
 
+  def include_receipt_matching_page(line, variant)
+    include(I18n.t("matching.receipts.show.title"))
+      .and include(line.label)
+      .and include(catalogue_product_variant_label_for_test(variant))
+      .and include(I18n.t("matching.queue.index.suggestions.reasons.prior_confirmed_label"))
+  end
+
+  def expect_receipt_matching_page_to_exclude_other_lines
+    expect(response.body).not_to include("Service fee")
+    expect(response.body).not_to include("Ignored item")
+    expect(response.body).not_to include("Other receipt line")
+  end
+
   def include_inline_catalogue_form
     include(I18n.t("matching.queue.index.inline_catalogue.heading"))
       .and include(I18n.t("matching.queue.index.inline_catalogue.product_brand_name"))
       .and include(I18n.t("matching.queue.index.inline_catalogue.no_retail_brand"))
       .and include("E.Leclerc")
       .and include("Compotes")
+  end
+
+  def catalogue_product_variant_label_for_test(variant)
+    I18n.t(
+      "product_catalog.labels.variant",
+      product: I18n.t(
+        "product_catalog.labels.product",
+        brand: variant.product.product_brand.name,
+        product: variant.product.name,
+        category: variant.product.category.name
+      ),
+      variant: variant.name
+    )
   end
 end

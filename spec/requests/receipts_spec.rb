@@ -571,6 +571,17 @@ RSpec.describe "Receipts", type: :request do
     expect_receipt_show(receipt)
   end
 
+  it "links reviewed receipts to their receipt-specific matching flow" do
+    receipt = create_review_receipt
+    receipt.update!(parser_status: "reviewed")
+
+    get receipt_path(receipt)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(matching_receipt_path(receipt))
+    expect(response.body).to include(I18n.t("receipts.show.actions.match_receipt", count: 1))
+  end
+
   it "renders the side-by-side review page with extracted text and receipt form" do
     receipt = create_review_receipt
 

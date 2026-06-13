@@ -42,6 +42,14 @@ module Matching
       number_to_percentage(confidence * 100, precision: 0)
     end
 
+    def matching_queue_money_label(cents)
+      number_to_currency(cents / 100.0, unit: "€", separator: ",", delimiter: " ", format: "%n %u")
+    end
+
+    def matching_queue_quantity_value(line)
+      matching_queue_decimal_label(line.quantity)
+    end
+
     private
 
     def matching_queue_date_label(value)
@@ -58,10 +66,6 @@ module Matching
       return if values.blank?
 
       t(key, values: values.to_sentence)
-    end
-
-    def matching_queue_money_label(cents)
-      number_to_currency(cents / 100.0, unit: "€", separator: ",", delimiter: " ", format: "%n %u")
     end
 
     def matching_queue_decimal_label(value)

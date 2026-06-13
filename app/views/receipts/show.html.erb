@@ -11,6 +11,11 @@
     <div class="hc-page-actions">
       <%= link_to t(".actions.back_to_index"), receipts_path(anchor: dom_id(@receipt)), class: "hc-button hc-button--secondary" %>
       <%= link_to t(".actions.source_document"), source_document_path(@receipt.source_document), class: "hc-button hc-button--secondary" %>
+      <% if @matching_queue_entry_count.to_i.positive? %>
+        <%= link_to t(".actions.match_receipt", count: @matching_queue_entry_count),
+                    matching_receipt_path(@receipt),
+                    class: "hc-button hc-button--primary" %>
+      <% end %>
       <%= link_to t(".actions.review_receipt"), edit_receipt_path(@receipt), class: "hc-button hc-button--primary" %>
       <%= button_to t(".actions.delete_receipt"),
                     receipt_path(@receipt),
