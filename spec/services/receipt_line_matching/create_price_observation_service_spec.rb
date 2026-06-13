@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe ReceiptLineMatching::CreatePriceObservationService do
   subject(:observation) { described_class.call(receipt_line_match: receipt_line_match) }
 
-  let(:receipt_line) { create(:receipt_line, quantity: 2, total_cents: 500, unit_of_measure: "piece") }
+  let(:receipt_line) { create(:receipt_line, receipt: create(:receipt, :reviewed), quantity: 2, total_cents: 500, unit_of_measure: "piece") }
   let(:product_variant) { create(:product_variant) }
   let(:receipt_line_match) { create(:receipt_line_match, receipt_line: receipt_line, product_variant: product_variant) }
 

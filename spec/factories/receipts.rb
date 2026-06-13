@@ -9,5 +9,9 @@ FactoryBot.define do
     declared_article_count { 2 }
     parser_status { "needs_review" }
     parser_warnings { [] }
+
+    trait :reviewed do
+      parser_status { "reviewed" }
+    end
   end
 end

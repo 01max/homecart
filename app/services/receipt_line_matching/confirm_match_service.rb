@@ -1,6 +1,8 @@
 module ReceiptLineMatching
   # Confirms one receipt line against a product variant and records its price fact.
   class ConfirmMatchService < ApplicationService
+    UnreviewedReceiptError = Class.new(StandardError)
+
     Result = Data.define(:receipt_line_match, :price_observation)
 
     def initialize(receipt_line:, product_variant:, source: "user", decided_at: Time.current)
@@ -13,6 +15,8 @@ module ReceiptLineMatching
     def call
       ApplicationRecord.transaction do
         receipt_line.with_lock do
+          ensure_receipt_reviewed!
+
           match = confirmed_match
           price_observation = CreatePriceObservationService.call(receipt_line_match: match)
 
@@ -24,6 +28,10 @@ module ReceiptLineMatching
     private
 
     attr_reader :receipt_line, :product_variant, :source, :decided_at
+
+    def ensure_receipt_reviewed!
+      raise UnreviewedReceiptError unless receipt_line.receipt.reviewed?
+    end
 
     def confirmed_match
       (terminal_match || suggested_match || receipt_line.receipt_line_matches.build).tap do |match|

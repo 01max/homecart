@@ -10,8 +10,9 @@ RSpec.describe ReceiptLineMatching::QueueService do
   let!(:second_line) { create_lait_line(label: "LAIT demi écrémé", purchased_at: Time.zone.local(2026, 6, 3, 12)) }
 
   before do
-    create(:receipt_line, kind: "fee", label: "Service fee")
-    ignored_line = create(:receipt_line, label: "Lait demi ecreme")
+    create(:receipt_line, receipt: create(:receipt, :reviewed), kind: "fee", label: "Service fee")
+    create(:receipt_line, label: "Unreviewed item")
+    ignored_line = create(:receipt_line, receipt: create(:receipt, :reviewed), label: "Lait demi ecreme")
     create(:receipt_line_match, :ignored, receipt_line: ignored_line)
   end
 
@@ -29,7 +30,7 @@ RSpec.describe ReceiptLineMatching::QueueService do
   def create_lait_line(label: "Lait Demi Ecreme", purchased_at:, total_cents: 130, unit_price_cents: total_cents)
     create(
       :receipt_line,
-      receipt: create(:receipt, store: store, purchased_at: purchased_at),
+      receipt: create(:receipt, :reviewed, store: store, purchased_at: purchased_at),
       label: label,
       quantity: 1,
       total_cents: total_cents,

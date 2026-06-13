@@ -5,7 +5,7 @@ RSpec.describe ReceiptLineMatching::SuggestMatchesService do
 
   it "suggests variants from prior confirmed normalized labels without auto-confirming" do
     variant = confirmed_jambon_variant
-    receipt_line = create(:receipt_line, label: "JAMBON BLANC 4 TRANCHES")
+    receipt_line = reviewed_line(label: "JAMBON BLANC 4 TRANCHES")
 
     expect(described_class.call(receipt_line: receipt_line).first).to have_attributes(
       product_variant: variant,
@@ -17,14 +17,14 @@ RSpec.describe ReceiptLineMatching::SuggestMatchesService do
 
   it "suggests variants from fuzzy catalogue search" do
     variant = create_compote_variant
-    receipt_line = create(:receipt_line, label: "compote bio village")
+    receipt_line = reviewed_line(label: "compote bio village")
 
     expect(described_class.call(receipt_line: receipt_line).map(&:product_variant)).to include(variant)
   end
 
   it "does not return a variant rejected for the same line" do
     variant = create_compote_variant
-    receipt_line = create(:receipt_line, label: "compote bio village")
+    receipt_line = reviewed_line(label: "compote bio village")
 
     ReceiptLineMatching::RejectMatchService.call(receipt_line: receipt_line, product_variant: variant)
 
@@ -41,9 +41,13 @@ RSpec.describe ReceiptLineMatching::SuggestMatchesService do
 
   def confirmed_jambon_variant
     create_jambon_variant.tap do |variant|
-      prior_line = create(:receipt_line, label: "Jambon blanc 4 tranches")
+      prior_line = reviewed_line(label: "Jambon blanc 4 tranches")
       ReceiptLineMatching::ConfirmMatchService.call(receipt_line: prior_line, product_variant: variant)
     end
+  end
+
+  def reviewed_line(label:)
+    create(:receipt_line, receipt: create(:receipt, :reviewed), label: label)
   end
 
   def create_compote_variant

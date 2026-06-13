@@ -4,7 +4,7 @@ RSpec.describe ReceiptLineMatching::ConfirmMatchService do
   subject(:result) { described_class.call(receipt_line: receipt_line, product_variant: variant) }
 
   let(:variant) { create(:product_variant) }
-  let(:receipt_line) { create(:receipt_line, quantity: 2, total_cents: 500, unit_of_measure: "piece") }
+  let(:receipt_line) { create(:receipt_line, receipt: create(:receipt, :reviewed), quantity: 2, total_cents: 500, unit_of_measure: "piece") }
 
   it "records a confirmed match and persists the price observation" do
     expect(result.receipt_line_match).to have_attributes(
@@ -42,5 +42,13 @@ RSpec.describe ReceiptLineMatching::ConfirmMatchService do
     expect(second_result.price_observation).to eq(first_observation)
     expect(PriceObservation.where(receipt_line: receipt_line).count).to eq(1)
     expect(first_observation.reload.product_variant).to eq(second_variant)
+  end
+
+  it "rejects receipt lines whose receipt is not reviewed" do
+    unreviewed_line = create(:receipt_line, receipt: create(:receipt, parser_status: "needs_review"))
+
+    expect do
+      described_class.call(receipt_line: unreviewed_line, product_variant: variant)
+    end.to raise_error(described_class::UnreviewedReceiptError)
   end
 end
