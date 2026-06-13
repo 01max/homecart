@@ -7,6 +7,7 @@ RSpec.describe "Catalogue", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(I18n.t("product_catalog.dashboard.index.title"))
+      expect(response.body).to include(%(href="/catalogue/categories"))
       expect(response.body).to include(%(href="/matching"))
     end
   end

@@ -13,7 +13,7 @@ Rails.application.routes.draw do
   namespace :catalogue do
     root "dashboard#index"
 
-    resources :categories, only: %i[index new]
+    resources :categories, only: %i[index new create update destroy]
     resources :product_brands, only: %i[index show new]
     resources :manufacturers, only: %i[index show new]
     resources :comparison_units, only: %i[index show new]

@@ -1,0 +1,52 @@
+<% children = children_by_parent[category.id] || [] %>
+
+<article class="hc-surface-muted p-4" style="margin-left: <%= depth * 1.5 %>rem">
+  <div class="hc-stack">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h3 class="font-semibold"><%= category.name %></h3>
+        <p class="hc-body text-sm mt-1"><%= category_breadcrumb_text(category) %></p>
+        <p class="hc-body text-sm mt-1">
+          <%= t(
+                "product_catalog.categories.index.tree.usage",
+                children_count: category.children.size,
+                products_count: category.products.size
+              ) %>
+        </p>
+      </div>
+
+      <%= button_to t("product_catalog.categories.form.delete"),
+                    catalogue_category_path(category),
+                    method: :delete,
+                    class: "hc-button hc-button--danger",
+                    form: { data: { turbo_confirm: t("product_catalog.categories.form.delete_confirm", name: category.name) } } %>
+    </div>
+
+    <%= form_with model: [ :catalogue, category ], class: "hc-filter-row" do |form| %>
+      <div class="hc-filter-group">
+        <%= form.label :name, t("product_catalog.categories.form.name"), class: "hc-label" %>
+        <%= form.text_field :name, class: "hc-input", required: true %>
+      </div>
+
+      <div class="hc-filter-group">
+        <%= form.label :parent_id, t("product_catalog.categories.form.parent"), class: "hc-label" %>
+        <%= form.select :parent_id,
+                        category_parent_options(categories, category: category),
+                        { include_blank: t("product_catalog.categories.form.root_parent"), selected: category.parent_id },
+                        class: "hc-select" %>
+      </div>
+
+      <div class="hc-filter-actions">
+        <%= form.submit t("product_catalog.categories.form.update"), class: "hc-button hc-button--secondary" %>
+      </div>
+    <% end %>
+  </div>
+</article>
+
+<% children.each do |child| %>
+  <%= render "category",
+             category: child,
+             categories: categories,
+             children_by_parent: children_by_parent,
+             depth: depth + 1 %>
+<% end %>
