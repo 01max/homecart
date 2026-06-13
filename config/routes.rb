@@ -30,6 +30,10 @@ Rails.application.routes.draw do
     root "queue#index"
     get "queue", to: "queue#index", as: :queue
 
+    resources :receipt_lines, only: [] do
+      post :confirm, on: :member
+      post :reject, on: :member
+    end
     resources :receipts, only: %i[show]
   end
 

@@ -23,12 +23,32 @@ en:
           dates: "Dates"
           prices: "Prices"
           quantities: "Quantities"
+          suggestions: "Suggestions"
           line_count:
             one: "%{count} line"
             other: "%{count} lines"
+        suggestions:
+          empty: "No deterministic suggestions yet."
+          confirm: "Confirm"
+          reject: "Reject"
+          metadata: "%{reason}, %{confidence}"
+          reasons:
+            prior_confirmed_label: "Prior label match"
+            catalogue_search: "Catalogue search"
+        search:
+          query: "Search variants"
+          placeholder: "Product, brand, or variant"
+          submit: "Search"
+          confirm: "Confirm"
+          empty: "No existing variants matched this search."
         price_context:
           total: "totals %{values}"
           unit: "unit prices %{values}"
         quantity_context:
           quantities: "quantities %{values}"
           units: "units %{values}"
+    receipt_lines:
+      confirm:
+        success: "Confirmed %{label}."
+      reject:
+        success: "Rejected suggestion for %{label}."
