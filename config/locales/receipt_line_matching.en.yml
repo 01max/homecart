@@ -41,6 +41,18 @@ en:
           submit: "Search"
           confirm: "Confirm"
           empty: "No existing variants matched this search."
+        inline_catalogue:
+          heading: "Create and confirm"
+          description: "Create a missing catalogue variant and confirm this receipt line in one step."
+          product_brand_name: "Product brand"
+          retail_brand: "Retail brand"
+          no_retail_brand: "National brand"
+          product_name: "Product name"
+          category: "Category"
+          select_category: "Select a category"
+          manufacturer_name: "Manufacturer"
+          variant_name: "Variant name"
+          create: "Create and confirm"
         price_context:
           total: "totals %{values}"
           unit: "unit prices %{values}"
@@ -50,5 +62,9 @@ en:
     receipt_lines:
       confirm:
         success: "Confirmed %{label}."
+      create_variant:
+        success: "Created %{variant} and confirmed %{label}."
+        errors:
+          category_required: "Select a category before creating a product and variant."
       reject:
         success: "Rejected suggestion for %{label}."

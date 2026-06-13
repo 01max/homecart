@@ -103,6 +103,12 @@
                         <p class="hc-body mt-3 text-sm"><%= t(".search.empty") %></p>
                       <% end %>
                     </div>
+
+                    <%= render "inline_catalogue_form",
+                               entry: entry,
+                               categories: @categories,
+                               comparison_units: @comparison_units,
+                               retail_brands: @retail_brands %>
                   </div>
                 </td>
               </tr>

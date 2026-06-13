@@ -6,6 +6,9 @@ module Matching
     def index
       @variant_search_label = params[:variant_search_label].to_s
       @variant_search_query = params[:variant_search_query].to_s.strip
+      @categories = Category.includes(:parent).order(:normalized_name)
+      @comparison_units = ComparisonUnit.order(:normalized_name)
+      @retail_brands = RetailBrand.order(:name)
       @groups = ReceiptLineMatching::QueueService.call
       @entries = @groups.map { |group| build_entry(group) }
       @line_count = @groups.sum(&:line_count)
