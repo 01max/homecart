@@ -35,6 +35,13 @@ module Matching
                   alert: t("matching.receipt_lines.create_variant.errors.category_required")
     end
 
+    def ignore
+      ReceiptLineMatching::IgnoreLineService.call(receipt_line: @receipt_line)
+
+      redirect_to matching_queue_path,
+                  notice: t("matching.receipt_lines.ignore.success", label: @receipt_line.label)
+    end
+
     def reject
       ReceiptLineMatching::RejectMatchService.call(receipt_line: @receipt_line, product_variant: @product_variant)
 

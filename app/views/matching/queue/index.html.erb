@@ -45,6 +45,28 @@
                 <td><%= matching_queue_quantity_context(group.price_context) %></td>
                 <td>
                   <div class="hc-stack-sm">
+                    <div class="hc-action-block hc-block--flat">
+                      <div class="hc-block-heading">
+                        <h3 class="hc-block-title"><%= t(".ignore.heading") %></h3>
+                        <p class="hc-block-description"><%= t(".ignore.description") %></p>
+                      </div>
+                      <div class="hc-table-cell-actions mt-3 justify-start">
+                        <%= button_to t(".ignore.line_action"),
+                                      ignore_matching_receipt_line_path(entry.receipt_line),
+                                      class: "hc-button hc-button--subtle" %>
+                        <%= button_to t(".ignore.group_action", count: group.line_count),
+                                      matching_ignored_groups_path,
+                                      params: {
+                                        ignored_group: {
+                                          normalized_label: group.normalized_label,
+                                          expected_count: group.line_count
+                                        }
+                                      },
+                                      class: "hc-button hc-button--warning",
+                                      form: { data: { turbo_confirm: t(".ignore.group_confirm", count: group.line_count) } } %>
+                      </div>
+                    </div>
+
                     <% if entry.suggestions.any? %>
                       <% entry.suggestions.each do |suggestion| %>
                         <div class="hc-action-block hc-block--flat">
