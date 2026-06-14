@@ -12,7 +12,7 @@ module Parser
         BONS_REDUCTION_SECTION_PATTERN = /\ABONS DE REDUCTION\z/
         DETAIL_TOTAL_PATTERN = /\ATotal\b/
         BON_ACHAT_PATTERN = /\ABon achat carte\s+(?<amount>\d+\.\d{2})\z/
-        TICKET_CUMUL_PATTERN = /\ACUMUL DISPONIBLE\b/i
+        TICKET_CUMUL_PATTERN = /\ACUMUL DISPONIBLE\z/i
         VIGNETTE_ACCRUAL_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
         VIGNETTE_CONSUMPTION_PATTERN = /\A(?:Vous venez d'utiliser|Vous avez utilisé)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
         VIGNETTE_SECTION_PATTERN = /\A-+\s*VOS VIGNETTES\s+(?<campaign>.+?)\s*-+\z/i

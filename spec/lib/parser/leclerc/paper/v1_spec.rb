@@ -27,6 +27,17 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       expect(result.warnings).to be_empty
     end
 
+    it "does not infer a tickets promotion from displayed CUMUL DISPONIBLE balances" do
+      text = Rails.root.join("spec/fixtures/files/parser/leclerc_paper_v1_without_sections.txt").read
+                 .sub("CUMUL DISPONIBLE", "CUMUL DISPONIBLE AU 03/09/24 : 0.00 €")
+
+      result = described_class.new(text: text).call
+
+      expect(result.promotions).to contain_exactly(bon_achat_promotion(193), royal_vkb_promotion)
+      expect(result.payments).to contain_exactly(voucher_payment, card_payment(amount_cents: 796))
+      expect(result.warnings).to be_empty
+    end
+
     it "parses receipt-level discounts and immediate discount payments" do
       result = parse_fixture("parser/leclerc_paper_v1_receipt_level_discounts.txt")
 
