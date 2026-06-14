@@ -7,6 +7,9 @@ module Parser
         TICKET_PATTERN = /\A(?:Ticket )?\d{2}\/\d{2}\/\d{2}\s+\d+\s+(?<ticket>.+)\z/
         SECTION_PATTERN = /\A>>\s+(?<section>.+)\z/
         TOTAL_PATTERN = /\ATotal (?<count>\d+) articles?\s+(?<amount>\d+\.\d{2})\z/
+        SECTION_SEPARATOR_PATTERN = /\A-+\z/
+        REMISES_SECTION_PATTERN = /\AREMISES\z/
+        DETAIL_TOTAL_PATTERN = /\ATotal\b/
         BON_ACHAT_PATTERN = /\ABon achat carte\s+(?<amount>\d+\.\d{2})\z/
         TICKET_CUMUL_PATTERN = /\ACUMUL DISPONIBLE\b/i
         VIGNETTE_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s+(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
@@ -33,13 +36,15 @@ module Parser
 
         def parse_receipt_lines
           state = LineState.new
-          text_lines.each_with_object([]) do |line, parsed|
+          body_lines = text_lines.each_with_object([]) do |line, parsed|
             handle_body_marker(line, state)
             handle_section_marker(line, state)
             next if skip_line?(line, state)
 
             parse_receipt_line(line, state, parsed)
           end
+
+          body_lines + detailed_remise_discount_lines
         end
 
         def handle_body_marker(line, state)
@@ -70,6 +75,13 @@ module Parser
         def parse_receipt_line(line, state, parsed)
           if (quantity_match = line.match(self.class::QUANTITY_LINE_PATTERN))
             parsed << parse_quantity_line(quantity_match, state)
+            return state.pending_label = nil
+          end
+
+          if (discount_match = line.match(discount_line_pattern))
+            return state.pending_label = nil if detailed_remises_available?
+
+            parsed << parse_discount_line(discount_match, line, state)
             return state.pending_label = nil
           end
 
@@ -114,6 +126,61 @@ module Parser
             tr_eligible: false,
             section_label: state.section_label,
             kind: "item"
+          }
+        end
+
+        def detailed_remise_discount_lines
+          @detailed_remise_discount_lines ||= remise_detail_lines.filter_map do |line|
+            match = line.match(detail_discount_line_pattern)
+            next unless match
+            next if match[:label].match?(DETAIL_TOTAL_PATTERN)
+
+            discount_attributes(match, line, nil).merge(total_cents: -cents_from(match[:amount]).abs)
+          end
+        end
+
+        def detailed_remises_available?
+          detailed_remise_discount_lines.any?
+        end
+
+        def remise_detail_lines
+          lines = []
+          in_remises_section = false
+
+          text_lines.each do |line|
+            if line.match?(REMISES_SECTION_PATTERN)
+              in_remises_section = true
+              next
+            end
+
+            next unless in_remises_section
+            break if line.match?(SECTION_SEPARATOR_PATTERN)
+
+            lines << line
+          end
+
+          lines
+        end
+
+        def parse_discount_line(match, raw_text, state)
+          discount_attributes(match, raw_text, state.section_label)
+        end
+
+        def discount_attributes(match, raw_text, section_label)
+          label = clean_label(match[:label])
+
+          {
+            raw_text: raw_text,
+            label: normalize_label(label),
+            label_truncated: label_truncated?(label),
+            quantity: BigDecimal("1"),
+            unit_of_measure: "piece",
+            unit_price_cents: nil,
+            total_cents: cents_from(match[:amount]),
+            vat_rate_bp: discount_vat_rate_bp(match),
+            tr_eligible: false,
+            section_label: section_label,
+            kind: "discount"
           }
         end
 
@@ -237,6 +304,16 @@ module Parser
         def item_vat_rate_bp(_match) = nil
 
         def quantity_vat_rate_bp(_match) = nil
+
+        def discount_vat_rate_bp(_match) = nil
+
+        def discount_line_pattern
+          self.class.const_defined?(:DISCOUNT_LINE_PATTERN, false) ? self.class::DISCOUNT_LINE_PATTERN : /(?!)/
+        end
+
+        def detail_discount_line_pattern
+          self.class.const_defined?(:DETAIL_DISCOUNT_LINE_PATTERN, false) ? self.class::DETAIL_DISCOUNT_LINE_PATTERN : /(?!)/
+        end
 
         def clean_label(label)
           label.delete_prefix("*").strip

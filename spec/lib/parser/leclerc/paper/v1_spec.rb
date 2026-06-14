@@ -26,6 +26,15 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       expect(result.payments).to contain_exactly(voucher_payment, card_payment(amount_cents: 796))
       expect(result.warnings).to be_empty
     end
+
+    it "parses receipt-level discounts and immediate discount payments" do
+      result = parse_fixture("parser/leclerc_paper_v1_receipt_level_discounts.txt")
+
+      expect(result.receipt).to include(discounted_receipt_attributes)
+      expect(result.lines).to match_array(receipt_level_discount_lines)
+      expect(result.payments).to contain_exactly(immediate_discount_payment, card_payment(amount_cents: 925))
+      expect(result.warnings).to be_empty
+    end
   end
 
   def parse_fixture(path)
@@ -51,6 +60,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       register_number: "302-3002",
       ticket_number: "8M8G 02U00",
       total_cents: 989,
+      declared_article_count: 3,
+      parser_status: "parsed"
+    }
+  end
+
+  def discounted_receipt_attributes
+    {
+      parser_format: "leclerc.paper.v1",
+      purchased_at: Time.zone.local(2025, 11, 1, 11, 0),
+      register_number: "010-0105",
+      ticket_number: "0AUU 00X00",
+      total_cents: 1_164,
       declared_article_count: 3,
       parser_status: "parsed"
     }
@@ -84,8 +105,27 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
     hash_including(label: label, quantity: BigDecimal("1"), total_cents: total_cents, section_label: nil)
   end
 
+  def discount_line(label, total_cents)
+    hash_including(label: label, quantity: BigDecimal("1"), total_cents: total_cents, section_label: nil, kind: "discount")
+  end
+
+  def receipt_level_discount_lines
+    [
+      unsectioned_line("ITEM ALPHA", 1_000),
+      unsectioned_line("COUPON SET 3 COUVERTS,1KG", 1),
+      unsectioned_line("SET 3 COUVERTS,1", 1_700),
+      discount_line("COUPON SET 3 COUVERTS,1KG", -1),
+      discount_line("Lot KIWI VERT LOT DE 5", -36),
+      discount_line("Lot Set de couverts", -1_500)
+    ]
+  end
+
   def voucher_payment
     hash_including(raw_label: "Bon achat carte", category: "other", amount_cents: 193)
+  end
+
+  def immediate_discount_payment
+    hash_including(raw_label: "Bon immediat", category: "other", amount_cents: 239)
   end
 
   def bon_achat_promotion(amount_cents)
