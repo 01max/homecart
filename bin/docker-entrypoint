@@ -1,5 +1,23 @@
 #!/bin/bash -e
 
+ensure_bundle() {
+  if [ "${BUNDLE_DEPLOYMENT}" == "1" ] || [ "${BUNDLE_DEPLOYMENT}" == "true" ]; then
+    return
+  fi
+
+  local bundle_path="${BUNDLE_PATH:-/usr/local/bundle}"
+  local lockfile="${bundle_path}/.bundle-install.lock"
+
+  mkdir -p "${bundle_path}"
+
+  (
+    flock 9
+    bundle check || bundle install
+  ) 9>"${lockfile}"
+}
+
+ensure_bundle
+
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare
