@@ -12,7 +12,8 @@ module Parser
         DETAIL_TOTAL_PATTERN = /\ATotal\b/
         BON_ACHAT_PATTERN = /\ABon achat carte\s+(?<amount>\d+\.\d{2})\z/
         TICKET_CUMUL_PATTERN = /\ACUMUL DISPONIBLE\b/i
-        VIGNETTE_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s+(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
+        VIGNETTE_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
+        VIGNETTE_SECTION_PATTERN = /\A-+\s*VOS VIGNETTES\s+(?<campaign>.+?)\s*-+\z/i
 
         private
 
@@ -229,18 +230,28 @@ module Parser
         end
 
         def vignette_promotions
-          text_lines.filter_map do |line|
+          text_lines.filter_map.with_index do |line, index|
             match = line.match(VIGNETTE_PATTERN)
             next unless match
 
+            campaign = match[:campaign].presence || vignette_campaign_before(index)
             promotion_attributes_for(
-              program: vignette_program(match[:campaign]),
+              program: vignette_program(campaign),
               unit: "vignette_count",
               delta: match[:count].to_i,
-              label: match[:campaign].presence || "Vignette(s)",
+              label: campaign.presence || "Vignette(s)",
               kind: "points_accrual"
             )
           end
+        end
+
+        def vignette_campaign_before(index)
+          text_lines.first(index).reverse_each do |line|
+            match = line.match(VIGNETTE_SECTION_PATTERN)
+            return normalize_label(match[:campaign]) if match
+          end
+
+          nil
         end
 
         def bon_achat_amounts
@@ -256,6 +267,8 @@ module Parser
             "leclerc_vignettes_smeg"
           when /ROYAL|VKB/i
             "leclerc_vignettes_royal_vkb"
+          when /MONBENTO/i
+            "leclerc_vignettes_monbento"
           else
             "leclerc_vignettes"
           end
