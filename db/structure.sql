@@ -110,7 +110,8 @@ CREATE TYPE public.receipt_promotion_kind AS ENUM (
     'loyalty_cash_debit',
     'immediate_discount',
     'coupon',
-    'points_accrual'
+    'points_accrual',
+    'points_consumption'
 );
 
 

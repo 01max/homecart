@@ -4,19 +4,20 @@ Caisse 010-0105 01 novembre 2025 11:00
 01/11/25 0 0AUU 00X00
 
 ITEM ALPHA                          10.00
+COOKIES TRIPLE CHOCO,136G            2.64
 COUPON SET 3 COUVERTS,1KG            0.01
    Remise client carte (100%00)      -0.01
 SET 3 COUVERTS,1                    17.00
 
 Remises lots                       -15.36
                               ----------
-Total 3 articles                    11.64
+Total 4 articles                    14.28
 
 Bon immediat                         2.39
                               ----------
-Reste a payer                        9.25
+Reste a payer                       11.89
 
-CB                                   9.25
+CB                                  11.89
 
 ----------------------------------------
                 REMISES
@@ -29,6 +30,17 @@ Lot Set de couverts                 15.00
   COUPON SET 3 COUVERTS,1KG
 
 Total                              15.37
+----------------------------------------
+
+----------------------------------------
+           BONS DE REDUCTION
+
+COOKIES TRIPLE CHOCO,136G            0.90
+Lot LOT BRII 2M68PCT SAUCE MUTT      1.49
+  SAUCE TOMATES ET PARMESAN 400
+  SAUCE TOMATES CUISINEES 400G
+
+Total Bon immediat                  2.39
 ----------------------------------------
 
     ---- VOS VIGNETTES MONBENTO ----

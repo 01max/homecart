@@ -13,7 +13,8 @@ class ReceiptPromotion < ApplicationRecord
     loyalty_cash_debit: "loyalty_cash_debit",
     immediate_discount: "immediate_discount",
     coupon: "coupon",
-    points_accrual: "points_accrual"
+    points_accrual: "points_accrual",
+    points_consumption: "points_consumption"
   }, prefix: true, validate: true
 
   enum :linking_method, {

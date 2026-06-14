@@ -9,10 +9,12 @@ module Parser
         TOTAL_PATTERN = /\ATotal (?<count>\d+) articles?\s+(?<amount>\d+\.\d{2})\z/
         SECTION_SEPARATOR_PATTERN = /\A-+\z/
         REMISES_SECTION_PATTERN = /\AREMISES\z/
+        BONS_REDUCTION_SECTION_PATTERN = /\ABONS DE REDUCTION\z/
         DETAIL_TOTAL_PATTERN = /\ATotal\b/
         BON_ACHAT_PATTERN = /\ABon achat carte\s+(?<amount>\d+\.\d{2})\z/
         TICKET_CUMUL_PATTERN = /\ACUMUL DISPONIBLE\b/i
-        VIGNETTE_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
+        VIGNETTE_ACCRUAL_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
+        VIGNETTE_CONSUMPTION_PATTERN = /\A(?:Vous venez d'utiliser|Vous avez utilisé)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
         VIGNETTE_SECTION_PATTERN = /\A-+\s*VOS VIGNETTES\s+(?<campaign>.+?)\s*-+\z/i
 
         private
@@ -200,7 +202,7 @@ module Parser
         end
 
         def promotion_attributes
-          bon_achat_card_promotions + ticket_cumul_promotions + vignette_promotions
+          bon_achat_card_promotions + ticket_cumul_promotions + bon_immediat_promotions + vignette_promotions
         end
 
         def bon_achat_card_promotions
@@ -229,18 +231,56 @@ module Parser
           end
         end
 
+        def bon_immediat_promotions
+          bons_reduction_detail_lines.filter_map do |line|
+            match = line.match(detail_discount_line_pattern)
+            next unless match
+            next if match[:label].match?(DETAIL_TOTAL_PATTERN)
+
+            label = normalize_label(match[:label])
+            promotion_attributes_for(
+              program: "leclerc_bon_immediat",
+              unit: "euro_cents",
+              delta: -cents_from(match[:amount]).abs,
+              label: label,
+              kind: "immediate_discount",
+              linked_line_position: linked_line_position_for(label)
+            )
+          end
+        end
+
         def vignette_promotions
+          vignette_accrual_promotions + vignette_consumption_promotions
+        end
+
+        def vignette_accrual_promotions
+          vignette_event_promotions(
+            VIGNETTE_ACCRUAL_PATTERN,
+            kind: "points_accrual",
+            sign: 1
+          )
+        end
+
+        def vignette_consumption_promotions
+          vignette_event_promotions(
+            VIGNETTE_CONSUMPTION_PATTERN,
+            kind: "points_consumption",
+            sign: -1
+          )
+        end
+
+        def vignette_event_promotions(pattern, kind:, sign:)
           text_lines.filter_map.with_index do |line, index|
-            match = line.match(VIGNETTE_PATTERN)
+            match = line.match(pattern)
             next unless match
 
             campaign = match[:campaign].presence || vignette_campaign_before(index)
             promotion_attributes_for(
               program: vignette_program(campaign),
               unit: "vignette_count",
-              delta: match[:count].to_i,
+              delta: sign * match[:count].to_i,
               label: campaign.presence || "Vignette(s)",
-              kind: "points_accrual"
+              kind: kind
             )
           end
         end
@@ -252,6 +292,29 @@ module Parser
           end
 
           nil
+        end
+
+        def bons_reduction_detail_lines
+          detail_section_lines(BONS_REDUCTION_SECTION_PATTERN)
+        end
+
+        def detail_section_lines(section_pattern)
+          lines = []
+          in_section = false
+
+          text_lines.each do |line|
+            if line.match?(section_pattern)
+              in_section = true
+              next
+            end
+
+            next unless in_section
+            break if line.match?(SECTION_SEPARATOR_PATTERN)
+
+            lines << line
+          end
+
+          lines
         end
 
         def bon_achat_amounts
