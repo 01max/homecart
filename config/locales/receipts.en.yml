@@ -21,6 +21,7 @@ en:
       immediate_discount: "Immediate discount"
       coupon: "Coupon"
       points_accrual: "Points accrual"
+      points_consumption: "Points consumption"
     receipt_promotion_linking_methods:
       parser_inferred: "Parser inferred"
       user_confirmed: "User confirmed"
