@@ -32,6 +32,7 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
 
       expect(result.receipt).to include(discounted_receipt_attributes)
       expect(result.lines).to match_array(receipt_level_discount_lines)
+      expect(result.promotions).to contain_exactly(monbento_promotion)
       expect(result.payments).to contain_exactly(immediate_discount_payment, card_payment(amount_cents: 925))
       expect(result.warnings).to be_empty
     end
@@ -158,6 +159,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       unit: "vignette_count",
       delta: 2,
       label: "Royal VKB",
+      kind: "points_accrual",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def monbento_promotion
+    {
+      program: "leclerc_vignettes_monbento",
+      unit: "vignette_count",
+      delta: 14,
+      label: "MONBENTO",
       kind: "points_accrual",
       linked_line_position: nil,
       linking_method: "unallocated"
