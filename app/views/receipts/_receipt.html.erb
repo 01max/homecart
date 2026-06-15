@@ -1,11 +1,3 @@
-<% status_class =
-     case receipt.parser_status
-     when "needs_review"
-       "hc-badge--warning"
-     else
-       "hc-badge--success"
-     end %>
-
 <tr id="<%= dom_id(receipt) %>">
   <td class="whitespace-nowrap">
     <%= receipt.purchased_at ? l(receipt.purchased_at, format: :receipt_index) : t("receipts.index.empty_value") %>
@@ -19,7 +11,7 @@
         ) %>
   </td>
   <td class="whitespace-nowrap">
-    <span class="hc-badge <%= status_class %>">
+    <span class="hc-badge <%= parser_status_badge_class(receipt.parser_status) %>">
       <%= t("receipts.parser_statuses.#{receipt.parser_status}") %>
     </span>
   </td>

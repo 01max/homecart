@@ -62,7 +62,7 @@
                   </td>
                   <td><%= store_label(receipt.store) %></td>
                   <td class="whitespace-nowrap">
-                    <span class="hc-badge <%= receipt.needs_review? ? "hc-badge--warning" : "hc-badge--success" %>">
+                    <span class="hc-badge <%= parser_status_badge_class(receipt.parser_status) %>">
                       <%= parser_status_label(receipt.parser_status) %>
                     </span>
                   </td>

@@ -1136,6 +1136,11 @@
     color: var(--hc-on-surface-variant);
   }
 
+  .hc-badge--parsed {
+    background: var(--hc-primary-container);
+    color: var(--hc-on-primary-container);
+  }
+
   .hc-badge--success,
   .hc-badge--pass,
   .hc-badge--complete {
