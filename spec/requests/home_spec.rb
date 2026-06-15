@@ -2,10 +2,11 @@ require "rails_helper"
 
 RSpec.describe "Home", type: :request do
   def expect_global_navigation
-    expect(response.body).to include(%(data-controller="workspace-nav"))
+    expect(response.body).to match(/data-controller="[^"]*\bworkspace-nav\b[^"]*"/)
     expect(response.body).to include(%(id="workspace_nav_collapsed"))
     expect(response.body).to include(%(data-workspace-nav-target="toggle"))
     expect(response.body).to include(%(data-action="workspace-nav#save"))
+    expect(response.body).to include(I18n.t("app.nav.dark_mode"))
     expect(response.body).to include(%(href="/receipts"))
     expect(response.body).to include("Receipts")
     expect(response.body).to include(%(href="/source_documents/new"))
