@@ -3,6 +3,19 @@ module ApplicationHelper
     t("receipts.parser_statuses.#{parser_status}")
   end
 
+  def parser_status_badge_class(parser_status)
+    case parser_status
+    when "parsed"
+      "hc-badge--parsed"
+    when "needs_review"
+      "hc-badge--warning"
+    when "reviewed"
+      "hc-badge--success"
+    else
+      "hc-badge--neutral"
+    end
+  end
+
   def store_label(store)
     t(
       "receipts.store_label",

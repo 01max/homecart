@@ -13,9 +13,12 @@ module Parser
         DETAIL_TOTAL_PATTERN = /\ATotal\b/
         BON_ACHAT_PATTERN = /\ABon achat carte\s+(?<amount>\d+\.\d{2})\z/
         TICKET_CUMUL_PATTERN = /\ACUMUL DISPONIBLE\z/i
+        LOYALTY_POINTS_SECTION_PATTERN = %r{\ACumul points fidélité (?<campaign>Amazones/Jeannerie)\z}i
+        LOYALTY_POINTS_ACCRUAL_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s*:?\s*(?<count>\d+)\s+points?\z/i
+        LOYALTY_POINTS_CONSUMPTION_PATTERN = /\A(?:Vous venez d'utiliser|Vous avez utilisé)\s*:?\s*(?<count>\d+)\s+points?\z/i
         VIGNETTE_ACCRUAL_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
         VIGNETTE_CONSUMPTION_PATTERN = /\A(?:Vous venez d'utiliser|Vous avez utilisé)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
-        VIGNETTE_SECTION_PATTERN = /\A-+\s*VOS VIGNETTES\s+(?<campaign>.+?)\s*-+\z/i
+        VIGNETTE_SECTION_PATTERN = /\A(?:-+\s*)?VOS VIGNETTES\s+(?<campaign>.+)\z/i
 
         private
 
@@ -202,7 +205,7 @@ module Parser
         end
 
         def promotion_attributes
-          bon_achat_card_promotions + ticket_cumul_promotions + bon_immediat_promotions + vignette_promotions
+          bon_achat_card_promotions + ticket_cumul_promotions + bon_immediat_promotions + loyalty_point_promotions + vignette_promotions
         end
 
         def bon_achat_card_promotions
@@ -244,13 +247,65 @@ module Parser
               delta: -cents_from(match[:amount]).abs,
               label: label,
               kind: "immediate_discount",
-              linked_line_position: linked_line_position_for(label)
+              linked_line_position: linked_line_position_for(discount_link_label(label))
             )
           end
         end
 
+        def discount_link_label(label)
+          label.sub(/\s+\(X\d+\)\z/i, "")
+        end
+
         def vignette_promotions
           vignette_accrual_promotions + vignette_consumption_promotions
+        end
+
+        def loyalty_point_promotions
+          loyalty_point_accrual_promotions + loyalty_point_consumption_promotions
+        end
+
+        def loyalty_point_accrual_promotions
+          loyalty_point_event_promotions(
+            LOYALTY_POINTS_ACCRUAL_PATTERN,
+            kind: "points_accrual",
+            sign: 1
+          )
+        end
+
+        def loyalty_point_consumption_promotions
+          loyalty_point_event_promotions(
+            LOYALTY_POINTS_CONSUMPTION_PATTERN,
+            kind: "points_consumption",
+            sign: -1
+          )
+        end
+
+        def loyalty_point_event_promotions(pattern, kind:, sign:)
+          text_lines.filter_map.with_index do |line, index|
+            match = line.match(pattern)
+            next unless match
+
+            campaign = loyalty_points_campaign_before(index)
+            next unless campaign
+
+            promotion_attributes_for(
+              program: "leclerc_points_amazones_jeannerie",
+              unit: "point_count",
+              delta: sign * match[:count].to_i,
+              label: campaign,
+              kind: kind
+            )
+          end
+        end
+
+        def loyalty_points_campaign_before(index)
+          text_lines.first(index).reverse_each do |line|
+            match = line.match(LOYALTY_POINTS_SECTION_PATTERN)
+            return normalize_label(match[:campaign]) if match
+            break if line.match?(SECTION_SEPARATOR_PATTERN)
+          end
+
+          nil
         end
 
         def vignette_accrual_promotions
@@ -288,7 +343,7 @@ module Parser
         def vignette_campaign_before(index)
           text_lines.first(index).reverse_each do |line|
             match = line.match(VIGNETTE_SECTION_PATTERN)
-            return normalize_label(match[:campaign]) if match
+            return normalize_label(match[:campaign].sub(/\s*-+\z/, "")) if match
           end
 
           nil

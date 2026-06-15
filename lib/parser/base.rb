@@ -132,7 +132,7 @@ module Parser
       case raw_label
       when /\ACB Web\b/i
         "web"
-      when /\ACB TRD\b/i
+      when /\ACB\s*\(T\s*restau\)/i, /\ACB TRD\b/i
         "tickets_restaurant"
       when /\A(?:CB|CARTE BANCAIRE)\b/i
         "bank_card"

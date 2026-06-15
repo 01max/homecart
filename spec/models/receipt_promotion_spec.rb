@@ -16,7 +16,7 @@ RSpec.describe ReceiptPromotion do
   end
 
   it "declares promotion enums" do
-    expect(described_class.units.keys).to contain_exactly("euro_cents", "vignette_count")
+    expect(described_class.units.keys).to contain_exactly("euro_cents", "vignette_count", "point_count")
     expect(described_class.linking_methods.keys).to contain_exactly("parser_inferred", "user_confirmed", "unallocated")
   end
 

@@ -6,6 +6,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="<%= t("app.title") %>">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#f7fafb" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#101718" media="(prefers-color-scheme: dark)">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -18,13 +20,23 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
+    <style>
+      @font-face {
+        font-family: "Hanken Grotesk";
+        src: url("<%= asset_path("hanken-grotesk-latin.woff2") %>") format("woff2");
+        font-display: swap;
+        font-style: normal;
+        font-weight: 400 700;
+      }
+    </style>
+
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
   <body class="hc-app-shell hc-workspace-shell hc-workspace-shell--sidebar antialiased"
-        data-controller="workspace-nav">
+        data-controller="workspace-nav theme">
     <input type="checkbox"
            id="workspace_nav_collapsed"
            class="hc-workspace-rail-toggle sr-only"
@@ -59,6 +71,16 @@
         </nav>
 
         <div class="hc-workspace-sidebar-footer">
+          <label class="hc-theme-toggle">
+            <input type="checkbox"
+                   class="hc-theme-toggle-input sr-only"
+                   data-theme-target="toggle"
+                   data-action="theme#save"
+                   aria-label="<%= t("app.nav.dark_mode") %>">
+            <span class="hc-theme-toggle-control" aria-hidden="true"></span>
+            <span class="hc-theme-toggle-label"><%= t("app.nav.dark_mode") %></span>
+          </label>
+
           <%= link_to t("app.nav.upload_receipt"),
                       new_source_document_path,
                       class: "hc-button hc-button--primary" %>
@@ -84,6 +106,15 @@
           <%= workspace_nav_link t("app.nav.receipts"), receipts_path, icon: "R", active: controller_name == "receipts" %>
           <%= workspace_nav_link t("app.nav.catalogue"), catalogue_root_path, icon: "C", active: controller_path.start_with?("catalogue/") %>
           <%= workspace_nav_link t("app.nav.matching"), matching_root_path, icon: "M", active: controller_path.start_with?("matching/") %>
+          <label class="hc-theme-toggle">
+            <input type="checkbox"
+                   class="hc-theme-toggle-input sr-only"
+                   data-theme-target="toggle"
+                   data-action="theme#save"
+                   aria-label="<%= t("app.nav.dark_mode") %>">
+            <span class="hc-theme-toggle-control" aria-hidden="true"></span>
+            <span class="hc-theme-toggle-label"><%= t("app.nav.dark_mode") %></span>
+          </label>
           <%= link_to t("app.nav.upload_receipt"),
                       new_source_document_path,
                       class: "hc-button hc-button--primary" %>

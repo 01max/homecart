@@ -202,7 +202,8 @@ CREATE TYPE public.receipt_promotion_linking_method AS ENUM (
 
 CREATE TYPE public.receipt_promotion_unit AS ENUM (
     'euro_cents',
-    'vignette_count'
+    'vignette_count',
+    'point_count'
 );
 
 
@@ -1613,6 +1614,8 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260609094000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609095000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609100000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609101000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260614130000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260615191000');
 
 
 --
