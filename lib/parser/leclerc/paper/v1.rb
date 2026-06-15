@@ -9,7 +9,7 @@ module Parser
         DISCOUNT_LINE_PATTERN = /\A(?<label>.+?)\s+(?<amount>-\d+\.\d{2})\z/
         DETAIL_DISCOUNT_LINE_PATTERN = /\A(?<label>.+?)\s+(?<amount>\d+\.\d{2})\z/
         QUANTITY_LINE_PATTERN = /\A(?<quantity>\d+(?:[,.]\d+)?)\s+X\s+(?<unit_price>\d+\.\d{2})€\s+(?<total>\d+\.\d{2})\z/
-        PAYMENT_PATTERN = /\A(?<raw_label>CB|Bon achat carte|Bon immediat)\s+(?<amount>\d+\.\d{2})\z/
+        PAYMENT_PATTERN = /\A(?<raw_label>CB(?:\s+\(T\s*restau\))?|Bon achat carte|Bon immediat|CYCLEEN)\s+(?<amount>\d+\.\d{2})\z/i
 
         Parser::Registry.register(FORMAT, self)
       end

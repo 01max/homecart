@@ -26,6 +26,14 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
       expect(result.payments).to contain_exactly(immediate_discount_payment, voucher_payment, card_payment(amount_cents: 1_400))
       expect(result.warnings).to be_empty
     end
+
+    it "parses Ticket Restaurant card payments with eligibility detail lines" do
+      result = described_class.new(text: ticket_restaurant_payment_text).call
+
+      expect(result.receipt).to include(ticket_restaurant_receipt_attributes)
+      expect(result.payments).to contain_exactly(ticket_restaurant_payment, card_payment(amount_cents: 2_914))
+      expect(result.warnings).to be_empty
+    end
   end
 
   def parse_fixture(path)
@@ -54,6 +62,42 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
       declared_article_count: 5,
       parser_status: "parsed"
     }
+  end
+
+  def ticket_restaurant_receipt_attributes
+    {
+      parser_format: "leclerc.paper.v2",
+      purchased_at: Time.zone.local(2025, 4, 5, 9, 20),
+      register_number: "001-0128",
+      ticket_number: "01A9 01C00",
+      total_cents: 3_539,
+      declared_article_count: 2,
+      parser_status: "parsed"
+    }
+  end
+
+  def ticket_restaurant_payment_text
+    <<~TEXT
+      ANONYMIZED STORE
+      TEL:00.00.00.00.00
+      Caisse 001-0128 05 avril 2025 09:20
+      Ticket 05/04/25 0 01A9 01C00
+
+      TTC   TVA
+      ITEM FOOD                           6.25 1
+      ITEM OTHER                         29.14 2
+      ----------
+      Total 2 articles                   35.39
+
+      CB (T restau)                       6.25
+      (montant éligible 6.25€
+       plafonné à 25€)
+      CB                                29.14
+
+      Code               HT       TVA           TTC
+      1 5%50           5.92      0.33          6.25
+      2 20%00         24.28      4.86         29.14
+    TEXT
   end
 
   def quantity_line
@@ -97,6 +141,10 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
 
   def immediate_discount_payment
     hash_including(raw_label: "Bon immediat", category: "other", amount_cents: 200)
+  end
+
+  def ticket_restaurant_payment
+    hash_including(raw_label: "CB (T restau)", category: "tickets_restaurant", amount_cents: 625)
   end
 
   def bon_achat_promotion(amount_cents)

@@ -48,6 +48,23 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       expect(result.warnings).to be_empty
     end
 
+    it "parses Ticket Restaurant card payments with eligibility detail lines" do
+      result = described_class.new(text: ticket_restaurant_payment_text).call
+
+      expect(result.receipt).to include(ticket_restaurant_receipt_attributes)
+      expect(result.payments).to contain_exactly(ticket_restaurant_payment, card_payment(amount_cents: 2_914))
+      expect(result.warnings).to be_empty
+    end
+
+    it "parses CYCLEEN bottle recycling credits as payments" do
+      result = described_class.new(text: cycleen_recycling_credit_text).call
+
+      expect(result.receipt).to include(cycleen_recycling_credit_receipt_attributes)
+      expect(result.lines).to contain_exactly(cycleen_item_line)
+      expect(result.payments).to contain_exactly(cycleen_payment, card_payment(amount_cents: 984))
+      expect(result.warnings).to be_empty
+    end
+
     it "uses a plain vignette heading as the campaign for unlabeled vignette events" do
       text = Rails.root.join("spec/fixtures/files/parser/leclerc_paper_v1_receipt_level_discounts.txt").read
                  .sub("---- VOS VIGNETTES MONBENTO ----", "Vos vignettes SMEG")
@@ -116,6 +133,30 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
     }
   end
 
+  def ticket_restaurant_receipt_attributes
+    {
+      parser_format: "leclerc.paper.v1",
+      purchased_at: Time.zone.local(2025, 4, 5, 9, 20),
+      register_number: "001-0128",
+      ticket_number: "01A9 01C00",
+      total_cents: 3_539,
+      declared_article_count: 2,
+      parser_status: "parsed"
+    }
+  end
+
+  def cycleen_recycling_credit_receipt_attributes
+    {
+      parser_format: "leclerc.paper.v1",
+      purchased_at: Time.zone.local(2025, 7, 5, 9, 34),
+      register_number: "022-0115",
+      ticket_number: "0MWK 01S00",
+      total_cents: 1_000,
+      declared_article_count: 1,
+      parser_status: "parsed"
+    }
+  end
+
   def amazones_jeannerie_points_text
     <<~TEXT
       ANONYMIZED STORE
@@ -146,6 +187,41 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       Vous venez d'obtenir :          54 point
       Solde actuel          :         54 point
       ----------------------------------------
+    TEXT
+  end
+
+  def ticket_restaurant_payment_text
+    <<~TEXT
+      ANONYMIZED STORE
+      TEL:00.00.00.00.00
+      Caisse 001-0128 05 avril 2025 09:20
+      05/04/25 0 01A9 01C00
+
+      ITEM FOOD                              6.25
+      ITEM OTHER                            29.14
+                                      ----------
+      Total 2 articles                      35.39
+
+      CB (T restau)                          6.25
+      (montant éligible 6.25€
+       plafonné à 25€)
+      CB                                    29.14
+    TEXT
+  end
+
+  def cycleen_recycling_credit_text
+    <<~TEXT
+      ANONYMIZED STORE
+      TEL:00.00.00.00.00
+      Caisse 022-0115 05 juillet 2025 09:34
+      05/07/25 0 0MWK 01S00
+
+      ITEM ALPHA                            10.00
+                                      ----------
+      Total 1 article                       10.00
+
+      CYCLEEN                                0.16
+      CB                                     9.84
     TEXT
   end
 
@@ -199,6 +275,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
 
   def immediate_discount_payment
     hash_including(raw_label: "Bon immediat", category: "other", amount_cents: 239)
+  end
+
+  def ticket_restaurant_payment
+    hash_including(raw_label: "CB (T restau)", category: "tickets_restaurant", amount_cents: 625)
+  end
+
+  def cycleen_payment
+    hash_including(raw_label: "CYCLEEN", category: "other", amount_cents: 16)
+  end
+
+  def cycleen_item_line
+    hash_including(position: 1, label: "ITEM ALPHA", quantity: BigDecimal("1"), total_cents: 1_000, kind: "item")
   end
 
   def discounted_receipt_payments
