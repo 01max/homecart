@@ -47,6 +47,16 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       expect(result.payments).to match_array(discounted_receipt_payments)
       expect(result.warnings).to be_empty
     end
+
+    it "uses a plain vignette heading as the campaign for unlabeled vignette events" do
+      text = Rails.root.join("spec/fixtures/files/parser/leclerc_paper_v1_receipt_level_discounts.txt").read
+                 .sub("---- VOS VIGNETTES MONBENTO ----", "Vos vignettes SMEG")
+
+      result = described_class.new(text: text).call
+
+      expect(result.promotions).to include(smeg_accrual_promotion, smeg_consumption_promotion)
+      expect(result.warnings).to be_empty
+    end
   end
 
   def parse_fixture(path)
@@ -199,6 +209,30 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       unit: "vignette_count",
       delta: -35,
       label: "MONBENTO",
+      kind: "points_consumption",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def smeg_accrual_promotion
+    {
+      program: "leclerc_vignettes_smeg",
+      unit: "vignette_count",
+      delta: 14,
+      label: "SMEG",
+      kind: "points_accrual",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def smeg_consumption_promotion
+    {
+      program: "leclerc_vignettes_smeg",
+      unit: "vignette_count",
+      delta: -35,
+      label: "SMEG",
       kind: "points_consumption",
       linked_line_position: nil,
       linking_method: "unallocated"

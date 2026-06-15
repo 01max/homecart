@@ -15,7 +15,7 @@ module Parser
         TICKET_CUMUL_PATTERN = /\ACUMUL DISPONIBLE\z/i
         VIGNETTE_ACCRUAL_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
         VIGNETTE_CONSUMPTION_PATTERN = /\A(?:Vous venez d'utiliser|Vous avez utilisé)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
-        VIGNETTE_SECTION_PATTERN = /\A-+\s*VOS VIGNETTES\s+(?<campaign>.+?)\s*-+\z/i
+        VIGNETTE_SECTION_PATTERN = /\A(?:-+\s*)?VOS VIGNETTES\s+(?<campaign>.+)\z/i
 
         private
 
@@ -244,9 +244,13 @@ module Parser
               delta: -cents_from(match[:amount]).abs,
               label: label,
               kind: "immediate_discount",
-              linked_line_position: linked_line_position_for(label)
+              linked_line_position: linked_line_position_for(discount_link_label(label))
             )
           end
+        end
+
+        def discount_link_label(label)
+          label.sub(/\s+\(X\d+\)\z/i, "")
         end
 
         def vignette_promotions
@@ -288,7 +292,7 @@ module Parser
         def vignette_campaign_before(index)
           text_lines.first(index).reverse_each do |line|
             match = line.match(VIGNETTE_SECTION_PATTERN)
-            return normalize_label(match[:campaign]) if match
+            return normalize_label(match[:campaign].sub(/\s*-+\z/, "")) if match
           end
 
           nil

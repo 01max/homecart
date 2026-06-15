@@ -22,7 +22,7 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
 
       expect(result.receipt).to include(sectioned_receipt_attributes)
       expect(result.lines).to contain_exactly(low_vat_line, medium_vat_line, high_vat_quantity_line)
-      expect(result.promotions).to contain_exactly(bon_achat_promotion(100), tickets_promotion(100), smeg_promotion)
+      expect(result.promotions).to match_array(sectioned_promotions)
       expect(result.payments).to contain_exactly(immediate_discount_payment, voucher_payment, card_payment(amount_cents: 1_400))
       expect(result.warnings).to be_empty
     end
@@ -123,6 +123,15 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
     }
   end
 
+  def sectioned_promotions
+    [
+      bon_achat_promotion(100),
+      tickets_promotion(100),
+      item_bon_immediat_promotion,
+      smeg_promotion
+    ]
+  end
+
   def smeg_promotion
     {
       program: "leclerc_vignettes_smeg",
@@ -132,6 +141,18 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
       kind: "points_accrual",
       linked_line_position: nil,
       linking_method: "unallocated"
+    }
+  end
+
+  def item_bon_immediat_promotion
+    {
+      program: "leclerc_bon_immediat",
+      unit: "euro_cents",
+      delta: -200,
+      label: "ITEM ALPHA BIO 250G (X1)",
+      kind: "immediate_discount",
+      linked_line_position: 1,
+      linking_method: "parser_inferred"
     }
   end
 
