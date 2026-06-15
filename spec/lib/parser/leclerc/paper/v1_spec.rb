@@ -57,6 +57,23 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       expect(result.promotions).to include(smeg_accrual_promotion, smeg_consumption_promotion)
       expect(result.warnings).to be_empty
     end
+
+    it "parses Amazones/Jeannerie loyalty point accrual events" do
+      result = described_class.new(text: amazones_jeannerie_points_text).call
+
+      expect(result.lines).to include(discount_line("RAYON CAPSULE", -1_498))
+      expect(result.promotions).to contain_exactly(amazones_jeannerie_points_accrual_promotion)
+      expect(result.warnings).to be_empty
+    end
+
+    it "keeps generic point balance events out of promotions" do
+      text = amazones_jeannerie_points_text.sub("Cumul points fidélité Amazones/Jeannerie", "Cumul points fidélité Other Program")
+
+      result = described_class.new(text: text).call
+
+      expect(result.promotions).to be_empty
+      expect(result.warnings).to be_empty
+    end
   end
 
   def parse_fixture(path)
@@ -97,6 +114,39 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       declared_article_count: 4,
       parser_status: "parsed"
     }
+  end
+
+  def amazones_jeannerie_points_text
+    <<~TEXT
+      ANONYMIZED STORE
+      TEL:00.00.00.00.00
+      Caisse 053-0310 04 septembre 2024 10:32
+      04/09/24 0 1I4A 00P00
+
+      H22 PULL AUXANNE GRIS S/M            29.95
+      H24 F PANT 10255128 VMZAMIRA         39.99
+
+      Remises RAYON                       -14.98
+                                      ----------
+      Total 2 articles                     54.96
+
+      CB                                   54.96
+
+      ----------------------------------------
+                      REMISES
+
+      RAYON CAPSULE                      14.98
+        H22 PULL AUXANNE GRIS S/M
+        H24 F PANT 10255128 VMZAMIRA
+      ----------------------------------------
+
+      Cumul points fidélité Amazones/Jeannerie
+
+      Solde précédent       :          0 point
+      Vous venez d'obtenir :          54 point
+      Solde actuel          :         54 point
+      ----------------------------------------
+    TEXT
   end
 
   def quantity_line
@@ -234,6 +284,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       delta: -35,
       label: "SMEG",
       kind: "points_consumption",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def amazones_jeannerie_points_accrual_promotion
+    {
+      program: "leclerc_points_amazones_jeannerie",
+      unit: "point_count",
+      delta: 54,
+      label: "Amazones/Jeannerie",
+      kind: "points_accrual",
       linked_line_position: nil,
       linking_method: "unallocated"
     }

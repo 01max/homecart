@@ -5,7 +5,8 @@
 class ReceiptPromotion < ApplicationRecord
   enum :unit, {
     euro_cents: "euro_cents",
-    vignette_count: "vignette_count"
+    vignette_count: "vignette_count",
+    point_count: "point_count"
   }, validate: true
 
   enum :kind, {

@@ -15,6 +15,7 @@ en:
     receipt_promotion_units:
       euro_cents: "Euro cents"
       vignette_count: "Vignette count"
+      point_count: "Point count"
     receipt_promotion_kinds:
       loyalty_cash_credit: "Loyalty cash credit"
       loyalty_cash_debit: "Loyalty cash debit"
