@@ -24,6 +24,8 @@ CB SANS CONTACT VX                   EUR      10,27 €
 ------------------------------------------------------
 TOTAL TVA          9,73 €        0,54 €       10,27 €
 
+8 vignette(s) JBL offerte(s)
+
 Opérateur         Date      Heure      TPV     Ticket
 106    LV       15/06/25     08:59        1      450250
 Hash: tBje     V. 3.5.4.2        N° vente: 12

@@ -5,6 +5,7 @@ module Parser
       class Base < Parser::Base
         CARTE_U_BEFORE_PATTERN = /\ACarte U\s+solde\s+avant\b.*?(?<amount>\d+,\d{2})\s€?\z/i
         CARTE_U_AFTER_PATTERN = /\ACarte U\s+solde\s+apr[eè]s\b.*?(?<amount>\d+,\d{2})\s€?\z/i
+        VIGNETTE_ACCRUAL_PATTERN = /\A(?<count>\d+)\s+vignette\(s\)\s+(?<campaign>.+?)\s+offertes?(?:\(s\))?\z/i
 
         private
 
@@ -37,13 +38,33 @@ module Parser
         end
 
         def promotion_attributes
-          carte_u_balance_delta.filter_map do |delta|
+          carte_u_promotions + vignette_promotions
+        end
+
+        def carte_u_promotions
+          carte_u_balance_delta.map do |delta|
             promotion_attributes_for(
               program: "u_carte_u",
               unit: "euro_cents",
               delta: delta,
               label: "Carte U solde",
               kind: delta.positive? ? "loyalty_cash_credit" : "loyalty_cash_debit"
+            )
+          end
+        end
+
+        def vignette_promotions
+          text_lines.filter_map do |line|
+            match = line.match(VIGNETTE_ACCRUAL_PATTERN)
+            next unless match
+
+            campaign = normalize_label(match[:campaign])
+            promotion_attributes_for(
+              program: vignette_program(campaign),
+              unit: "vignette_count",
+              delta: match[:count].to_i,
+              label: campaign,
+              kind: "points_accrual"
             )
           end
         end
@@ -65,6 +86,15 @@ module Parser
 
         def carte_u_match(pattern)
           text_lines.lazy.filter_map { |line| line.match(pattern) }.first
+        end
+
+        def vignette_program(campaign)
+          case campaign.to_s
+          when /\AJBL\z/i
+            "u_vignettes_jbl"
+          else
+            "u_vignettes"
+          end
         end
 
         def total_cents

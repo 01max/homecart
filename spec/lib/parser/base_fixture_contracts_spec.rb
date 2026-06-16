@@ -97,7 +97,7 @@ PARSER_FIXTURE_CONTRACTS = [
     line_count: 3,
     total_cents: 1_027,
     declared_article_count: 4,
-    promotion_count: 0,
+    promotion_count: 1,
     warning_count: 0
   },
   {
