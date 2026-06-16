@@ -43,6 +43,14 @@ RSpec.describe Parser::Base do
       expect(result.receipt[:parser_status]).to eq("parsed")
       expect(result.warnings).to be_empty
     end
+
+    it "coalesces adjacent identical piece-item rows before assigning positions" do
+      result = repeated_item_parser.new(text: "receipt text").call
+
+      expect(result.receipt).to include(total_cents: 794, declared_article_count: 8, parser_status: "parsed")
+      expect(result.lines).to contain_exactly(repeated_kiwi_line, following_quantity_line)
+      expect(result.warnings).to be_empty
+    end
   end
 
   describe "#result_envelope" do
@@ -244,6 +252,86 @@ RSpec.describe Parser::Base do
         parser_payment_amounts.map { |amount_cents| { amount_cents: amount_cents } }
       end
     end
+  end
+
+  def repeated_item_parser
+    Class.new(described_class) do
+      private
+
+      def receipt_attributes
+        {
+          total_cents: 794,
+          declared_article_count: 8,
+          parser_status: "parsed",
+          parser_warnings: warnings
+        }
+      end
+
+      def parsed_lines
+        Array.new(6) { repeated_item_line } + [ following_item_line ]
+      end
+
+      def repeated_item_line
+        {
+          raw_text: "*KIWI JAUNE PIECE 0,99",
+          label: "KIWI JAUNE PIECE",
+          label_truncated: false,
+          quantity: BigDecimal("1"),
+          unit_of_measure: "piece",
+          unit_price_cents: nil,
+          total_cents: 99,
+          vat_rate_bp: nil,
+          tr_eligible: true,
+          section_label: "Selfscan",
+          kind: "item"
+        }
+      end
+
+      def following_item_line
+        {
+          raw_text: "PRODUIT QUANTITE 2*1,00 2,00",
+          label: "PRODUIT QUANTITE",
+          label_truncated: false,
+          quantity: BigDecimal("2"),
+          unit_of_measure: "piece",
+          unit_price_cents: 100,
+          total_cents: 200,
+          vat_rate_bp: nil,
+          tr_eligible: false,
+          section_label: "Selfscan",
+          kind: "item"
+        }
+      end
+
+      def payment_attributes
+        [ { amount_cents: 794 } ]
+      end
+    end
+  end
+
+  def repeated_kiwi_line
+    hash_including(
+      position: 1,
+      raw_text: "*KIWI JAUNE PIECE 0,99",
+      label: "KIWI JAUNE PIECE",
+      quantity: BigDecimal("6"),
+      unit_of_measure: "piece",
+      unit_price_cents: 99,
+      total_cents: 594,
+      tr_eligible: true,
+      section_label: "Selfscan",
+      kind: "item"
+    )
+  end
+
+  def following_quantity_line
+    hash_including(
+      position: 2,
+      label: "PRODUIT QUANTITE",
+      quantity: BigDecimal("2"),
+      unit_price_cents: 100,
+      total_cents: 200
+    )
   end
 
   def piece_line(quantity:)

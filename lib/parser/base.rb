@@ -106,7 +106,7 @@ module Parser
     #
     # @return [Array<Hash>] line attributes with `:position` populated
     def line_attributes
-      @line_attributes ||= parsed_lines.map.with_index(1) { |line, position| line.merge(position: position) }
+      @line_attributes ||= coalesced_duplicate_item_lines.map.with_index(1) { |line, position| line.merge(position: position) }
     end
 
     # @!method parsed_lines
@@ -114,6 +114,62 @@ module Parser
     #   @return [Array<Hash>]
     def parsed_lines
       raise NotImplementedError, "#{self.class.name} must implement #parsed_lines or #line_attributes"
+    end
+
+    def coalesced_duplicate_item_lines
+      duplicate_line_runs.map do |run|
+        line = run.fetch(:line)
+        line[:unit_price_cents] ||= inferred_unit_price_cents(line) if run.fetch(:count) > 1
+        line
+      end
+    end
+
+    def duplicate_line_runs
+      parsed_lines.each_with_object([]) do |line, runs|
+        current_key = duplicate_item_line_key(line)
+        previous_run = runs.last
+
+        if current_key && previous_run&.fetch(:key) == current_key
+          merge_duplicate_item_line(previous_run.fetch(:line), line)
+          previous_run[:count] += 1
+        else
+          runs << { line: line.dup, key: current_key, count: 1 }
+        end
+      end
+    end
+
+    def merge_duplicate_item_line(target, source)
+      target[:quantity] = decimal_line_value(target, :quantity) + decimal_line_value(source, :quantity)
+      target[:total_cents] = integer_line_value(target, :total_cents) + integer_line_value(source, :total_cents)
+    end
+
+    def duplicate_item_line_key(line)
+      return unless line_value(line, :kind).to_s == "item"
+      return unless line_value(line, :unit_of_measure).to_s == "piece"
+      return if line_value(line, :raw_text).blank?
+      return if line_value(line, :label).blank?
+      return if line_value(line, :quantity).nil?
+      return if line_value(line, :total_cents).nil?
+
+      %i[
+        raw_text
+        label
+        label_truncated
+        unit_of_measure
+        unit_price_cents
+        vat_rate_bp
+        tr_eligible
+        section_label
+        kind
+      ].map { |attribute| line_value(line, attribute) }
+    end
+
+    def inferred_unit_price_cents(line)
+      quantity = decimal_line_value(line, :quantity)
+      return if quantity.zero?
+
+      unit_price = BigDecimal(integer_line_value(line, :total_cents).to_s) / quantity
+      unit_price.to_i if unit_price == unit_price.to_i
     end
 
     # @return [Array<Hash>] parsed promotion attributes, if any
@@ -333,6 +389,20 @@ module Parser
 
     def comparable_label(label)
       normalize_label(label.to_s).upcase.gsub(/\s+/, " ").strip
+    end
+
+    def integer_line_value(line, attribute)
+      line_value(line, attribute).to_i
+    end
+
+    def decimal_line_value(line, attribute)
+      BigDecimal(line_value(line, attribute).to_s)
+    end
+
+    def line_value(line, attribute)
+      return line[attribute] if line.key?(attribute)
+
+      line[attribute.to_s] if line.key?(attribute.to_s)
     end
 
     def attribute_value(record, attribute)
