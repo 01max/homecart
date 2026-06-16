@@ -14,6 +14,7 @@ module Parser
         REGISTER_PATTERN = /\ACaisse\s*:\s*(?<register>\d+)\s+Ticket\s*:\s*(?<ticket>\d+)\z/
         WAAOH_AMOUNT_PATTERN = /\A(?<label>.+?)\s+(?<amount>\d+,\d{2})\s*(?:€)?\z/
         WAAOH_CASH_EVENT_PATTERN = /\A(?<event>Crédit du jour|Débit du jour)\s*:\s*(?<amount>\d+,\d{2})\s*(?:€)?\z/i
+        WAAOH_INFORMATION_LINE_PATTERN = /\A(?:Votre solde|Nouveau solde|Jusqu'au)\b/i
 
         Parser::Registry.register(FORMAT, self)
 
@@ -163,6 +164,7 @@ module Parser
             in_waaoh_section = false if line.match?(/\A(?:Reçu|TOT\.|Merci|TVAS|Brut|\d+ Articles|Total)(?:\b|\s)/)
             next unless in_waaoh_section
             next if scan_correction_line?(line)
+            next if waaoh_information_line?(line)
 
             waaoh_cash_event(line) || waaoh_cash_credit(line)
           end
@@ -179,6 +181,10 @@ module Parser
             kind: debit ? "loyalty_cash_debit" : "loyalty_cash_credit",
             linked_line_position: nil
           }
+        end
+
+        def waaoh_information_line?(line)
+          line.match?(WAAOH_INFORMATION_LINE_PATTERN)
         end
 
         def waaoh_cash_credit(line)

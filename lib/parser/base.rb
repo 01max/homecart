@@ -106,7 +106,9 @@ module Parser
     #
     # @return [Array<Hash>] line attributes with `:position` populated
     def line_attributes
-      @line_attributes ||= parsed_lines.map.with_index(1) { |line, position| line.merge(position: position) }
+      @line_attributes ||= Parser::LineCoalescer.call(parsed_lines).map.with_index(1) do |line, position|
+        line.merge(position: position)
+      end
     end
 
     # @!method parsed_lines

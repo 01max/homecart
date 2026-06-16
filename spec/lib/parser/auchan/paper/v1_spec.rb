@@ -62,7 +62,7 @@ RSpec.describe Parser::Auchan::Paper::V1 do
   def cashier_text_with_waaoh_cash_events
     Rails.root.join("spec/fixtures/files/parser/auchan_paper_v1_cashier.txt").read.sub(
       "ARTICLE TRONQUE EXTRA.. 0,40",
-      "Crédit du jour : 0,40\nDébit du jour : 0,15"
+      "Votre solde étai..: 6,29\nCrédit du jour : 0,40\nDébit du jour : 0,15\nNouveau solde : 6,54\nJusqu'au 31/01/27 6,54"
     )
   end
 
