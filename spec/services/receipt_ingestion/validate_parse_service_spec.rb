@@ -10,14 +10,15 @@ RSpec.describe ReceiptIngestion::ValidateParseService do
     )
   end
 
-  def add_line(receipt, position:, total_cents:, quantity: 1, unit_of_measure: "piece", kind: "item")
+  def add_line(receipt, position:, total_cents:, quantity: 1, unit_of_measure: "piece", kind: "item", **attributes)
     create(:receipt_line,
       receipt: receipt,
       position: position,
       total_cents: total_cents,
       quantity: quantity,
       unit_of_measure: unit_of_measure,
-      kind: kind
+      kind: kind,
+      **attributes
     )
   end
 
@@ -40,6 +41,35 @@ RSpec.describe ReceiptIngestion::ValidateParseService do
 
   def warning_codes(receipt)
     receipt.parser_warnings.pluck("code")
+  end
+
+  def add_discounted_duplicate_lines(receipt)
+    add_line(receipt, position: 1, **discounted_item_attributes(total_cents: 600, section_label: "Selfscan"))
+    add_line(receipt, position: 2, **discounted_item_attributes(total_cents: 910, section_label: "Articles avec Remise"))
+    add_line(receipt, position: 3, **discount_line_attributes)
+  end
+
+  def discounted_item_attributes(total_cents:, section_label:)
+    {
+      raw_text: "*MENGUY S PEANUT C.. 2*4,55 6,00",
+      label: "MENGUY S PEANUT C",
+      label_truncated: true,
+      quantity: BigDecimal("2"),
+      unit_price_cents: 455,
+      total_cents: total_cents,
+      section_label: section_label
+    }
+  end
+
+  def discount_line_attributes
+    {
+      raw_text: "BEURRE DE CACAHU.. -3,10",
+      label: "BEURRE DE CACAHU",
+      label_truncated: true,
+      total_cents: -310,
+      kind: "discount",
+      section_label: "Articles avec Remise"
+    }
   end
 
   def parser_notice_warning
@@ -87,6 +117,17 @@ RSpec.describe ReceiptIngestion::ValidateParseService do
 
     expect(receipt).to be_parsed
     expect(warning_codes(receipt)).not_to include("article_count_mismatch")
+  end
+
+  it "validates totals and article count against coalesced persisted lines" do
+    receipt = build_receipt(total_cents: 600, declared_article_count: 2)
+    add_discounted_duplicate_lines(receipt)
+    add_payment(receipt, amount_cents: 600)
+
+    receipt = validate(receipt)
+
+    expect(receipt).to be_parsed
+    expect(receipt.parser_warnings).to be_empty
   end
 
   it "keeps non-validator parser warnings as review blockers" do

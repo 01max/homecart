@@ -36,7 +36,7 @@ module ReceiptIngestion
     attr_reader :receipt
 
     def validate_totals_sum
-      discrepancy = receipt.receipt_lines.sum(:total_cents) - receipt.total_cents
+      discrepancy = normalized_line_attributes.sum { |line| line[:total_cents].to_i } - receipt.total_cents
       return passed_result(:totals_sum) if discrepancy.abs <= MONETARY_TOLERANCE_CENTS
 
       failed_result(
@@ -74,12 +74,16 @@ module ReceiptIngestion
     end
 
     def computed_article_count
-      receipt.receipt_lines.sum do |line|
-        next 0 unless line.kind == "item"
-        next line.quantity.to_i if line.unit_of_measure == "piece"
+      normalized_line_attributes.sum do |line|
+        next 0 unless line[:kind].to_s == "item"
+        next line[:quantity].to_i if line[:unit_of_measure].to_s == "piece"
 
         1
       end
+    end
+
+    def normalized_line_attributes
+      @normalized_line_attributes ||= Parser::LineCoalescer.call(receipt.receipt_lines.order(:position))
     end
 
     def passed_result(validator)
