@@ -13,6 +13,7 @@ RSpec.describe Parser::MagasinsU::Paper::V1 do
 
       expect(result.receipt).to include(weighted_receipt_attributes)
       expect(result.lines).to contain_exactly(piece_quantity_line, weighted_quantity_line, direct_line)
+      expect(result.promotions).to contain_exactly(jbl_vignette_promotion)
       expect(result.payments).to contain_exactly(card_payment(amount_cents: 1_027))
       expect(result.warnings).to be_empty
     end
@@ -109,6 +110,18 @@ RSpec.describe Parser::MagasinsU::Paper::V1 do
       delta: delta,
       label: "Carte U solde",
       kind: "loyalty_cash_credit",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def jbl_vignette_promotion
+    {
+      program: "u_vignettes_jbl",
+      unit: "vignette_count",
+      delta: 8,
+      label: "JBL",
+      kind: "points_accrual",
       linked_line_position: nil,
       linking_method: "unallocated"
     }
