@@ -75,6 +75,13 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       expect(result.warnings).to be_empty
     end
 
+    it "uses a following operation banner as the campaign for unlabeled vignette events" do
+      result = described_class.new(text: pyrex_vignette_operation_text).call
+
+      expect(result.promotions).to contain_exactly(pyrex_accrual_promotion)
+      expect(result.warnings).to be_empty
+    end
+
     it "parses Amazones/Jeannerie loyalty point accrual events" do
       result = described_class.new(text: amazones_jeannerie_points_text).call
 
@@ -225,6 +232,31 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
     TEXT
   end
 
+  def pyrex_vignette_operation_text
+    <<~TEXT
+      ANONYMIZED STORE
+      TEL:00.00.00.00.00
+      Caisse 302-3002 06 mars 2024 14:09
+      06/03/24 0 8M8G 03600
+
+      ITEM ALPHA                            10.75
+                                      ----------
+      Total 1 article                       10.75
+
+      CB                                    10.75
+
+      Solde précédent       :      54 Vignette(s)
+      Vous venez d'obtenir :       1 Vignette(s)
+      Solde actuel          :      55 Vignette(s)
+
+      Détail des avantages obtenus :
+      Sur total ticket             1 Vignette(s)
+      ----------------------------------------
+              OPERATION VIGNETTES PYREX
+      ----------------------------------------
+    TEXT
+  end
+
   def quantity_line
     hash_including(
       position: 1,
@@ -372,6 +404,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       delta: -35,
       label: "SMEG",
       kind: "points_consumption",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def pyrex_accrual_promotion
+    {
+      program: "leclerc_vignettes_pyrex",
+      unit: "vignette_count",
+      delta: 1,
+      label: "PYREX",
+      kind: "points_accrual",
       linked_line_position: nil,
       linking_method: "unallocated"
     }

@@ -19,6 +19,7 @@ module Parser
         VIGNETTE_ACCRUAL_PATTERN = /\A(?:Vous venez d'obtenir|Vous avez obtenu)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
         VIGNETTE_CONSUMPTION_PATTERN = /\A(?:Vous venez d'utiliser|Vous avez utilisé)\s*:?\s*(?<count>\d+)\s+Vignette\(s\)(?:\s+(?<campaign>.+))?\z/i
         VIGNETTE_SECTION_PATTERN = /\A(?:-+\s*)?VOS VIGNETTES\s+(?<campaign>.+)\z/i
+        VIGNETTE_OPERATION_PATTERN = /\AOP[ÉE]RATION VIGNETTES?\s+(?<campaign>.+)\z/i
 
         private
 
@@ -329,7 +330,7 @@ module Parser
             match = line.match(pattern)
             next unless match
 
-            campaign = match[:campaign].presence || vignette_campaign_before(index)
+            campaign = match[:campaign].presence || vignette_campaign_before(index) || vignette_campaign_after(index)
             promotion_attributes_for(
               program: vignette_program(campaign),
               unit: "vignette_count",
@@ -342,11 +343,27 @@ module Parser
 
         def vignette_campaign_before(index)
           text_lines.first(index).reverse_each do |line|
-            match = line.match(VIGNETTE_SECTION_PATTERN)
-            return normalize_label(match[:campaign].sub(/\s*-+\z/, "")) if match
+            campaign = vignette_campaign_from(line)
+            return campaign if campaign
           end
 
           nil
+        end
+
+        def vignette_campaign_after(index)
+          text_lines.drop(index + 1).each do |line|
+            campaign = vignette_campaign_from(line)
+            return campaign if campaign
+          end
+
+          nil
+        end
+
+        def vignette_campaign_from(line)
+          match = line.match(VIGNETTE_SECTION_PATTERN) || line.match(VIGNETTE_OPERATION_PATTERN)
+          return unless match
+
+          normalize_label(match[:campaign].sub(/\s*[-*]+\z/, ""))
         end
 
         def bons_reduction_detail_lines
@@ -387,6 +404,8 @@ module Parser
             "leclerc_vignettes_royal_vkb"
           when /MONBENTO/i
             "leclerc_vignettes_monbento"
+          when /PYREX/i
+            "leclerc_vignettes_pyrex"
           else
             "leclerc_vignettes"
           end
