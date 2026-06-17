@@ -134,3 +134,39 @@ en:
           other: "Ignored %{count} lines for %{label}."
         errors:
           stale_preview: "The matching queue changed. Reload the group before ignoring it."
+    match_statuses:
+      suggested: "Suggested"
+      confirmed: "Confirmed"
+      rejected: "Rejected"
+      ignored: "Ignored"
+    match_sources:
+      user: "User"
+      heuristic: "Heuristic"
+    price_observation_sources:
+      receipt_line: "Receipt line"
+  activerecord:
+    models:
+      receipt_line_match: "Receipt-line match"
+      price_observation: "Price observation"
+    attributes:
+      receipt_line_match:
+        receipt_line: "Receipt line"
+        product_variant: "Product variant"
+        status: "Status"
+        source: "Decision source"
+        confidence: "Confidence"
+        label_snapshot: "Receipt label"
+        decided_at: "Decided at"
+      price_observation:
+        receipt_line_match: "Receipt-line match"
+        receipt_line: "Receipt line"
+        product_variant: "Product variant"
+        store: "Store"
+        observed_at: "Observed at"
+        purchased_quantity: "Purchased quantity"
+        purchased_unit: "Purchased unit"
+        total_cents: "Total cents"
+        pack_unit_price_cents: "Pack unit price cents"
+        comparison_unit: "Comparison unit"
+        comparison_unit_price_cents: "Comparison unit price cents"
+        source: "Source"

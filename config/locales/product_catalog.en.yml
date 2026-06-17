@@ -425,3 +425,63 @@ en:
       success: "Updated category %{name}."
     destroy:
       success: "Deleted category %{name}."
+  activerecord:
+    models:
+      product_brand: "Product brand"
+      manufacturer: "Manufacturer"
+      category: "Category"
+      comparison_unit: "Comparison unit"
+      product: "Product"
+      product_variant: "Product variant"
+      product_alternative_group: "Alternative group"
+      product_alternative_group_membership: "Alternative group membership"
+    attributes:
+      product_brand:
+        name: "Name"
+        normalized_name: "Normalized name"
+        slug: "Slug"
+        retail_brand: "Retail brand"
+      manufacturer:
+        name: "Name"
+        normalized_name: "Normalized name"
+        slug: "Slug"
+      category:
+        name: "Name"
+        normalized_name: "Normalized name"
+        slug: "Slug"
+        parent: "Parent category"
+        parent_id: "Parent category"
+      comparison_unit:
+        name: "Name"
+        symbol: "Symbol"
+        normalized_name: "Normalized name"
+        slug: "Slug"
+      product:
+        name: "Name"
+        normalized_name: "Normalized name"
+        slug: "Slug"
+        product_brand: "Product brand"
+        category: "Category"
+        manufacturer: "Manufacturer"
+      product_variant:
+        product: "Product"
+        name: "Variant name"
+        normalized_name: "Normalized name"
+        slug: "Slug"
+        package_count: "Package count"
+        quantity_value: "Quantity value"
+        comparison_unit: "Comparison unit"
+        barcode: "Barcode"
+      product_alternative_group:
+        name: "Name"
+        category: "Category"
+      product_alternative_group_membership:
+        product_alternative_group: "Alternative group"
+        product_variant: "Product variant"
+        equivalence: "Equivalence"
+    errors:
+      models:
+        category:
+          attributes:
+            parent:
+              self_parent: "cannot be the category itself"
