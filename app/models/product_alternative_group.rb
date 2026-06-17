@@ -18,3 +18,19 @@ class ProductAlternativeGroup < ApplicationRecord
     %w[category product_alternative_group_memberships product_variants]
   end
 end
+
+# == Schema Information
+#
+# Table name: product_alternative_groups
+#
+#  id          :uuid             not null, primary key
+#  category_id :uuid             not null, indexed, indexed => [name]
+#  name        :string           not null, indexed => [category_id]
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#
+# Indexes
+#
+#  index_product_alternative_groups_on_category_id           (category_id)
+#  index_product_alternative_groups_on_category_id_and_name  (category_id,name) UNIQUE
+#

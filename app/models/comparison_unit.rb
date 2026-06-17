@@ -14,3 +14,22 @@ class ComparisonUnit < ApplicationRecord
     %w[price_observations product_variants]
   end
 end
+
+# == Schema Information
+#
+# Table name: comparison_units
+#
+#  id              :uuid             not null, primary key
+#  name            :string           not null
+#  symbol          :string           not null, indexed
+#  normalized_name :string           not null, indexed
+#  slug            :string           not null, indexed
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#
+# Indexes
+#
+#  index_comparison_units_on_normalized_name  (normalized_name) UNIQUE
+#  index_comparison_units_on_slug             (slug) UNIQUE
+#  index_comparison_units_on_symbol           (symbol) UNIQUE
+#

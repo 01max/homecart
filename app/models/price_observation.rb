@@ -37,3 +37,34 @@ class PriceObservation < ApplicationRecord
   scope :variant_history, ->(variant) { for_variant(variant).recent_first }
   scope :variant_store_history, ->(variant, store) { variant_history(variant).for_store(store) }
 end
+
+# == Schema Information
+#
+# Table name: price_observations
+#
+#  id                          :uuid             not null, primary key
+#  receipt_line_match_id       :uuid             not null, indexed
+#  receipt_line_id             :uuid             not null, indexed
+#  product_variant_id          :uuid             not null, indexed, indexed => [store_id, observed_at]
+#  store_id                    :uuid             not null, indexed, indexed => [observed_at], indexed => [product_variant_id, observed_at]
+#  observed_at                 :datetime         not null, indexed => [store_id], indexed => [product_variant_id, store_id]
+#  purchased_quantity          :decimal(10, 3)   not null
+#  purchased_unit              :enum             not null
+#  total_cents                 :integer          not null
+#  pack_unit_price_cents       :integer          not null
+#  comparison_unit_id          :uuid             indexed
+#  comparison_unit_price_cents :integer
+#  source                      :enum             not null
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#
+# Indexes
+#
+#  index_price_observations_on_comparison_unit_id         (comparison_unit_id)
+#  index_price_observations_on_product_variant_id         (product_variant_id)
+#  index_price_observations_on_receipt_line_id            (receipt_line_id) UNIQUE
+#  index_price_observations_on_receipt_line_match_id      (receipt_line_match_id) UNIQUE
+#  index_price_observations_on_store_id                   (store_id)
+#  index_price_observations_on_store_observed_at          (store_id,observed_at)
+#  index_price_observations_on_variant_store_observed_at  (product_variant_id,store_id,observed_at)
+#

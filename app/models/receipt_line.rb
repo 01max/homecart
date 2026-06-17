@@ -31,3 +31,30 @@ class ReceiptLine < ApplicationRecord
   validates :vat_rate_bp, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validates :label_truncated, :tr_eligible, inclusion: { in: [ true, false ] }
 end
+
+# == Schema Information
+#
+# Table name: receipt_lines
+#
+#  position         :integer          not null, indexed => [receipt_id]
+#  raw_text         :text             not null
+#  label            :text             not null
+#  label_truncated  :boolean          default(FALSE), not null
+#  quantity         :decimal(10, 3)   default(1.0), not null
+#  unit_of_measure  :enum             default("piece"), not null
+#  unit_price_cents :integer
+#  total_cents      :integer          not null
+#  vat_rate_bp      :integer
+#  tr_eligible      :boolean          default(FALSE), not null
+#  section_label    :text
+#  kind             :enum             default("item"), not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  id               :uuid             not null, primary key
+#  receipt_id       :uuid             not null, indexed, indexed => [position]
+#
+# Indexes
+#
+#  index_receipt_lines_on_receipt_id               (receipt_id)
+#  index_receipt_lines_on_receipt_id_and_position  (receipt_id,position) UNIQUE
+#

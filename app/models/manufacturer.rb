@@ -13,3 +13,20 @@ class Manufacturer < ApplicationRecord
     %w[products]
   end
 end
+
+# == Schema Information
+#
+# Table name: manufacturers
+#
+#  id              :uuid             not null, primary key
+#  name            :string           not null
+#  normalized_name :string           not null, indexed
+#  slug            :string           not null, indexed
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#
+# Indexes
+#
+#  index_manufacturers_on_normalized_name  (normalized_name) UNIQUE
+#  index_manufacturers_on_slug             (slug) UNIQUE
+#

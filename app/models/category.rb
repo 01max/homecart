@@ -28,3 +28,22 @@ class Category < ApplicationRecord
     errors.add(:parent, :self_parent) if parent_id.present? && parent_id == id
   end
 end
+
+# == Schema Information
+#
+# Table name: categories
+#
+#  id              :uuid             not null, primary key
+#  name            :string           not null
+#  normalized_name :string           not null, indexed
+#  slug            :string           not null, indexed
+#  parent_id       :uuid             indexed
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#
+# Indexes
+#
+#  index_categories_on_normalized_name  (normalized_name) UNIQUE
+#  index_categories_on_parent_id        (parent_id)
+#  index_categories_on_slug             (slug) UNIQUE
+#

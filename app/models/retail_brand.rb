@@ -24,3 +24,19 @@ class RetailBrand < ApplicationRecord
     errors.add(:aliases, :not_an_array) unless aliases.is_a?(Array)
   end
 end
+
+# == Schema Information
+#
+# Table name: retail_brands
+#
+#  name       :string           not null
+#  slug       :string           not null, indexed
+#  aliases    :jsonb            default("[]"), not null
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  id         :uuid             not null, primary key
+#
+# Indexes
+#
+#  index_retail_brands_on_slug  (slug) UNIQUE
+#

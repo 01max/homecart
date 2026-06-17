@@ -33,3 +33,22 @@ class Store < ApplicationRecord
     errors.add(:identifiers, :not_an_object) unless identifiers.is_a?(Hash)
   end
 end
+
+# == Schema Information
+#
+# Table name: stores
+#
+#  location_name   :string           not null, indexed => [retail_brand_id, channel]
+#  channel         :enum             not null, indexed => [retail_brand_id, location_name]
+#  address         :text
+#  identifiers     :jsonb            default("{}"), not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  id              :uuid             not null, primary key
+#  retail_brand_id :uuid             not null, indexed, indexed => [location_name, channel]
+#
+# Indexes
+#
+#  index_stores_on_retail_brand_id                                (retail_brand_id)
+#  index_stores_on_retail_brand_id_and_location_name_and_channel  (retail_brand_id,location_name,channel) UNIQUE
+#

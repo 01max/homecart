@@ -88,3 +88,31 @@ class Receipt < ApplicationRecord
     errors.add(:parser_warnings, :not_an_array) unless parser_warnings.is_a?(Array)
   end
 end
+
+# == Schema Information
+#
+# Table name: receipts
+#
+#  parser_format          :enum             not null
+#  purchased_at           :datetime         indexed => [store_id, register_number, ticket_number]
+#  register_number        :string           indexed => [store_id, ticket_number, purchased_at]
+#  ticket_number          :string           indexed => [store_id, register_number, purchased_at]
+#  cashier_code           :string
+#  total_cents            :integer
+#  declared_article_count :integer
+#  parser_status          :enum             default("needs_review"), not null
+#  parser_warnings        :jsonb            default("[]"), not null
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  id                     :uuid             not null, primary key
+#  store_id               :uuid             not null, indexed, indexed => [register_number, ticket_number, purchased_at]
+#  source_document_id     :uuid             not null, indexed
+#  text_extraction_id     :uuid             not null, indexed
+#
+# Indexes
+#
+#  index_receipts_on_source_document_id                  (source_document_id)
+#  index_receipts_on_store_id                            (store_id)
+#  index_receipts_on_store_register_ticket_purchased_at  (store_id,register_number,ticket_number,purchased_at) UNIQUE
+#  index_receipts_on_text_extraction_id                  (text_extraction_id)
+#
