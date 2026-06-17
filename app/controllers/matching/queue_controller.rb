@@ -20,8 +20,9 @@ module Matching
       @comparison_units = ComparisonUnit.order(:normalized_name)
       @retail_brands = RetailBrand.order(:name)
       @groups = ReceiptLineMatching::QueueService.call
-      @entries = @groups.map { |group| build_entry(group) }
       @line_count = @groups.sum(&:line_count)
+      @pagy, @groups = pagy(@groups)
+      @entries = @groups.map { |group| build_entry(group) }
     end
 
     private

@@ -5,7 +5,7 @@ module Catalogue
 
     def index
       @q = catalogue_ransack_search(ComparisonUnit.includes(:product_variants), default_sort: "normalized_name asc")
-      @comparison_units = @q.result
+      @pagy, @comparison_units = pagy(@q.result)
     end
 
     def show

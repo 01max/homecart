@@ -16,7 +16,7 @@
         <h2 class="hc-block-title"><%= t("product_catalog.comparison_units.index.table.heading") %></h2>
         <p class="hc-block-description"><%= t("product_catalog.comparison_units.index.table.description") %></p>
       </div>
-      <p class="hc-badge hc-badge--neutral"><%= t("product_catalog.counts.comparison_units", count: @comparison_units.size) %></p>
+      <p class="hc-badge hc-badge--neutral"><%= t("product_catalog.counts.comparison_units", count: @pagy.count) %></p>
     </div>
 
     <% if @comparison_units.any? %>
@@ -51,5 +51,7 @@
         <p class="hc-body text-sm"><%= t("product_catalog.comparison_units.index.empty") %></p>
       </div>
     <% end %>
+
+    <%= hc_pagy_nav(@pagy) %>
   </section>
 </section>

@@ -53,8 +53,8 @@ module Catalogue
         Category.includes(:parent, :children, :products, :product_alternative_groups),
         default_sort: "normalized_name asc"
       )
-      @categories = @q.result
-      @root_categories = @categories.select { |category| category.parent_id.nil? }
+      @categories = @q.result.to_a
+      @pagy, @root_categories = pagy(@categories.select { |category| category.parent_id.nil? })
       @children_by_parent = @categories.group_by(&:parent_id)
     end
 

@@ -9,7 +9,7 @@ module Catalogue
         ProductBrand.includes(:retail_brand, :products),
         default_sort: "normalized_name asc"
       )
-      @product_brands = @q.result
+      @pagy, @product_brands = pagy(@q.result)
     end
 
     def show

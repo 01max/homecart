@@ -16,7 +16,7 @@
         <h2 class="hc-block-title"><%= t("product_catalog.product_alternative_groups.index.table.heading") %></h2>
         <p class="hc-block-description"><%= t("product_catalog.product_alternative_groups.index.table.description") %></p>
       </div>
-      <p class="hc-badge hc-badge--neutral"><%= t("product_catalog.counts.product_alternative_groups", count: @product_alternative_groups.size) %></p>
+      <p class="hc-badge hc-badge--neutral"><%= t("product_catalog.counts.product_alternative_groups", count: @pagy.count) %></p>
     </div>
 
     <% if @product_alternative_groups.any? %>
@@ -51,5 +51,7 @@
         <p class="hc-body text-sm"><%= t("product_catalog.product_alternative_groups.index.empty") %></p>
       </div>
     <% end %>
+
+    <%= hc_pagy_nav(@pagy) %>
   </section>
 </section>

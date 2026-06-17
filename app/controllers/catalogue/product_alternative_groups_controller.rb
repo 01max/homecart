@@ -9,7 +9,7 @@ module Catalogue
         ProductAlternativeGroup.includes(:category, :product_variants),
         default_sort: "name asc"
       )
-      @product_alternative_groups = @q.result
+      @pagy, @product_alternative_groups = pagy(@q.result)
     end
 
     def show

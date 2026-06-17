@@ -10,7 +10,7 @@ module Catalogue
         ProductVariant.includes(:comparison_unit, product: %i[category product_brand]),
         default_sort: "normalized_name asc"
       )
-      @product_variants = @q.result
+      @pagy, @product_variants = pagy(@q.result)
     end
 
     def show

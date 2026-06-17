@@ -63,6 +63,8 @@
       <% else %>
         <p class="hc-body text-sm"><%= t("product_catalog.categories.index.empty") %></p>
       <% end %>
+
+      <%= hc_pagy_nav(@pagy) %>
     </div>
   </section>
 </section>

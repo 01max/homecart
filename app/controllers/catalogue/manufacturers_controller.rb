@@ -5,7 +5,7 @@ module Catalogue
 
     def index
       @q = catalogue_ransack_search(Manufacturer.includes(:products), default_sort: "normalized_name asc")
-      @manufacturers = @q.result
+      @pagy, @manufacturers = pagy(@q.result)
     end
 
     def show

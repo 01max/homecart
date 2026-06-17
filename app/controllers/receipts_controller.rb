@@ -60,7 +60,7 @@ class ReceiptsController < ApplicationController
     @selected_parser_status = selected_parser_status
     @sort_column = receipt_index_sort_column
     @sort_direction = receipt_index_sort_direction(@sort_column)
-    @receipts = filtered_receipts
+    @pagy, @receipts = pagy(filtered_receipts)
   end
 
   def edit

@@ -10,7 +10,7 @@ module Catalogue
         Product.includes(:category, :manufacturer, :product_brand, :product_variants),
         default_sort: "normalized_name asc"
       )
-      @products = @q.result
+      @pagy, @products = pagy(@q.result)
     end
 
     def show
