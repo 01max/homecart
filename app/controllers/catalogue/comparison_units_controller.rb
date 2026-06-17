@@ -4,7 +4,8 @@ module Catalogue
     before_action :load_comparison_unit, only: %i[show edit update]
 
     def index
-      @comparison_units = ComparisonUnit.includes(:product_variants).order(:normalized_name)
+      @q = catalogue_ransack_search(ComparisonUnit.includes(:product_variants), default_sort: "normalized_name asc")
+      @comparison_units = @q.result
     end
 
     def show

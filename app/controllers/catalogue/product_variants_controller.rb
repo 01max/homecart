@@ -6,7 +6,11 @@ module Catalogue
     before_action :load_catalogue_variant_search_results, only: %i[new]
 
     def index
-      @product_variants = ProductVariant.includes(:comparison_unit, product: %i[category product_brand]).order(:normalized_name)
+      @q = catalogue_ransack_search(
+        ProductVariant.includes(:comparison_unit, product: %i[category product_brand]),
+        default_sort: "normalized_name asc"
+      )
+      @product_variants = @q.result
     end
 
     def show

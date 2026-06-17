@@ -28,7 +28,26 @@ class Receipt < ApplicationRecord
   validates :declared_article_count, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validate :parser_warnings_are_an_array
 
+  ransacker :parser_format_text do
+    Arel.sql("receipts.parser_format::text")
+  end
+
+  ransacker :parser_status_text do
+    Arel.sql("receipts.parser_status::text")
+  end
+
   scope :recent_first, -> { order(purchased_at: :desc, id: :desc) }
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      created_at declared_article_count id parser_format parser_format_text parser_status parser_status_text purchased_at
+      source_document_id store_id text_extraction_id ticket_number total_cents updated_at
+    ]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[receipt_lines receipt_payments receipt_promotions source_document store text_extraction]
+  end
 
   private
 

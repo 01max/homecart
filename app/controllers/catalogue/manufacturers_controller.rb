@@ -4,7 +4,8 @@ module Catalogue
     before_action :load_manufacturer, only: %i[show edit update]
 
     def index
-      @manufacturers = Manufacturer.includes(:products).order(:normalized_name)
+      @q = catalogue_ransack_search(Manufacturer.includes(:products), default_sort: "normalized_name asc")
+      @manufacturers = @q.result
     end
 
     def show

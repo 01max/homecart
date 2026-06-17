@@ -9,4 +9,12 @@ class ProductAlternativeGroup < ApplicationRecord
 
   validates :name, presence: true
   validates :name, uniqueness: { scope: :category_id }
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[category_id created_at id name updated_at]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[category product_alternative_group_memberships product_variants]
+  end
 end

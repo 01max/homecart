@@ -10,6 +10,14 @@ class RetailBrand < ApplicationRecord
   validates :slug, presence: true, uniqueness: true
   validate :aliases_are_an_array
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[created_at id name slug updated_at]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[product_brands stores]
+  end
+
   private
 
   def aliases_are_an_array

@@ -5,7 +5,11 @@ module Catalogue
     before_action :load_form_options, only: %i[new edit create update]
 
     def index
-      @product_alternative_groups = ProductAlternativeGroup.includes(:category, :product_variants).order(:name)
+      @q = catalogue_ransack_search(
+        ProductAlternativeGroup.includes(:category, :product_variants),
+        default_sort: "name asc"
+      )
+      @product_alternative_groups = @q.result
     end
 
     def show

@@ -5,7 +5,11 @@ module Catalogue
     before_action :load_retail_brands, only: %i[new edit create update]
 
     def index
-      @product_brands = ProductBrand.includes(:retail_brand, :products).order(:normalized_name)
+      @q = catalogue_ransack_search(
+        ProductBrand.includes(:retail_brand, :products),
+        default_sort: "normalized_name asc"
+      )
+      @product_brands = @q.result
     end
 
     def show

@@ -5,4 +5,12 @@ class ComparisonUnit < ApplicationRecord
 
   validates :name, :symbol, :normalized_name, :slug, presence: true
   validates :normalized_name, :slug, :symbol, uniqueness: true
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[created_at id name normalized_name slug symbol updated_at]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[price_observations product_variants]
+  end
 end

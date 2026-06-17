@@ -1,6 +1,6 @@
 module Catalogue
   # Handles catalogue category management screens.
-  class CategoriesController < ApplicationController
+  class CategoriesController < BaseController
     before_action :load_category, only: %i[update destroy]
     before_action :load_categories, only: %i[index new]
 
@@ -49,7 +49,11 @@ module Catalogue
     end
 
     def load_categories
-      @categories = Category.includes(:parent, :children, :products, :product_alternative_groups).order(:normalized_name)
+      @q = catalogue_ransack_search(
+        Category.includes(:parent, :children, :products, :product_alternative_groups),
+        default_sort: "normalized_name asc"
+      )
+      @categories = @q.result
       @root_categories = @categories.select { |category| category.parent_id.nil? }
       @children_by_parent = @categories.group_by(&:parent_id)
     end

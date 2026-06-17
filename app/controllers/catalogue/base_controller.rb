@@ -13,6 +13,16 @@ module Catalogue
       value.presence
     end
 
+    def catalogue_ransack_search(scope, default_sort:)
+      search = scope.ransack(catalogue_ransack_params)
+      search.sorts = default_sort if search.sorts.empty?
+      search
+    end
+
+    def catalogue_ransack_params
+      params[:q]&.permit(:s) || {}
+    end
+
     def load_catalogue_variant_search_results
       @catalogue_search_query = params[:catalogue_search_query].to_s.strip
       @catalogue_variant_search_results = []

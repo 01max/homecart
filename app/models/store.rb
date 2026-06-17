@@ -19,6 +19,14 @@ class Store < ApplicationRecord
   validates :location_name, uniqueness: { scope: [ :retail_brand_id, :channel ] }
   validate :identifiers_are_an_object
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[channel created_at id location_name retail_brand_id updated_at]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[price_observations receipts retail_brand source_documents]
+  end
+
   private
 
   def identifiers_are_an_object

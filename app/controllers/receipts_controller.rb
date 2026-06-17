@@ -6,42 +6,37 @@ class ReceiptsController < ApplicationController
   INDEX_SORT_COLUMNS = {
     "purchased_at" => {
       default_direction: "desc",
-      joins: nil,
-      orders: {
-        "asc" => [ "receipts.purchased_at ASC NULLS LAST", "receipts.id ASC" ],
-        "desc" => [ "receipts.purchased_at DESC NULLS LAST", "receipts.id DESC" ]
+      sorts: {
+        "asc" => [ "purchased_at asc", "id asc" ],
+        "desc" => [ "purchased_at desc", "id desc" ]
       }
     },
     "store" => {
       default_direction: "asc",
-      joins: { store: :retail_brand },
-      orders: {
-        "asc" => [ "retail_brands.name ASC", "stores.location_name ASC", "stores.channel ASC", "receipts.id ASC" ],
-        "desc" => [ "retail_brands.name DESC", "stores.location_name DESC", "stores.channel DESC", "receipts.id DESC" ]
+      sorts: {
+        "asc" => [ "store_retail_brand_name asc", "store_location_name asc", "store_channel asc", "id asc" ],
+        "desc" => [ "store_retail_brand_name desc", "store_location_name desc", "store_channel desc", "id desc" ]
       }
     },
     "parser_status" => {
       default_direction: "asc",
-      joins: nil,
-      orders: {
-        "asc" => [ "receipts.parser_status::text ASC", "receipts.id ASC" ],
-        "desc" => [ "receipts.parser_status::text DESC", "receipts.id DESC" ]
+      sorts: {
+        "asc" => [ "parser_status_text asc", "id asc" ],
+        "desc" => [ "parser_status_text desc", "id desc" ]
       }
     },
     "total" => {
       default_direction: "asc",
-      joins: nil,
-      orders: {
-        "asc" => [ "receipts.total_cents ASC NULLS LAST", "receipts.id ASC" ],
-        "desc" => [ "receipts.total_cents DESC NULLS LAST", "receipts.id DESC" ]
+      sorts: {
+        "asc" => [ "total_cents asc", "id asc" ],
+        "desc" => [ "total_cents desc", "id desc" ]
       }
     },
     "parser_format" => {
       default_direction: "asc",
-      joins: nil,
-      orders: {
-        "asc" => [ "receipts.parser_format::text ASC", "receipts.id ASC" ],
-        "desc" => [ "receipts.parser_format::text DESC", "receipts.id DESC" ]
+      sorts: {
+        "asc" => [ "parser_format_text asc", "id asc" ],
+        "desc" => [ "parser_format_text desc", "id desc" ]
       }
     }
   }.freeze
@@ -196,16 +191,15 @@ class ReceiptsController < ApplicationController
   end
 
   def filtered_receipts
-    sort_config = INDEX_SORT_COLUMNS.fetch(@sort_column)
-    receipts = Receipt.includes(:source_document, store: :retail_brand)
-    receipts = receipts.joins(sort_config.fetch(:joins)) if sort_config.fetch(:joins)
-    receipts = receipts.where(parser_status: @selected_parser_status) if @selected_parser_status
+    search = Receipt.includes(:source_document, store: :retail_brand).ransack(receipt_index_ransack_params)
+    search.sorts = receipt_index_sorts
+    @q = search
 
-    apply_index_sort(receipts, sort_config)
+    search.result
   end
 
   def selected_parser_status
-    parser_status = params[:parser_status].presence
+    parser_status = params[:parser_status].presence || params.dig(:q, :parser_status_eq).presence
     parser_status if Receipt.parser_statuses.key?(parser_status)
   end
 
@@ -221,10 +215,15 @@ class ReceiptsController < ApplicationController
     INDEX_SORT_COLUMNS.fetch(sort_column).fetch(:default_direction)
   end
 
-  def apply_index_sort(receipts, sort_config)
-    order_fragments = sort_config.fetch(:orders).fetch(@sort_direction)
+  def receipt_index_ransack_params
+    ransack_params = params[:q]&.permit(:parser_status_eq) || {}
+    ransack_params = ransack_params.to_h
+    ransack_params["parser_status_eq"] = @selected_parser_status if @selected_parser_status
+    ransack_params
+  end
 
-    receipts.order(*order_fragments.map { |fragment| Arel.sql(fragment) })
+  def receipt_index_sorts
+    INDEX_SORT_COLUMNS.fetch(@sort_column).fetch(:sorts).fetch(@sort_direction)
   end
 
   def parser_status_label(parser_status)
