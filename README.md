@@ -2,7 +2,7 @@
 
 Personal Rails app for turning grocery receipts into durable, queryable data.
 
-The long-term goal is grocery automation: preserve receipt history, normalize products, understand spending patterns, compare prices, and eventually help build shopping carts. The project is currently focused on French grocery receipts and the ingestion foundation: storing original receipt files, extracting text, parsing known retailer formats, and keeping the raw evidence intact for later re-processing.
+The long-term goal is grocery automation: preserve receipt history, normalize products, understand spending patterns, compare prices, and eventually help build shopping carts. The project is currently focused on French grocery receipts, immutable receipt evidence, and the catalogue layer that links reviewed receipt lines to user-curated product variants without rewriting the original observations.
 
 Single-user, self-hosted, no authentication.
 
@@ -20,10 +20,14 @@ Implemented:
 - Parser registry and parser implementations for the known receipt corpus.
 - Upload, source-document status, receipt listing, and side-by-side receipt review UI.
 - Parser reruns from the review UI.
+- Product catalogue screens for product brands, optional manufacturers, category trees, comparison units, products, variants, and alternative groups.
+- Receipt-line matching workflows for grouped historical labels and receipt-specific review, including search, inline variant creation, confirmation, rejection, ignore, and bulk-confirm flows.
+- Price observations derived from confirmed receipt-line matches.
 
 Still in progress:
 
 - End-to-end ingestion of the historical receipt corpus.
+- Higher-level shopping-list, recommendation, scraping, and offer-validity workflows.
 
 ## Stack
 
@@ -45,7 +49,19 @@ Still in progress:
 
 `Receipt` is the structured parser result for a source document and text extraction. It stores receipt-level fields such as purchase time, ticket/register metadata, total, parser format, parser status, and structured parser warnings.
 
-`ReceiptLine`, `ReceiptPromotion`, and `ReceiptPayment` keep the normalized observations from the receipt without trying to identify products yet. Product matching, categories, offers, and price comparison are intentionally deferred.
+`ReceiptLine`, `ReceiptPromotion`, and `ReceiptPayment` keep the normalized observations from the receipt. `ReceiptLine` remains evidence: matching a line to a product does not change its raw text, label, quantity, unit price, or total.
+
+`RetailBrand` is the store chain or retailer, such as E.Leclerc, Auchan, or Magasins U. `ProductBrand` is the brand printed on a product, such as Bio Village, Marque Repere, Andros, Coca-Cola, or Auchan. A product brand can optionally belong to a retail brand for private labels, but retailer identity and product identity stay separate.
+
+`Manufacturer` is optional catalogue enrichment. Products can link to one when the information is useful, but product creation and receipt-line matching do not require it.
+
+`Category` is a user-managed tree. Products require a category, categories can be created, renamed, moved, and deleted when unused, and the app prevents category cycles.
+
+`Product` is the shopper-facing item under a product brand and category. `ProductVariant` is the concrete purchasable size, flavor, package, or barcode-level item that receipt lines match to. Variants can store optional barcode data plus structured comparison details such as package count, quantity value, and comparison unit.
+
+`ProductAlternativeGroup` records explicit variant-level substitutions within a category. Memberships can distinguish equivalent variants from comparable or different-size variants, while product-level alternatives remain derived from variant memberships.
+
+`ReceiptLineMatch` stores product-identification decisions separately from receipt lines. Suggested, confirmed, rejected, and ignored decisions keep provenance and review status without mutating v1 evidence. Confirmed matches create or update `PriceObservation` rows for the matched variant, store, purchase time, purchased quantity/unit, total price, pack unit price, and comparison-unit price when derivable.
 
 ## Parser Formats
 
