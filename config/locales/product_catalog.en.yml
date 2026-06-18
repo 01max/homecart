@@ -5,16 +5,11 @@ en:
         eyebrow: "Catalogue"
         title: "Catalogue"
         description: "Manage product brands, categories, variants, comparison units, and substitutions."
-        actions:
-          categories: "Manage categories"
-          product_brands: "Product brands"
-          products: "Products"
-          product_variants: "Variants"
-          reference_data: "Reference data"
         sections:
           manage:
             heading: "Catalogue workbench"
             description: "Maintain the reusable catalogue records used by receipt-line matching."
+            categories: "Curated category tree for organizing products."
             product_brands: "National and private-label product identities."
             manufacturers: "Optional manufacturer enrichment for products."
             comparison_units: "Consumer units such as grams, slices, rolls, or capsules."

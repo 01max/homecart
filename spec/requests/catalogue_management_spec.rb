@@ -6,10 +6,13 @@ RSpec.describe "Catalogue management", type: :request do
       get catalogue_root_path
 
       expect(response).to have_http_status(:ok)
+      expect(response.body).to include(%(href="/catalogue/categories"))
       expect(response.body).to include(%(href="/catalogue/product_brands"))
       expect(response.body).to include(%(href="/catalogue/products"))
       expect(response.body).to include(%(href="/catalogue/product_variants"))
       expect(response.body).to include(%(href="/catalogue/product_alternative_groups"))
+      expect(response.body).to include(I18n.t("product_catalog.dashboard.index.sections.manage.categories"))
+      expect(response.body).not_to include(%(class="hc-page-actions"))
     end
   end
 
@@ -152,6 +155,7 @@ RSpec.describe "Catalogue management", type: :request do
 
   def catalogue_index_paths
     [
+      catalogue_categories_path,
       catalogue_product_brands_path,
       catalogue_manufacturers_path,
       catalogue_comparison_units_path,
