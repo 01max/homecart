@@ -3,6 +3,7 @@ module Matching
   class ReceiptLinesController < ApplicationController
     before_action :load_receipt_line
     before_action :ensure_receipt_reviewed
+    before_action :ensure_receipt_has_purchase_date
     before_action :load_product_variant, only: %i[confirm reject]
 
     def confirm
@@ -64,6 +65,12 @@ module Matching
       return if @receipt_line.receipt.reviewed?
 
       redirect_to decision_redirect_path, alert: t("matching.receipt_lines.errors.receipt_not_reviewed")
+    end
+
+    def ensure_receipt_has_purchase_date
+      return if @receipt_line.receipt.purchased_at.present?
+
+      redirect_to decision_redirect_path, alert: t("matching.receipt_lines.errors.purchase_date_required")
     end
 
     def inline_product_variant_params

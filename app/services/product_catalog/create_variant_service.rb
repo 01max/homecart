@@ -81,7 +81,17 @@ module ProductCatalog
     def product_brand_record
       find_or_create_named_record(ProductBrand, product_brand_name) do |product_brand|
         product_brand.retail_brand = retail_brand
+      end.tap do |product_brand|
+        link_retail_brand(product_brand)
       end
+    end
+
+    def link_retail_brand(product_brand)
+      return if retail_brand.blank? || product_brand.retail_brand == retail_brand
+      return product_brand.update!(retail_brand: retail_brand) if product_brand.retail_brand.blank?
+
+      product_brand.errors.add(:retail_brand, :conflict)
+      raise ActiveRecord::RecordInvalid, product_brand
     end
 
     def manufacturer_record

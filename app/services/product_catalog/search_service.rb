@@ -5,6 +5,7 @@ module ProductCatalog
 
     DEFAULT_LIMIT = 20
     MAX_LIMIT = 100
+    MINIMUM_TRIGRAM_SCORE = 0.18
 
     def initialize(query:, limit: DEFAULT_LIMIT)
       @query = query
@@ -27,23 +28,27 @@ module ProductCatalog
     end
 
     def product_brand_results
-      ProductBrand.where(match_condition("product_brands.normalized_name")).map do |product_brand|
+      ProductBrand
+        .select(Arel.sql("product_brands.*, #{score_sql('product_brands.normalized_name')} AS normalized_name_score"))
+        .where("#{score_sql('product_brands.normalized_name')} >= ?", MINIMUM_TRIGRAM_SCORE)
+        .map do |product_brand|
         build_result(
           record: product_brand,
           record_type: :product_brand,
-          candidate_scores: { normalized_name: product_brand.normalized_name }
+          candidate_scores: { normalized_name: read_score(product_brand, :normalized_name_score) }
         )
       end
     end
 
     def product_results
       Product.includes(:product_brand, :category)
-        .where(match_condition("products.normalized_name"))
+        .select(Arel.sql("products.*, #{score_sql('products.normalized_name')} AS normalized_name_score"))
+        .where("#{score_sql('products.normalized_name')} >= ?", MINIMUM_TRIGRAM_SCORE)
         .map do |product|
           build_result(
             record: product,
             record_type: :product,
-            candidate_scores: { normalized_name: product.normalized_name }
+            candidate_scores: { normalized_name: read_score(product, :normalized_name_score) }
           )
         end
     end
@@ -51,15 +56,21 @@ module ProductCatalog
     def product_variant_results
       ProductVariant.includes(product: :product_brand)
         .joins(product: :product_brand)
-        .where(variant_match_condition)
+        .select(Arel.sql(<<~SQL.squish))
+          product_variants.*,
+          #{score_sql('product_variants.normalized_name')} AS normalized_name_score,
+          #{score_sql('products.normalized_name')} AS product_name_score,
+          #{score_sql('product_brands.normalized_name')} AS product_brand_name_score
+        SQL
+        .where("#{variant_score_sql} >= ?", MINIMUM_TRIGRAM_SCORE)
         .map do |variant|
           build_result(
             record: variant,
             record_type: :product_variant,
             candidate_scores: {
-              normalized_name: variant.normalized_name,
-              product_name: variant.product.normalized_name,
-              product_brand_name: variant.product.product_brand.normalized_name
+              normalized_name: read_score(variant, :normalized_name_score),
+              product_name: read_score(variant, :product_name_score),
+              product_brand_name: read_score(variant, :product_brand_name_score)
             }
           )
         end
@@ -67,42 +78,37 @@ module ProductCatalog
 
     def build_result(record:, record_type:, candidate_scores:)
       matched_attribute, score = candidate_scores
-        .transform_values { |candidate| score(candidate) }
         .max_by { |_attribute, candidate_score| candidate_score }
 
-      Result.new(record: record, record_type: record_type, matched_attribute: matched_attribute, score: score)
+      Result.new(record: record, record_type: record_type, matched_attribute: matched_attribute, score: (score * 100).round(2))
     end
 
-    def variant_match_condition
-      [
-        match_condition("product_variants.normalized_name"),
-        match_condition("products.normalized_name"),
-        match_condition("product_brands.normalized_name")
-      ].reduce(&:or)
+    def variant_score_sql
+      score_sql(
+        "product_variants.normalized_name",
+        "products.normalized_name",
+        "product_brands.normalized_name"
+      )
     end
 
-    def match_condition(qualified_column)
-      tokens
-        .map { |token| arel_table_matches(qualified_column, token) }
-        .reduce(&:or)
+    def score_sql(*qualified_columns)
+      "GREATEST(#{qualified_columns.map { |column| column_score_sql(column) }.join(', ')})"
     end
 
-    def arel_table_matches(qualified_column, token)
-      Arel.sql(qualified_column).matches("%#{ActiveRecord::Base.sanitize_sql_like(token)}%")
+    def column_score_sql(qualified_column)
+      <<~SQL.squish
+        similarity(#{qualified_column}, #{quoted_normalized_query}),
+        word_similarity(#{quoted_normalized_query}, #{qualified_column}),
+        word_similarity(#{qualified_column}, #{quoted_normalized_query})
+      SQL
     end
 
-    def score(candidate)
-      candidate = candidate.to_s
-      matching_tokens = tokens.count { |token| candidate.include?(token) }
-
-      (candidate == normalized_query ? 100 : 0) +
-        (normalized_query.include?(candidate) ? 60 : 0) +
-        (candidate.start_with?(tokens.first) ? 30 : 0) +
-        (matching_tokens * 20)
+    def quoted_normalized_query
+      ActiveRecord::Base.connection.quote(normalized_query)
     end
 
-    def tokens
-      @tokens ||= normalized_query.split
+    def read_score(record, attribute)
+      record.read_attribute(attribute).to_d
     end
 
     def normalized_query

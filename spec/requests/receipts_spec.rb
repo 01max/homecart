@@ -582,6 +582,16 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include(I18n.t("receipts.show.actions.match_receipt", count: 1))
   end
 
+  it "does not link reviewed receipts without purchase dates to matching" do
+    receipt = create_review_receipt
+    receipt.update!(parser_status: "reviewed", purchased_at: nil)
+
+    get receipt_path(receipt)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include(matching_receipt_path(receipt))
+  end
+
   it "renders the side-by-side review page with extracted text and receipt form" do
     receipt = create_review_receipt
 

@@ -60,6 +60,31 @@ RSpec.describe PriceObservation do
     expect(duplicate).not_to be_valid
   end
 
+  it "requires receipt line and variant to match the confirmed receipt-line match" do
+    match = create(:receipt_line_match, status: "confirmed")
+    observation = build(:price_observation, receipt_line_match: match, receipt_line: create(:receipt_line))
+
+    expect(observation).not_to be_valid
+    expect(observation.errors.of_kind?(:receipt_line_match, :must_match_observation_fields)).to be(true)
+  end
+
+  it "requires a confirmed receipt-line match" do
+    match = create(:receipt_line_match, :rejected)
+    observation = build(:price_observation, receipt_line_match: match, receipt_line: match.receipt_line)
+
+    expect(observation).not_to be_valid
+    expect(observation.errors.of_kind?(:receipt_line_match, :must_be_confirmed)).to be(true)
+  end
+
+  it "guards consistency at the database layer" do
+    observation = create(:price_observation)
+    mismatched_line = create(:receipt_line)
+
+    expect do
+      observation.update_columns(receipt_line_id: mismatched_line.id)
+    end.to raise_error(ActiveRecord::StatementInvalid, /price observations must match their receipt-line match/)
+  end
+
   context "with price history for multiple variants and stores" do
     let(:history) do
       variant = create(:product_variant)

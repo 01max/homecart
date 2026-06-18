@@ -29,6 +29,7 @@ class PriceObservation < ApplicationRecord
   validates :comparison_unit, presence: true, if: -> { comparison_unit_price_cents.present? }
   validates :comparison_unit_price_cents, presence: true, if: -> { comparison_unit_id.present? }
   validates :receipt_line_match_id, :receipt_line_id, uniqueness: true
+  validate :receipt_line_match_is_confirmed_and_consistent
 
   scope :for_variant, ->(variant) { where(product_variant: variant) }
   scope :for_store, ->(store) { where(store: store) }
@@ -36,6 +37,18 @@ class PriceObservation < ApplicationRecord
   scope :recent_first, -> { order(observed_at: :desc, id: :desc) }
   scope :variant_history, ->(variant) { for_variant(variant).recent_first }
   scope :variant_store_history, ->(variant, store) { variant_history(variant).for_store(store) }
+
+  private
+
+  def receipt_line_match_is_confirmed_and_consistent
+    return if receipt_line_match.blank?
+
+    errors.add(:receipt_line_match, :must_be_confirmed) unless receipt_line_match.confirmed?
+    return if receipt_line_match.receipt_line_id == receipt_line_id &&
+      receipt_line_match.product_variant_id == product_variant_id
+
+    errors.add(:receipt_line_match, :must_match_observation_fields)
+  end
 end
 
 # == Schema Information

@@ -35,6 +35,7 @@ module ReceiptLineMatching
         .kind_item
         .joins(:receipt)
         .where(receipts: { parser_status: "reviewed" })
+        .where.not(receipts: { purchased_at: nil })
         .where.not(id: ReceiptLineMatch.terminal_decisions.select(:receipt_line_id))
         .includes(receipt: { store: :retail_brand })
         .order(:label, :id)

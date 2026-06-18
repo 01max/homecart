@@ -96,6 +96,24 @@ RSpec.describe ProductCatalog::CreateVariantService do
     end.not_to change(ProductVariant, :count)
   end
 
+  it "links an existing national product brand when a retailer is explicitly supplied" do
+    product_brand = create(:product_brand, name: "Bio Village", retail_brand: nil)
+    retail_brand = create(:retail_brand, name: "E.Leclerc")
+
+    result = call_service(retail_brand: retail_brand)
+
+    expect(result.product_brand).to eq(product_brand)
+    expect(product_brand.reload.retail_brand).to eq(retail_brand)
+  end
+
+  it "rejects linking a product brand that already belongs to another retailer" do
+    create(:product_brand, :private_label, name: "Bio Village", retail_brand: create(:retail_brand, name: "Auchan"))
+
+    expect do
+      call_service(retail_brand: create(:retail_brand, name: "E.Leclerc"))
+    end.to raise_error(ActiveRecord::RecordInvalid, /Retail brand/)
+  end
+
   it "creates a product without manufacturer and a variant without barcode or comparison unit" do
     result = call_service(manufacturer_name: nil, barcode: nil)
 

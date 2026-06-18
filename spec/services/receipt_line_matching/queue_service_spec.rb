@@ -12,6 +12,7 @@ RSpec.describe ReceiptLineMatching::QueueService do
   before do
     create(:receipt_line, receipt: create(:receipt, :reviewed), kind: "fee", label: "Service fee")
     create(:receipt_line, label: "Unreviewed item")
+    create(:receipt_line, receipt: create(:receipt, :reviewed, purchased_at: nil), label: "Undated item")
     ignored_line = create(:receipt_line, receipt: create(:receipt, :reviewed), label: "Lait demi ecreme")
     create(:receipt_line_match, :ignored, receipt_line: ignored_line)
   end
@@ -25,6 +26,10 @@ RSpec.describe ReceiptLineMatching::QueueService do
     expect(group.first_purchased_at.to_date).to eq(Date.new(2026, 6, 1))
     expect(group.last_purchased_at.to_date).to eq(Date.new(2026, 6, 3))
     expect(group.price_context).to have_attributes(total_cents: [ 130, 240 ], unit_price_cents: [ 120, 130 ])
+  end
+
+  it "excludes reviewed receipts without purchase dates" do
+    expect(described_class.call.flat_map(&:receipt_lines).map(&:label)).not_to include("Undated item")
   end
 
   def create_lait_line(label: "Lait Demi Ecreme", purchased_at:, total_cents: 130, unit_price_cents: total_cents)

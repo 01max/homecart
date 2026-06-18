@@ -35,7 +35,7 @@ module Matching
       Entry.new(
         group: group,
         receipt_line: receipt_line,
-        suggestions: ReceiptLineMatching::SuggestMatchesService.call(receipt_line: receipt_line),
+        suggestions: ReceiptLineMatching::SuggestMatchesService.call(receipt_line: receipt_line, persist: false),
         variant_search_query: search_query_for(group),
         variant_search_results: variant_search_results_for(group),
         bulk_preview: bulk_preview_for(group),

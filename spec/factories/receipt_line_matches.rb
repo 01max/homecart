@@ -6,6 +6,7 @@ FactoryBot.define do
     source { "user" }
     confidence { nil }
     label_snapshot { receipt_line.label }
+    normalized_label_snapshot { ProductCatalog::NormalizeTextService.call(label_snapshot) }
     decided_at { Time.current }
 
     trait :suggested do

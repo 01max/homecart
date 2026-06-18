@@ -2,6 +2,7 @@ module ReceiptLineMatching
   # Confirms one receipt line against a product variant and records its price fact.
   class ConfirmMatchService < ApplicationService
     UnreviewedReceiptError = Class.new(StandardError)
+    PurchaseDateRequiredError = Class.new(StandardError)
 
     Result = Data.define(:receipt_line_match, :price_observation)
 
@@ -31,6 +32,7 @@ module ReceiptLineMatching
 
     def ensure_receipt_reviewed!
       raise UnreviewedReceiptError unless receipt_line.receipt.reviewed?
+      raise PurchaseDateRequiredError if receipt_line.receipt.purchased_at.blank?
     end
 
     def confirmed_match

@@ -35,7 +35,9 @@ RSpec.describe "Matching", type: :request do
       create_prior_jambon_confirmation
       create_line(label: "JAMBON BLANC 4 TRANCHES")
 
-      get matching_root_path
+      expect do
+        get matching_root_path
+      end.not_to change(ReceiptLineMatch.suggested, :count)
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include_matching_suggestion_actions
@@ -86,12 +88,23 @@ RSpec.describe "Matching", type: :request do
     it "renders only one receipt's unmatched item lines with prior-label suggestions" do
       records = create_receipt_specific_matching_records
 
-      get matching_receipt_path(records.fetch(:receipt))
+      expect do
+        get matching_receipt_path(records.fetch(:receipt))
+      end.not_to change(ReceiptLineMatch.suggested, :count)
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include_receipt_matching_page(records.fetch(:line), records.fetch(:variant))
       expect_receipt_matching_page_to_exclude_other_lines
       expect(ReceiptLineMatch.confirmed.exists?(receipt_line: records.fetch(:line))).to be(false)
+    end
+
+    it "redirects receipts without purchase dates back to review" do
+      receipt = create(:receipt, :reviewed, purchased_at: nil)
+
+      get matching_receipt_path(receipt)
+
+      expect(response).to redirect_to(receipt_path(receipt))
+      expect(flash[:alert]).to eq(I18n.t("matching.receipts.show.errors.purchase_date_required"))
     end
   end
 
@@ -106,6 +119,19 @@ RSpec.describe "Matching", type: :request do
 
       expect(response).to redirect_to(matching_queue_path)
       expect(line.receipt_line_matches.confirmed.last.product_variant).to eq(variant)
+    end
+
+    it "rejects receipt lines without purchase dates" do
+      variant = create(:product_variant)
+      receipt = create(:receipt, :reviewed, purchased_at: nil)
+      line = create_line(receipt: receipt, label: "Compote pomme")
+
+      expect do
+        post confirm_matching_receipt_line_path(line), params: { product_variant_id: variant.id }
+      end.not_to change(ReceiptLineMatch.confirmed, :count)
+
+      expect(response).to redirect_to(matching_queue_path)
+      expect(flash[:alert]).to eq(I18n.t("matching.receipt_lines.errors.purchase_date_required"))
     end
   end
 

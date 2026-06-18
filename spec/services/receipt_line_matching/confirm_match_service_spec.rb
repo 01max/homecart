@@ -51,4 +51,12 @@ RSpec.describe ReceiptLineMatching::ConfirmMatchService do
       described_class.call(receipt_line: unreviewed_line, product_variant: variant)
     end.to raise_error(described_class::UnreviewedReceiptError)
   end
+
+  it "rejects receipt lines whose receipt has no purchase date" do
+    undated_line = create(:receipt_line, receipt: create(:receipt, :reviewed, purchased_at: nil))
+
+    expect do
+      described_class.call(receipt_line: undated_line, product_variant: variant)
+    end.to raise_error(described_class::PurchaseDateRequiredError)
+  end
 end

@@ -81,6 +81,7 @@ en:
     receipt_lines:
       errors:
         receipt_not_reviewed: "Review the receipt before matching its lines."
+        purchase_date_required: "Add a purchase date before matching this receipt."
       confirm:
         success: "Confirmed %{label}."
       create_variant:
@@ -103,6 +104,7 @@ en:
           global_queue: "Global queue"
         errors:
           receipt_not_reviewed: "Review the receipt before matching its lines."
+          purchase_date_required: "Add a purchase date before matching this receipt."
         lines:
           heading: "Unmatched item lines"
           description: "Only this receipt's unmatched item lines are shown. Fees, discounts, confirmed lines, and ignored lines are excluded."
@@ -156,6 +158,7 @@ en:
         source: "Decision source"
         confidence: "Confidence"
         label_snapshot: "Receipt label"
+        normalized_label_snapshot: "Normalized receipt label"
         decided_at: "Decided at"
       price_observation:
         receipt_line_match: "Receipt-line match"
@@ -170,3 +173,10 @@ en:
         comparison_unit: "Comparison unit"
         comparison_unit_price_cents: "Comparison unit price cents"
         source: "Source"
+    errors:
+      models:
+        price_observation:
+          attributes:
+            receipt_line_match:
+              must_be_confirmed: "must be confirmed"
+              must_match_observation_fields: "must match the receipt line and product variant"

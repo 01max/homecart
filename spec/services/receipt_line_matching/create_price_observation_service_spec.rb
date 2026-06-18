@@ -37,6 +37,12 @@ RSpec.describe ReceiptLineMatching::CreatePriceObservationService do
     expect { observation }.to raise_error(ArgumentError)
   end
 
+  it "rejects confirmed matches whose receipts have no purchase date" do
+    receipt_line.receipt.update!(purchased_at: nil)
+
+    expect { observation }.to raise_error(ReceiptLineMatching::ConfirmMatchService::PurchaseDateRequiredError)
+  end
+
   def price_attributes
     {
       receipt_line: receipt_line,

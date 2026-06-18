@@ -7,7 +7,7 @@ module ReceiptLineMatching
     SEARCH_LIMIT = 20
     PRIOR_CONFIRMED_CONFIDENCE = 1.0
 
-    def initialize(receipt_line:, limit: DEFAULT_LIMIT, persist: true)
+    def initialize(receipt_line:, limit: DEFAULT_LIMIT, persist: false)
       @receipt_line = receipt_line
       @limit = limit
       @persist = persist
@@ -43,15 +43,11 @@ module ReceiptLineMatching
 
     def prior_confirmed_variants
       ReceiptLineMatch.confirmed
-        .includes(:receipt_line, :product_variant)
-        .filter_map { |match| match.product_variant if same_normalized_label?(match) }
+        .where(normalized_label_snapshot: normalized_label)
+        .includes(:product_variant)
+        .map(&:product_variant)
         .uniq
         .reject { |variant| rejected_variant_ids.include?(variant.id) }
-    end
-
-    def same_normalized_label?(match)
-      normalized(match.label_snapshot) == normalized_label ||
-        normalized(match.receipt_line.label) == normalized_label
     end
 
     def catalogue_search_suggestions

@@ -7,6 +7,7 @@ module ReceiptLineMatching
 
     def call
       raise ArgumentError unless receipt_line_match.confirmed?
+      raise ConfirmMatchService::PurchaseDateRequiredError if receipt_line.receipt.purchased_at.blank?
 
       upsert_price_observation
     end

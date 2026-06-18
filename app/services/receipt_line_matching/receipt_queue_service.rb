@@ -6,7 +6,7 @@ module ReceiptLineMatching
     def initialize(
       receipt:,
       suggestion_limit: SuggestMatchesService::DEFAULT_LIMIT,
-      persist_suggestions: true
+      persist_suggestions: false
     )
       @receipt = receipt
       @suggestion_limit = suggestion_limit
@@ -14,7 +14,7 @@ module ReceiptLineMatching
     end
 
     def call
-      return [] unless receipt.reviewed?
+      return [] unless receipt.reviewed? && receipt.purchased_at.present?
 
       unmatched_item_lines.map do |receipt_line|
         Entry.new(

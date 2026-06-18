@@ -55,6 +55,26 @@ RSpec.describe ProductCatalog::SearchService do
     expect(result_records_for("TRANCHÉS")).to include(variant)
   end
 
+  it "finds variants with misspelled receipt text" do
+    variant = create_catalogue_variant(
+      product_brand_name: "Bio Village",
+      product_name: "Compotes pomme",
+      variant_name: "12 x 90g"
+    )
+
+    expect(result_records_for("bio vilage compottes pommme")).to include(variant)
+  end
+
+  it "finds variants from abbreviated receipt text" do
+    variant = create_catalogue_variant(
+      product_brand_name: "Maison Dupont",
+      product_name: "Jambon blanc",
+      variant_name: "4 tranches"
+    )
+
+    expect(result_records_for("jambn blnc 4 trnch")).to include(variant)
+  end
+
   it "does not return unrelated catalogue records" do
     create_catalogue_variant(product_brand_name: "Bio Village", product_name: "Compotes pomme", variant_name: "12 x 90g")
     unrelated_variant = create_catalogue_variant(

@@ -37,6 +37,12 @@ RSpec.describe ReceiptLineMatching::ReceiptQueueService do
     expect(entries).to be_empty
   end
 
+  it "returns no entries until the receipt has a purchase date" do
+    receipt.update!(purchased_at: nil)
+
+    expect(entries).to be_empty
+  end
+
   def create_catalogue_variant(product_brand_name:, product_name:, variant_name:)
     product_brand = create(:product_brand, name: product_brand_name)
     product = create(:product, product_brand: product_brand, name: product_name)

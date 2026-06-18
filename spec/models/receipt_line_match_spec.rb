@@ -19,6 +19,12 @@ RSpec.describe ReceiptLineMatch do
     expect(match.source_heuristic?).to be(true)
   end
 
+  it "stores a normalized label snapshot for indexed suggestion lookups" do
+    match = build(:receipt_line_match, label_snapshot: "JAMBON BLANC 4 TRANCHÉS")
+
+    expect(match.normalized_label_snapshot).to eq("jambon blanc 4 tranches")
+  end
+
   it "requires product variants for suggested, confirmed, and rejected matches" do
     suggested = build(:receipt_line_match, :suggested, product_variant: nil)
     confirmed = build(:receipt_line_match, product_variant: nil)

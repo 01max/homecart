@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XcTvZlKfwzFA58DrQgftAigeSJFtpOBaQynk1v7oiMVh2qf85wKgqd2OTsOKWJ1
+\restrict 4FB27pPuleIeFeYB92gaAGDBgw7RDSo30Hd62yGacjGfvoc8jwYW68khW6RhfGS
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -227,6 +227,41 @@ CREATE TYPE public.store_channel AS ENUM (
     'drive',
     'click_collect'
 );
+
+
+--
+-- Name: enforce_price_observation_match_consistency(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.enforce_price_observation_match_consistency() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  matching_decision receipt_line_matches%ROWTYPE;
+BEGIN
+  SELECT *
+  INTO matching_decision
+  FROM receipt_line_matches
+  WHERE id = NEW.receipt_line_match_id;
+
+  IF NOT FOUND THEN
+    RETURN NEW;
+  END IF;
+
+  IF matching_decision.status <> 'confirmed' THEN
+    RAISE EXCEPTION 'price observations require confirmed receipt-line matches'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF ROW(matching_decision.receipt_line_id, matching_decision.product_variant_id)
+    IS DISTINCT FROM ROW(NEW.receipt_line_id, NEW.product_variant_id) THEN
+    RAISE EXCEPTION 'price observations must match their receipt-line match'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
 
 
 --
@@ -534,6 +569,7 @@ CREATE TABLE public.receipt_line_matches (
     decided_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
+    normalized_label_snapshot character varying NOT NULL,
     CONSTRAINT receipt_line_matches_confidence_probability CHECK (((confidence IS NULL) OR ((confidence >= (0)::numeric) AND (confidence <= (1)::numeric)))),
     CONSTRAINT receipt_line_matches_product_variant_presence CHECK ((((status = 'ignored'::public.receipt_line_match_status) AND (product_variant_id IS NULL)) OR ((status = ANY (ARRAY['suggested'::public.receipt_line_match_status, 'confirmed'::public.receipt_line_match_status, 'rejected'::public.receipt_line_match_status])) AND (product_variant_id IS NOT NULL))))
 );
@@ -1180,6 +1216,13 @@ CREATE INDEX index_receipt_line_matches_on_receipt_line_id_and_status ON public.
 
 
 --
+-- Name: index_receipt_line_matches_on_status_normalized_label; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_line_matches_on_status_normalized_label ON public.receipt_line_matches USING btree (status, normalized_label_snapshot);
+
+
+--
 -- Name: index_receipt_line_matches_on_terminal_decision; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1310,6 +1353,13 @@ CREATE INDEX index_text_extractions_on_source_document_id ON public.text_extract
 --
 
 CREATE TRIGGER categories_prevent_cycle AFTER INSERT OR UPDATE OF parent_id ON public.categories FOR EACH ROW EXECUTE FUNCTION public.prevent_category_cycle();
+
+
+--
+-- Name: price_observations price_observations_match_consistency; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER price_observations_match_consistency BEFORE INSERT OR UPDATE OF receipt_line_match_id, receipt_line_id, product_variant_id ON public.price_observations FOR EACH ROW EXECUTE FUNCTION public.enforce_price_observation_match_consistency();
 
 
 --
@@ -1562,13 +1612,13 @@ ALTER TABLE ONLY public.products
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XcTvZlKfwzFA58DrQgftAigeSJFtpOBaQynk1v7oiMVh2qf85wKgqd2OTsOKWJ1
+\unrestrict 4FB27pPuleIeFeYB92gaAGDBgw7RDSo30Hd62yGacjGfvoc8jwYW68khW6RhfGS
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict Dba4tiLI2KxAo7ovJdFLmSDHt9PSPxNcnVS9RZV06XKVUrkWa08UGFYlawd1hs1
+\restrict OH0dkfk8WanQOwWphQCsifMpyWvPiWJDldvk4ny3vs9BdA30FfeYR8AQCMW3ooF
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -1583,6 +1633,14 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Data for Name: ar_internal_metadata; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('environment', 'test', '2026-06-17 20:45:31.447697', '2026-06-17 20:45:31.4477');
+INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('schema_sha1', '26f1f5b5f43a3e381ddab05d4634e4d852b6b98d', '2026-06-17 20:45:31.449223', '2026-06-17 20:45:31.449224');
+
 
 --
 -- Data for Name: schema_migrations; Type: TABLE DATA; Schema: public; Owner: -
@@ -1616,10 +1674,12 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260609100000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260609101000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260614130000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260615191000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260617220000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260617221000');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Dba4tiLI2KxAo7ovJdFLmSDHt9PSPxNcnVS9RZV06XKVUrkWa08UGFYlawd1hs1
+\unrestrict OH0dkfk8WanQOwWphQCsifMpyWvPiWJDldvk4ny3vs9BdA30FfeYR8AQCMW3ooF

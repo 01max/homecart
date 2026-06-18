@@ -481,6 +481,10 @@ en:
         equivalence: "Equivalence"
     errors:
       models:
+        product_brand:
+          attributes:
+            retail_brand:
+              conflict: "already belongs to another retailer"
         category:
           attributes:
             parent:
