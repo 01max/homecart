@@ -93,6 +93,14 @@ Open a development console:
 docker compose exec app bundle exec rails console
 ```
 
+Install or update gems inside Docker:
+
+```sh
+docker compose run --rm app bundle install
+```
+
+Bundled gems are cached in the `bundle_cache` Docker volume so one-off installs are reused by later `docker compose run` and `docker compose up` containers.
+
 Run the full RSpec suite in Docker:
 
 ```sh
@@ -126,7 +134,7 @@ Run Zeitwerk check in Docker:
 docker compose run --rm --no-deps -e RAILS_ENV=test app bundle exec rails zeitwerk:check
 ```
 
-Docker may print orphan-container warnings during test runs. They are harmless unless you intentionally changed compose service names and want to clean old containers.
+Docker may print orphan-container warnings if previous one-off containers were run without `--rm`. They are harmless unless you intentionally changed compose service names and want to clean old containers.
 
 For a production-shaped self-hosted run, use the standalone production compose file:
 

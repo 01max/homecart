@@ -24,6 +24,7 @@ services:
       retries: 12
     volumes:
       - .:/rails
+      - bundle_cache:/usr/local/bundle
       - rails_storage:/rails/storage
     command: ["bash", "-lc", "./bin/rails db:prepare && ./bin/rails server -b 0.0.0.0 -p 3000"]
 
@@ -45,6 +46,7 @@ services:
       RAILS_LOG_LEVEL: debug
     volumes:
       - .:/rails
+      - bundle_cache:/usr/local/bundle
       - rails_storage:/rails/storage
     command: ["bash", "-lc", "./bin/rails db:prepare && ./bin/jobs"]
 
@@ -59,6 +61,7 @@ services:
       RAILS_ENV: development
     volumes:
       - .:/rails
+      - bundle_cache:/usr/local/bundle
     command: ["bash", "-lc", "./bin/rails tailwindcss:watch[always]"]
 
   db:
@@ -76,5 +79,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
 volumes:
+  bundle_cache:
   postgres_data:
   rails_storage:
