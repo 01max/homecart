@@ -28,22 +28,26 @@ module ProductCatalog
     end
 
     def product_brand_results
+      normalized_name_score = score_node(product_brand_table[:normalized_name])
+
       ProductBrand
-        .select(Arel.sql("product_brands.*, #{score_sql('product_brands.normalized_name')} AS normalized_name_score"))
-        .where("#{score_sql('product_brands.normalized_name')} >= ?", MINIMUM_TRIGRAM_SCORE)
+        .select(product_brand_table[Arel.star], normalized_name_score.as("normalized_name_score"))
+        .where(normalized_name_score.gteq(MINIMUM_TRIGRAM_SCORE))
         .map do |product_brand|
-        build_result(
-          record: product_brand,
-          record_type: :product_brand,
-          candidate_scores: { normalized_name: read_score(product_brand, :normalized_name_score) }
-        )
-      end
+          build_result(
+            record: product_brand,
+            record_type: :product_brand,
+            candidate_scores: { normalized_name: read_score(product_brand, :normalized_name_score) }
+          )
+        end
     end
 
     def product_results
+      normalized_name_score = score_node(product_table[:normalized_name])
+
       Product.includes(:product_brand, :category)
-        .select(Arel.sql("products.*, #{score_sql('products.normalized_name')} AS normalized_name_score"))
-        .where("#{score_sql('products.normalized_name')} >= ?", MINIMUM_TRIGRAM_SCORE)
+        .select(product_table[Arel.star], normalized_name_score.as("normalized_name_score"))
+        .where(normalized_name_score.gteq(MINIMUM_TRIGRAM_SCORE))
         .map do |product|
           build_result(
             record: product,
@@ -54,15 +58,24 @@ module ProductCatalog
     end
 
     def product_variant_results
+      normalized_name_score = score_node(product_variant_table[:normalized_name])
+      product_name_score = score_node(product_table[:normalized_name])
+      product_brand_name_score = score_node(product_brand_table[:normalized_name])
+      variant_score = score_node(
+        product_variant_table[:normalized_name],
+        product_table[:normalized_name],
+        product_brand_table[:normalized_name]
+      )
+
       ProductVariant.includes(product: :product_brand)
         .joins(product: :product_brand)
-        .select(Arel.sql(<<~SQL.squish))
-          product_variants.*,
-          #{score_sql('product_variants.normalized_name')} AS normalized_name_score,
-          #{score_sql('products.normalized_name')} AS product_name_score,
-          #{score_sql('product_brands.normalized_name')} AS product_brand_name_score
-        SQL
-        .where("#{variant_score_sql} >= ?", MINIMUM_TRIGRAM_SCORE)
+        .select(
+          product_variant_table[Arel.star],
+          normalized_name_score.as("normalized_name_score"),
+          product_name_score.as("product_name_score"),
+          product_brand_name_score.as("product_brand_name_score")
+        )
+        .where(variant_score.gteq(MINIMUM_TRIGRAM_SCORE))
         .map do |variant|
           build_result(
             record: variant,
@@ -83,28 +96,35 @@ module ProductCatalog
       Result.new(record: record, record_type: record_type, matched_attribute: matched_attribute, score: (score * 100).round(2))
     end
 
-    def variant_score_sql
-      score_sql(
-        "product_variants.normalized_name",
-        "products.normalized_name",
-        "product_brands.normalized_name"
+    def score_node(*attributes)
+      Arel::Nodes::NamedFunction.new(
+        "GREATEST",
+        attributes.flat_map { |attribute| column_score_nodes(attribute) }
       )
     end
 
-    def score_sql(*qualified_columns)
-      "GREATEST(#{qualified_columns.map { |column| column_score_sql(column) }.join(', ')})"
+    def column_score_nodes(attribute)
+      [
+        Arel::Nodes::NamedFunction.new("similarity", [ attribute, normalized_query_node ]),
+        Arel::Nodes::NamedFunction.new("word_similarity", [ normalized_query_node, attribute ]),
+        Arel::Nodes::NamedFunction.new("word_similarity", [ attribute, normalized_query_node ])
+      ]
     end
 
-    def column_score_sql(qualified_column)
-      <<~SQL.squish
-        similarity(#{qualified_column}, #{quoted_normalized_query}),
-        word_similarity(#{quoted_normalized_query}, #{qualified_column}),
-        word_similarity(#{qualified_column}, #{quoted_normalized_query})
-      SQL
+    def normalized_query_node
+      @normalized_query_node ||= Arel::Nodes.build_quoted(normalized_query)
     end
 
-    def quoted_normalized_query
-      ActiveRecord::Base.connection.quote(normalized_query)
+    def product_brand_table
+      ProductBrand.arel_table
+    end
+
+    def product_table
+      Product.arel_table
+    end
+
+    def product_variant_table
+      ProductVariant.arel_table
     end
 
     def read_score(record, attribute)
