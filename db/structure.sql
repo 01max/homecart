@@ -208,6 +208,28 @@ CREATE TYPE public.receipt_promotion_unit AS ENUM (
 
 
 --
+-- Name: source_document_detection_confidence; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.source_document_detection_confidence AS ENUM (
+    'none',
+    'low',
+    'high',
+    'manual'
+);
+
+
+--
+-- Name: source_document_detection_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.source_document_detection_status AS ENUM (
+    'classified',
+    'needs_classification'
+);
+
+
+--
 -- Name: source_document_mime_type; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -689,6 +711,26 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: source_document_detections; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.source_document_detections (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    source_document_id uuid NOT NULL,
+    text_extraction_id uuid NOT NULL,
+    status public.source_document_detection_status NOT NULL,
+    parser_format public.parser_format,
+    parser_confidence public.source_document_detection_confidence DEFAULT 'none'::public.source_document_detection_confidence NOT NULL,
+    store_id uuid,
+    store_confidence public.source_document_detection_confidence DEFAULT 'none'::public.source_document_detection_confidence NOT NULL,
+    evidence jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT source_document_detections_evidence_array CHECK ((jsonb_typeof(evidence) = 'array'::text))
+);
+
+
+--
 -- Name: source_documents; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -898,6 +940,14 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: source_document_detections source_document_detections_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.source_document_detections
+    ADD CONSTRAINT source_document_detections_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: source_documents source_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -919,6 +969,20 @@ ALTER TABLE ONLY public.stores
 
 ALTER TABLE ONLY public.text_extractions
     ADD CONSTRAINT text_extractions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_on_source_document_id_created_at_0b2abb0abd; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_on_source_document_id_created_at_0b2abb0abd ON public.source_document_detections USING btree (source_document_id, created_at);
+
+
+--
+-- Name: idx_on_text_extraction_id_created_at_ef13f9c5b0; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_on_text_extraction_id_created_at_ef13f9c5b0 ON public.source_document_detections USING btree (text_extraction_id, created_at);
 
 
 --
@@ -1314,6 +1378,27 @@ CREATE UNIQUE INDEX index_retail_brands_on_slug ON public.retail_brands USING bt
 
 
 --
+-- Name: index_source_document_detections_on_source_document_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_source_document_detections_on_source_document_id ON public.source_document_detections USING btree (source_document_id);
+
+
+--
+-- Name: index_source_document_detections_on_store_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_source_document_detections_on_store_id ON public.source_document_detections USING btree (store_id);
+
+
+--
+-- Name: index_source_document_detections_on_text_extraction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_source_document_detections_on_text_extraction_id ON public.source_document_detections USING btree (text_extraction_id);
+
+
+--
 -- Name: index_source_documents_on_content_hash; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1398,6 +1483,14 @@ ALTER TABLE ONLY public.stores
 
 ALTER TABLE ONLY public.receipts
     ADD CONSTRAINT fk_rails_0b2f6f5e69 FOREIGN KEY (text_extraction_id) REFERENCES public.text_extractions(id);
+
+
+--
+-- Name: source_document_detections fk_rails_129e6d2f33; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.source_document_detections
+    ADD CONSTRAINT fk_rails_129e6d2f33 FOREIGN KEY (source_document_id) REFERENCES public.source_documents(id);
 
 
 --
@@ -1513,6 +1606,14 @@ ALTER TABLE ONLY public.text_extractions
 
 
 --
+-- Name: source_document_detections fk_rails_8fb6b341ad; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.source_document_detections
+    ADD CONSTRAINT fk_rails_8fb6b341ad FOREIGN KEY (text_extraction_id) REFERENCES public.text_extractions(id);
+
+
+--
 -- Name: active_storage_variant_records fk_rails_993965df05; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1550,6 +1651,14 @@ ALTER TABLE ONLY public.product_alternative_group_memberships
 
 ALTER TABLE ONLY public.active_storage_attachments
     ADD CONSTRAINT fk_rails_c3b3935057 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
+-- Name: source_document_detections fk_rails_c542692905; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.source_document_detections
+    ADD CONSTRAINT fk_rails_c542692905 FOREIGN KEY (store_id) REFERENCES public.stores(id);
 
 
 --
@@ -1639,7 +1748,7 @@ SET row_security = off;
 --
 
 INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('environment', 'test', '2026-06-17 20:45:31.447697', '2026-06-17 20:45:31.4477');
-INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('schema_sha1', '26f1f5b5f43a3e381ddab05d4634e4d852b6b98d', '2026-06-17 20:45:31.449223', '2026-06-17 20:45:31.449224');
+INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('schema_sha1', '02eb545469bc4d7e717afaa440d5eccda129c8e2', '2026-06-17 20:45:31.449223', '2026-06-17 21:51:24.607269');
 
 
 --
@@ -1676,6 +1785,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260614130000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260615191000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260617220000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260617221000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260620090000');
 
 
 --
