@@ -1,0 +1,65 @@
+<% content_for :title, @product_brand.name %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.product_brands.show.eyebrow"),
+             title: @product_brand.name,
+             description: t("product_catalog.product_brands.show.description"),
+             actions: safe_join([
+               link_to(t("product_catalog.actions.back_to_index"), catalogue_product_brands_path, class: "hc-button hc-button--subtle"),
+               link_to(t("product_catalog.actions.edit"), edit_catalogue_product_brand_path(@product_brand), class: "hc-button hc-button--secondary")
+             ]) %>
+
+  <section class="hc-detail-block hc-block text-sm">
+    <div class="hc-block-heading">
+      <h2 class="hc-block-title"><%= t("product_catalog.product_brands.show.details.heading") %></h2>
+    </div>
+    <dl class="hc-detail-grid mt-4">
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("product_catalog.product_brands.show.details.retail_brand") %></dt>
+        <dd class="hc-detail-value"><%= @product_brand.retail_brand&.name || t("product_catalog.labels.empty_value") %></dd>
+      </div>
+      <div class="hc-detail-item">
+        <dt class="hc-detail-term"><%= t("product_catalog.product_brands.show.details.products") %></dt>
+        <dd class="hc-detail-value"><%= @products.size %></dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("product_catalog.product_brands.show.products.heading") %></h2>
+        <p class="hc-block-description"><%= t("product_catalog.product_brands.show.products.description") %></p>
+      </div>
+      <%= link_to t("product_catalog.products.index.actions.new"), new_catalogue_product_path(product: { product_brand_id: @product_brand.id }), class: "hc-button hc-button--primary" %>
+    </div>
+
+    <% if @products.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[44rem]">
+          <thead>
+            <tr>
+              <th><%= t("product_catalog.products.index.table.name") %></th>
+              <th><%= t("product_catalog.products.index.table.category") %></th>
+              <th><%= t("product_catalog.products.index.table.variants") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @products.each do |product| %>
+              <tr>
+                <td><%= link_to product.name, catalogue_product_path(product), class: "hc-link" %></td>
+                <td><%= catalogue_category_label(product.category) %></td>
+                <td><%= product.product_variants.size %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t("product_catalog.product_brands.show.products.empty") %></p>
+      </div>
+    <% end %>
+  </section>
+</section>

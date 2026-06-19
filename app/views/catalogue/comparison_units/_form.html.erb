@@ -1,0 +1,22 @@
+<%= form_with model: [ :catalogue, comparison_unit ], class: "hc-block" do |form| %>
+  <div class="hc-block-heading">
+    <h2 class="hc-block-title"><%= title %></h2>
+    <p class="hc-block-description"><%= description %></p>
+  </div>
+
+  <div class="hc-filter-row mt-4">
+    <div class="hc-filter-group">
+      <%= form.label :name, t("product_catalog.comparison_units.form.name"), class: "hc-label" %>
+      <%= form.text_field :name, class: "hc-input", required: true %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :symbol, t("product_catalog.comparison_units.form.symbol"), class: "hc-label" %>
+      <%= form.text_field :symbol, class: "hc-input", required: true %>
+    </div>
+
+    <div class="hc-filter-actions">
+      <%= form.submit submit_label, class: "hc-button hc-button--primary" %>
+    </div>
+  </div>
+<% end %>

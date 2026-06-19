@@ -9,6 +9,13 @@ en:
       collapse: "Collapse navigation"
       dark_mode: "Dark mode"
       receipts: "Receipts"
+      catalogue: "Catalogue"
+      matching: "Matching"
       upload_receipt: "Upload receipt"
+    pagination:
+      label: "Pagination"
+      next: "Next"
+      previous: "Previous"
+      status: "Page %{page} of %{pages} · %{count} total"
     pwa:
       description: "homecart is a grocery companion app that helps you manage your grocery shopping."

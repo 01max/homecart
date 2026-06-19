@@ -18,3 +18,22 @@ class ReceiptPayment < ApplicationRecord
   validates :raw_label, :category, presence: true
   validates :amount_cents, presence: true, numericality: { only_integer: true, greater_than: 0 }
 end
+
+# == Schema Information
+#
+# Table name: receipt_payments
+#
+#  position     :integer          not null, indexed => [receipt_id]
+#  raw_label    :text             not null
+#  category     :enum             not null
+#  amount_cents :integer          not null
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#  id           :uuid             not null, primary key
+#  receipt_id   :uuid             not null, indexed, indexed => [position]
+#
+# Indexes
+#
+#  index_receipt_payments_on_receipt_id               (receipt_id)
+#  index_receipt_payments_on_receipt_id_and_position  (receipt_id,position) UNIQUE
+#

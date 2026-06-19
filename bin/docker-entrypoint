@@ -16,7 +16,9 @@ ensure_bundle() {
   ) 9>"${lockfile}"
 }
 
-ensure_bundle
+if [ "$1" != "bundle" ] || [ "${2:-}" != "install" ]; then
+  ensure_bundle
+fi
 
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then

@@ -27,3 +27,22 @@ class SourceDocument < ApplicationRecord
   validates :content_hash, presence: true, uniqueness: true, format: { with: /\A\h{64}\z/ }
   validates :mime_type, :parser_format, :ingested_at, presence: true
 end
+
+# == Schema Information
+#
+# Table name: source_documents
+#
+#  content_hash  :string           not null, indexed
+#  mime_type     :enum             not null
+#  ingested_at   :datetime         not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  parser_format :enum             not null
+#  id            :uuid             not null, primary key
+#  store_id      :uuid             not null, indexed
+#
+# Indexes
+#
+#  index_source_documents_on_content_hash  (content_hash) UNIQUE
+#  index_source_documents_on_store_id      (store_id)
+#

@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+
+class File
+  def self.exists?(path)
+    exist?(path)
+  end
+end
+
+Object.const_set(:Fixnum, Integer) unless defined?(Fixnum)
+Object.const_set(:Bignum, Integer) unless defined?(Bignum)
+
+load Gem.bin_path("annotate", "annotate")

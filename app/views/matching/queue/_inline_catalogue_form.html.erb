@@ -1,0 +1,86 @@
+<div class="hc-action-block hc-block--flat">
+  <div class="hc-block-heading">
+    <h3 class="hc-block-title"><%= t("matching.queue.index.inline_catalogue.heading") %></h3>
+    <p class="hc-block-description"><%= t("matching.queue.index.inline_catalogue.description") %></p>
+  </div>
+
+  <%= form_with scope: :inline_product_variant,
+                url: create_variant_matching_receipt_line_path(entry.receipt_line),
+                class: "hc-filter-row mt-4" do |form| %>
+    <div class="hc-filter-group">
+      <%= form.label :product_brand_name, t("matching.queue.index.inline_catalogue.product_brand_name"), class: "hc-label" %>
+      <%= form.text_field :product_brand_name, class: "hc-input", required: true %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :retail_brand_id, t("matching.queue.index.inline_catalogue.retail_brand"), class: "hc-label" %>
+      <%= form.collection_select :retail_brand_id,
+                                 retail_brands,
+                                 :id,
+                                 :name,
+                                 { include_blank: t("matching.queue.index.inline_catalogue.no_retail_brand") },
+                                 class: "hc-select" %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :product_name, t("matching.queue.index.inline_catalogue.product_name"), class: "hc-label" %>
+      <%= form.text_field :product_name,
+                          value: entry.group.representative_label,
+                          class: "hc-input",
+                          required: true %>
+    </div>
+
+    <%= render "catalogue/shared/category_picker",
+               form: form,
+               field: :category_id,
+               categories: categories,
+               label: t("matching.queue.index.inline_catalogue.category"),
+               include_blank: t("matching.queue.index.inline_catalogue.select_category"),
+               required: true,
+               describedby: "inline_variant_category_picker_hint_#{entry.receipt_line.id}",
+               description: t("product_catalog.category_picker.inline_variant_description"),
+               manage_label: t("product_catalog.category_picker.manage_categories") %>
+
+    <div class="hc-filter-group">
+      <%= form.label :manufacturer_name, t("matching.queue.index.inline_catalogue.manufacturer_name"), class: "hc-label" %>
+      <%= form.text_field :manufacturer_name, class: "hc-input" %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :variant_name, t("matching.queue.index.inline_catalogue.variant_name"), class: "hc-label" %>
+      <%= form.text_field :variant_name,
+                          value: entry.group.representative_label,
+                          class: "hc-input",
+                          required: true %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :package_count, t("product_catalog.product_variants.form.package_count"), class: "hc-label" %>
+      <%= form.number_field :package_count, class: "hc-input", min: 1 %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :quantity_value, t("product_catalog.product_variants.form.quantity_value"), class: "hc-label" %>
+      <%= form.number_field :quantity_value, class: "hc-input", min: 0, step: "0.001" %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :comparison_unit_id, t("product_catalog.product_variants.form.comparison_unit"), class: "hc-label" %>
+      <%= form.collection_select :comparison_unit_id,
+                                 comparison_units,
+                                 :id,
+                                 :name,
+                                 { include_blank: t("product_catalog.product_variants.form.no_comparison_unit") },
+                                 class: "hc-select" %>
+    </div>
+
+    <div class="hc-filter-group">
+      <%= form.label :barcode, t("product_catalog.product_variants.form.barcode"), class: "hc-label" %>
+      <%= form.text_field :barcode, class: "hc-input" %>
+    </div>
+
+    <div class="hc-filter-actions">
+      <%= form.submit t("matching.queue.index.inline_catalogue.create"), class: "hc-button hc-button--primary" %>
+    </div>
+  <% end %>
+</div>

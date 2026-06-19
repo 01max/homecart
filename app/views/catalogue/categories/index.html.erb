@@ -1,0 +1,70 @@
+<% content_for :title, t("product_catalog.categories.index.title") %>
+
+<section class="hc-stack">
+  <div class="hc-page-toolbar">
+    <div>
+      <p class="hc-eyebrow"><%= t("product_catalog.categories.index.eyebrow") %></p>
+      <h1 class="hc-heading-lg mt-2"><%= t("product_catalog.categories.index.title") %></h1>
+      <p class="hc-body mt-2"><%= t("product_catalog.categories.index.description") %></p>
+    </div>
+
+    <div class="hc-page-actions">
+      <%= link_to t("product_catalog.categories.index.actions.back_to_catalogue"),
+                  catalogue_root_path,
+                  class: "hc-button hc-button--subtle" %>
+    </div>
+  </div>
+
+  <section class="hc-block">
+    <div class="hc-block-heading">
+      <h2 class="hc-block-title"><%= t("product_catalog.categories.index.create.heading") %></h2>
+      <p class="hc-block-description"><%= t("product_catalog.categories.index.create.description") %></p>
+    </div>
+
+    <%= form_with scope: :category, url: catalogue_categories_path, class: "hc-filter-row mt-4" do |form| %>
+      <div class="hc-filter-group">
+        <%= form.label :name, t("product_catalog.categories.form.name"), class: "hc-label" %>
+        <%= form.text_field :name, class: "hc-input", required: true %>
+      </div>
+
+      <div class="hc-filter-group">
+        <%= form.label :parent_id, t("product_catalog.categories.form.parent"), class: "hc-label" %>
+        <%= form.select :parent_id,
+                        category_parent_options(@categories),
+                        { include_blank: t("product_catalog.categories.form.root_parent") },
+                        class: "hc-select" %>
+      </div>
+
+      <div class="hc-filter-actions">
+        <%= form.submit t("product_catalog.categories.form.create"), class: "hc-button hc-button--primary" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("product_catalog.categories.index.tree.heading") %></h2>
+        <p class="hc-block-description"><%= t("product_catalog.categories.index.tree.description") %></p>
+      </div>
+    </div>
+
+    <div class="hc-block-body">
+      <% if @root_categories.any? %>
+        <div class="hc-stack">
+          <% @root_categories.each do |category| %>
+            <%= render "category",
+                       category: category,
+                       categories: @categories,
+                       children_by_parent: @children_by_parent,
+                       depth: 0 %>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="hc-body text-sm"><%= t("product_catalog.categories.index.empty") %></p>
+      <% end %>
+
+      <%= hc_pagy_nav(@pagy) %>
+    </div>
+  </section>
+</section>

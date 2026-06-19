@@ -1,0 +1,49 @@
+<% content_for :title, @comparison_unit.name %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.comparison_units.show.eyebrow"),
+             title: catalogue_comparison_unit_label(@comparison_unit),
+             description: t("product_catalog.comparison_units.show.description"),
+             actions: safe_join([
+               link_to(t("product_catalog.actions.back_to_index"), catalogue_comparison_units_path, class: "hc-button hc-button--subtle"),
+               link_to(t("product_catalog.actions.edit"), edit_catalogue_comparison_unit_path(@comparison_unit), class: "hc-button hc-button--secondary")
+             ]) %>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("product_catalog.comparison_units.show.variants.heading") %></h2>
+        <p class="hc-block-description"><%= t("product_catalog.comparison_units.show.variants.description") %></p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t("product_catalog.counts.product_variants", count: @product_variants.size) %></p>
+    </div>
+
+    <% if @product_variants.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[44rem]">
+          <thead>
+            <tr>
+              <th><%= t("product_catalog.product_variants.index.table.variant") %></th>
+              <th><%= t("product_catalog.product_variants.index.table.product") %></th>
+              <th><%= t("product_catalog.product_variants.index.table.quantity") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @product_variants.each do |product_variant| %>
+              <tr>
+                <td><%= link_to product_variant.name, catalogue_product_variant_path(product_variant), class: "hc-link" %></td>
+                <td><%= catalogue_product_label(product_variant.product) %></td>
+                <td><%= t("product_catalog.labels.variant_quantity", package_count: product_variant.package_count || t("product_catalog.labels.empty_value"), quantity_value: product_variant.quantity_value || t("product_catalog.labels.empty_value"), unit: @comparison_unit.symbol) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t("product_catalog.comparison_units.show.variants.empty") %></p>
+      </div>
+    <% end %>
+  </section>
+</section>

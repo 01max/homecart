@@ -1,0 +1,182 @@
+en:
+  matching:
+    queue:
+      index:
+        eyebrow: "Matching"
+        title: "Matching queue"
+        description: "Match receipt-line observations to catalogue variants and keep ignored lines out of the queue."
+        empty_value: "Not available"
+        date_range: "%{first} to %{last}"
+        actions:
+          catalogue: "Catalogue"
+        queue:
+          heading: "Unmatched item labels"
+          description: "Item receipt lines grouped by normalized label. Fees, discounts, confirmed lines, and ignored lines are left out."
+          empty: "No unmatched item lines are waiting for product matching."
+          count:
+            one: "%{count} line"
+            other: "%{count} lines"
+        table:
+          label: "Receipt label"
+          lines: "Lines"
+          stores: "Stores"
+          dates: "Dates"
+          prices: "Prices"
+          quantities: "Quantities"
+          suggestions: "Suggestions"
+          line_count:
+            one: "%{count} line"
+            other: "%{count} lines"
+        suggestions:
+          empty: "No deterministic suggestions yet."
+          confirm: "Confirm"
+          reject: "Reject"
+          metadata: "%{reason}, %{confidence}"
+          reasons:
+            prior_confirmed_label: "Prior label match"
+            catalogue_search: "Catalogue search"
+        search:
+          query: "Search variants"
+          placeholder: "Product, brand, or variant"
+          submit: "Search"
+          confirm: "Confirm"
+          empty: "No existing variants matched this search."
+        bulk:
+          preview_action: "Preview bulk"
+          heading: "Bulk confirmation preview"
+          description:
+            one: "%{count} line will be confirmed as %{variant}."
+            other: "%{count} lines will be confirmed as %{variant}."
+          confirm:
+            one: "Confirm %{count} line"
+            other: "Confirm %{count} lines"
+        ignore:
+          heading: "Ignore"
+          description: "Remove receipt lines that should not map to a product variant."
+          line_action: "Ignore line"
+          group_action:
+            one: "Ignore %{count} line"
+            other: "Ignore %{count} lines"
+          group_confirm:
+            one: "Ignore %{count} line in this group?"
+            other: "Ignore %{count} lines in this group?"
+        inline_catalogue:
+          heading: "Create and confirm"
+          description: "Create a missing catalogue variant and confirm this receipt line in one step."
+          product_brand_name: "Product brand"
+          retail_brand: "Retail brand"
+          no_retail_brand: "National brand"
+          product_name: "Product name"
+          category: "Category"
+          select_category: "Select a category"
+          manufacturer_name: "Manufacturer"
+          variant_name: "Variant name"
+          create: "Create and confirm"
+        price_context:
+          total: "totals %{values}"
+          unit: "unit prices %{values}"
+        quantity_context:
+          quantities: "quantities %{values}"
+          units: "units %{values}"
+    receipt_lines:
+      errors:
+        receipt_not_reviewed: "Review the receipt before matching its lines."
+        purchase_date_required: "Add a purchase date before matching this receipt."
+      confirm:
+        success: "Confirmed %{label}."
+      create_variant:
+        success: "Created %{variant} and confirmed %{label}."
+        errors:
+          category_required: "Select a category before creating a product and variant."
+      ignore:
+        success: "Ignored %{label}."
+      reject:
+        success: "Rejected suggestion for %{label}."
+    receipts:
+      show:
+        eyebrow: "Receipt matching"
+        title: "Match this receipt"
+        description: "Review unmatched item lines from %{store}; suggestions are shown for confirmation but never auto-applied."
+        empty_value: "Not available"
+        quantity: "%{quantity} %{unit}"
+        actions:
+          back_to_receipt: "Back to receipt"
+          global_queue: "Global queue"
+        errors:
+          receipt_not_reviewed: "Review the receipt before matching its lines."
+          purchase_date_required: "Add a purchase date before matching this receipt."
+        lines:
+          heading: "Unmatched item lines"
+          description: "Only this receipt's unmatched item lines are shown. Fees, discounts, confirmed lines, and ignored lines are excluded."
+          empty: "This receipt has no unmatched item lines."
+          count:
+            one: "%{count} line"
+            other: "%{count} lines"
+        table:
+          position: "#"
+          label: "Label"
+          quantity: "Qty"
+          total: "Total"
+          suggestions: "Suggestions"
+        suggestions:
+          empty: "No prior-label suggestions yet."
+          confirm: "Confirm"
+          reject: "Reject"
+    bulk_confirmations:
+      create:
+        success:
+          one: "Confirmed %{count} line for %{label}."
+          other: "Confirmed %{count} lines for %{label}."
+        errors:
+          stale_preview: "The matching queue changed. Preview the bulk confirmation again before applying it."
+    ignored_groups:
+      create:
+        success:
+          one: "Ignored %{count} line for %{label}."
+          other: "Ignored %{count} lines for %{label}."
+        errors:
+          stale_preview: "The matching queue changed. Reload the group before ignoring it."
+    match_statuses:
+      suggested: "Suggested"
+      confirmed: "Confirmed"
+      rejected: "Rejected"
+      ignored: "Ignored"
+    match_sources:
+      user: "User"
+      heuristic: "Heuristic"
+    price_observation_sources:
+      receipt_line: "Receipt line"
+  activerecord:
+    models:
+      receipt_line_match: "Receipt-line match"
+      price_observation: "Price observation"
+    attributes:
+      receipt_line_match:
+        receipt_line: "Receipt line"
+        product_variant: "Product variant"
+        status: "Status"
+        source: "Decision source"
+        confidence: "Confidence"
+        label_snapshot: "Receipt label"
+        normalized_label_snapshot: "Normalized receipt label"
+        decided_at: "Decided at"
+      price_observation:
+        receipt_line_match: "Receipt-line match"
+        receipt_line: "Receipt line"
+        product_variant: "Product variant"
+        store: "Store"
+        observed_at: "Observed at"
+        purchased_quantity: "Purchased quantity"
+        purchased_unit: "Purchased unit"
+        total_cents: "Total cents"
+        pack_unit_price_cents: "Pack unit price cents"
+        comparison_unit: "Comparison unit"
+        comparison_unit_price_cents: "Comparison unit price cents"
+        source: "Source"
+    errors:
+      models:
+        price_observation:
+          attributes:
+            receipt_line_match:
+              must_be_confirmed: "must be confirmed"
+              must_match_observation_fields: "must match the receipt line and product variant"

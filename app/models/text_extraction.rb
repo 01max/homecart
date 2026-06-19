@@ -16,3 +16,22 @@ class TextExtraction < ApplicationRecord
   validates :text, presence: true, if: :success?
   validates :error_message, presence: true, unless: :success?
 end
+
+# == Schema Information
+#
+# Table name: text_extractions
+#
+#  engine             :string           not null
+#  text               :text             default(""), not null
+#  ran_at             :datetime         not null
+#  success            :boolean          default(FALSE), not null
+#  error_message      :text
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  id                 :uuid             not null, primary key
+#  source_document_id :uuid             not null, indexed
+#
+# Indexes
+#
+#  index_text_extractions_on_source_document_id  (source_document_id)
+#

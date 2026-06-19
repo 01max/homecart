@@ -1,0 +1,28 @@
+<%= form_with model: [ :catalogue, product_alternative_group ], class: "hc-block" do |form| %>
+  <div class="hc-block-heading">
+    <h2 class="hc-block-title"><%= title %></h2>
+    <p class="hc-block-description"><%= description %></p>
+  </div>
+
+  <div class="hc-filter-row mt-4">
+    <div class="hc-filter-group">
+      <%= form.label :name, t("product_catalog.product_alternative_groups.form.name"), class: "hc-label" %>
+      <%= form.text_field :name, class: "hc-input", required: true %>
+    </div>
+
+    <%= render "catalogue/shared/category_picker",
+               form: form,
+               field: :category_id,
+               categories: @categories,
+               label: t("product_catalog.product_alternative_groups.form.category"),
+               include_blank: t("product_catalog.product_alternative_groups.form.select_category"),
+               required: true,
+               describedby: "alternative_group_category_picker_hint",
+               description: t("product_catalog.category_picker.alternative_group_description"),
+               manage_label: t("product_catalog.category_picker.manage_categories") %>
+
+    <div class="hc-filter-actions">
+      <%= form.submit submit_label, class: "hc-button hc-button--primary" %>
+    </div>
+  </div>
+<% end %>

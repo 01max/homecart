@@ -41,3 +41,25 @@ class ReceiptPromotion < ApplicationRecord
     end
   end
 end
+
+# == Schema Information
+#
+# Table name: receipt_promotions
+#
+#  program        :string           not null
+#  unit           :enum             not null
+#  delta          :integer          not null
+#  label          :text
+#  kind           :enum             not null
+#  linking_method :enum             not null
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  id             :uuid             not null, primary key
+#  receipt_id     :uuid             not null, indexed
+#  linked_line_id :uuid             indexed
+#
+# Indexes
+#
+#  index_receipt_promotions_on_linked_line_id  (linked_line_id)
+#  index_receipt_promotions_on_receipt_id      (receipt_id)
+#

@@ -1,0 +1,57 @@
+<% content_for :title, t("product_catalog.comparison_units.index.title") %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.comparison_units.index.eyebrow"),
+             title: t("product_catalog.comparison_units.index.title"),
+             description: t("product_catalog.comparison_units.index.description"),
+             actions: safe_join([
+               link_to(t("product_catalog.actions.back_to_catalogue"), catalogue_root_path, class: "hc-button hc-button--subtle"),
+               link_to(t("product_catalog.comparison_units.index.actions.new"), new_catalogue_comparison_unit_path, class: "hc-button hc-button--primary")
+             ]) %>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("product_catalog.comparison_units.index.table.heading") %></h2>
+        <p class="hc-block-description"><%= t("product_catalog.comparison_units.index.table.description") %></p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t("product_catalog.counts.comparison_units", count: @pagy.count) %></p>
+    </div>
+
+    <% if @comparison_units.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[36rem]">
+          <thead>
+            <tr>
+              <th><%= t("product_catalog.comparison_units.index.table.name") %></th>
+              <th><%= t("product_catalog.comparison_units.index.table.symbol") %></th>
+              <th><%= t("product_catalog.comparison_units.index.table.variants") %></th>
+              <th><%= t("product_catalog.comparison_units.index.table.actions") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @comparison_units.each do |comparison_unit| %>
+              <tr>
+                <td><%= link_to comparison_unit.name, catalogue_comparison_unit_path(comparison_unit), class: "hc-link" %></td>
+                <td><%= comparison_unit.symbol %></td>
+                <td><%= comparison_unit.product_variants.size %></td>
+                <td>
+                  <div class="hc-table-cell-actions">
+                    <%= link_to t("product_catalog.actions.edit"), edit_catalogue_comparison_unit_path(comparison_unit), class: "hc-link text-sm" %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t("product_catalog.comparison_units.index.empty") %></p>
+      </div>
+    <% end %>
+
+    <%= hc_pagy_nav(@pagy) %>
+  </section>
+</section>

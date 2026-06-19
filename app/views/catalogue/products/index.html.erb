@@ -1,0 +1,61 @@
+<% content_for :title, t("product_catalog.products.index.title") %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t("product_catalog.products.index.eyebrow"),
+             title: t("product_catalog.products.index.title"),
+             description: t("product_catalog.products.index.description"),
+             actions: safe_join([
+               link_to(t("product_catalog.actions.back_to_catalogue"), catalogue_root_path, class: "hc-button hc-button--subtle"),
+               link_to(t("product_catalog.products.index.actions.new"), new_catalogue_product_path, class: "hc-button hc-button--primary")
+             ]) %>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("product_catalog.products.index.table.heading") %></h2>
+        <p class="hc-block-description"><%= t("product_catalog.products.index.table.description") %></p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t("product_catalog.counts.products", count: @pagy.count) %></p>
+    </div>
+
+    <% if @products.any? %>
+      <div class="hc-table-frame">
+        <table class="hc-table hc-table--dense min-w-[56rem]">
+          <thead>
+            <tr>
+              <th><%= t("product_catalog.products.index.table.name") %></th>
+              <th><%= t("product_catalog.products.index.table.brand") %></th>
+              <th><%= t("product_catalog.products.index.table.category") %></th>
+              <th><%= t("product_catalog.products.index.table.manufacturer") %></th>
+              <th><%= t("product_catalog.products.index.table.variants") %></th>
+              <th><%= t("product_catalog.products.index.table.actions") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @products.each do |product| %>
+              <tr>
+                <td><%= link_to product.name, catalogue_product_path(product), class: "hc-link" %></td>
+                <td><%= catalogue_product_brand_label(product.product_brand) %></td>
+                <td><%= catalogue_category_label(product.category) %></td>
+                <td><%= product.manufacturer&.name || t("product_catalog.labels.empty_value") %></td>
+                <td><%= product.product_variants.size %></td>
+                <td>
+                  <div class="hc-table-cell-actions">
+                    <%= link_to t("product_catalog.actions.edit"), edit_catalogue_product_path(product), class: "hc-link text-sm" %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="hc-block-body">
+        <p class="hc-body text-sm"><%= t("product_catalog.products.index.empty") %></p>
+      </div>
+    <% end %>
+
+    <%= hc_pagy_nav(@pagy) %>
+  </section>
+</section>

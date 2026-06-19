@@ -20,6 +20,8 @@ gem "stimulus-rails"
 gem "tailwindcss-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
+gem "pagy"
+gem "ransack"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
@@ -63,6 +65,8 @@ group :development, :test do
 end
 
 group :development do
+  gem "annotate", require: false
+
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end

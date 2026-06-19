@@ -1,0 +1,59 @@
+<% content_for :title, t("product_catalog.dashboard.index.title") %>
+
+<section class="hc-stack">
+  <div class="hc-page-toolbar">
+    <div>
+      <p class="hc-eyebrow"><%= t("product_catalog.dashboard.index.eyebrow") %></p>
+      <h1 class="hc-heading-lg mt-2"><%= t("product_catalog.dashboard.index.title") %></h1>
+      <p class="hc-body mt-2"><%= t("product_catalog.dashboard.index.description") %></p>
+    </div>
+  </div>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t("product_catalog.dashboard.index.sections.manage.heading") %></h2>
+        <p class="hc-block-description"><%= t("product_catalog.dashboard.index.sections.manage.description") %></p>
+      </div>
+    </div>
+
+    <div class="hc-block-body">
+      <div class="hc-content-grid hc-content-grid--three">
+        <%= link_to catalogue_products_path, class: "hc-metric-block" do %>
+          <p class="hc-metric-label"><%= t("product_catalog.products.index.title") %></p>
+          <p class="hc-metric-support"><%= t("product_catalog.dashboard.index.sections.manage.products") %></p>
+        <% end %>
+
+        <%= link_to catalogue_product_variants_path, class: "hc-metric-block" do %>
+          <p class="hc-metric-label"><%= t("product_catalog.product_variants.index.title") %></p>
+          <p class="hc-metric-support"><%= t("product_catalog.dashboard.index.sections.manage.product_variants") %></p>
+        <% end %>
+
+        <%= link_to catalogue_product_brands_path, class: "hc-metric-block" do %>
+          <p class="hc-metric-label"><%= t("product_catalog.product_brands.index.title") %></p>
+          <p class="hc-metric-support"><%= t("product_catalog.dashboard.index.sections.manage.product_brands") %></p>
+        <% end %>
+
+        <%= link_to catalogue_categories_path, class: "hc-metric-block" do %>
+          <p class="hc-metric-label"><%= t("product_catalog.categories.index.title") %></p>
+          <p class="hc-metric-support"><%= t("product_catalog.dashboard.index.sections.manage.categories") %></p>
+        <% end %>
+
+        <%= link_to catalogue_manufacturers_path, class: "hc-metric-block" do %>
+          <p class="hc-metric-label"><%= t("product_catalog.manufacturers.index.title") %></p>
+          <p class="hc-metric-support"><%= t("product_catalog.dashboard.index.sections.manage.manufacturers") %></p>
+        <% end %>
+
+        <%= link_to catalogue_comparison_units_path, class: "hc-metric-block" do %>
+          <p class="hc-metric-label"><%= t("product_catalog.comparison_units.index.title") %></p>
+          <p class="hc-metric-support"><%= t("product_catalog.dashboard.index.sections.manage.comparison_units") %></p>
+        <% end %>
+
+        <%= link_to catalogue_product_alternative_groups_path, class: "hc-metric-block" do %>
+          <p class="hc-metric-label"><%= t("product_catalog.product_alternative_groups.index.title") %></p>
+          <p class="hc-metric-support"><%= t("product_catalog.dashboard.index.sections.manage.product_alternative_groups") %></p>
+        <% end %>
+      </div>
+    </div>
+  </section>
+</section>

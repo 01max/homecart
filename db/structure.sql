@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XcTvZlKfwzFA58DrQgftAigeSJFtpOBaQynk1v7oiMVh2qf85wKgqd2OTsOKWJ1
+\restrict 4FB27pPuleIeFeYB92gaAGDBgw7RDSo30Hd62yGacjGfvoc8jwYW68khW6RhfGS
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -26,6 +26,20 @@ COMMENT ON SCHEMA public IS '';
 
 
 --
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
+
+
+--
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -37,6 +51,20 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
+--
+-- Name: unaccent; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION unaccent; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION unaccent IS 'text search dictionary that removes accents';
 
 
 --
@@ -54,6 +82,26 @@ CREATE TYPE public.parser_format AS ENUM (
 
 
 --
+-- Name: price_observation_source; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.price_observation_source AS ENUM (
+    'receipt_line'
+);
+
+
+--
+-- Name: product_alternative_equivalence; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.product_alternative_equivalence AS ENUM (
+    'equivalent',
+    'comparable_size',
+    'different_size'
+);
+
+
+--
 -- Name: receipt_line_kind; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -61,6 +109,28 @@ CREATE TYPE public.receipt_line_kind AS ENUM (
     'item',
     'fee',
     'discount'
+);
+
+
+--
+-- Name: receipt_line_match_source; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.receipt_line_match_source AS ENUM (
+    'user',
+    'heuristic'
+);
+
+
+--
+-- Name: receipt_line_match_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.receipt_line_match_status AS ENUM (
+    'suggested',
+    'confirmed',
+    'rejected',
+    'ignored'
 );
 
 
@@ -160,6 +230,82 @@ CREATE TYPE public.store_channel AS ENUM (
 
 
 --
+-- Name: enforce_price_observation_match_consistency(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.enforce_price_observation_match_consistency() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  matching_decision receipt_line_matches%ROWTYPE;
+BEGIN
+  SELECT *
+  INTO matching_decision
+  FROM receipt_line_matches
+  WHERE id = NEW.receipt_line_match_id;
+
+  IF NOT FOUND THEN
+    RETURN NEW;
+  END IF;
+
+  IF matching_decision.status <> 'confirmed' THEN
+    RAISE EXCEPTION 'price observations require confirmed receipt-line matches'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF ROW(matching_decision.receipt_line_id, matching_decision.product_variant_id)
+    IS DISTINCT FROM ROW(NEW.receipt_line_id, NEW.product_variant_id) THEN
+    RAISE EXCEPTION 'price observations must match their receipt-line match'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: prevent_category_cycle(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.prevent_category_cycle() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  cycle_exists boolean;
+BEGIN
+  IF NEW.parent_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  WITH RECURSIVE ancestors(id, parent_id) AS (
+    SELECT categories.id, categories.parent_id
+    FROM categories
+    WHERE categories.id = NEW.parent_id
+
+    UNION ALL
+
+    SELECT categories.id, categories.parent_id
+    FROM categories
+    INNER JOIN ancestors ON categories.id = ancestors.parent_id
+  )
+  SELECT true
+  INTO cycle_exists
+  FROM ancestors
+  WHERE ancestors.id = NEW.id
+  LIMIT 1;
+
+  IF COALESCE(cycle_exists, false) THEN
+    RAISE EXCEPTION 'categories cannot contain cycles'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: prevent_source_document_evidence_update(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -252,6 +398,180 @@ CREATE TABLE public.ar_internal_metadata (
     value character varying,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: categories; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.categories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    parent_id uuid,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT categories_parent_not_self CHECK (((parent_id IS NULL) OR (parent_id <> id)))
+);
+
+
+--
+-- Name: comparison_units; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comparison_units (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying NOT NULL,
+    symbol character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: manufacturers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.manufacturers (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: price_observations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.price_observations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    receipt_line_match_id uuid NOT NULL,
+    receipt_line_id uuid NOT NULL,
+    product_variant_id uuid NOT NULL,
+    store_id uuid NOT NULL,
+    observed_at timestamp(6) without time zone NOT NULL,
+    purchased_quantity numeric(10,3) NOT NULL,
+    purchased_unit public.receipt_line_unit_of_measure NOT NULL,
+    total_cents integer NOT NULL,
+    pack_unit_price_cents integer NOT NULL,
+    comparison_unit_id uuid,
+    comparison_unit_price_cents integer,
+    source public.price_observation_source NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT price_observations_comparison_unit_pairing CHECK ((((comparison_unit_id IS NULL) AND (comparison_unit_price_cents IS NULL)) OR ((comparison_unit_id IS NOT NULL) AND (comparison_unit_price_cents IS NOT NULL)))),
+    CONSTRAINT price_observations_comparison_unit_price_non_negative CHECK (((comparison_unit_price_cents IS NULL) OR (comparison_unit_price_cents >= 0))),
+    CONSTRAINT price_observations_pack_unit_price_non_negative CHECK ((pack_unit_price_cents >= 0)),
+    CONSTRAINT price_observations_purchased_quantity_positive CHECK ((purchased_quantity > (0)::numeric)),
+    CONSTRAINT price_observations_total_cents_non_negative CHECK ((total_cents >= 0))
+);
+
+
+--
+-- Name: product_alternative_group_memberships; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_alternative_group_memberships (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    product_alternative_group_id uuid NOT NULL,
+    product_variant_id uuid NOT NULL,
+    equivalence public.product_alternative_equivalence NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: product_alternative_groups; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_alternative_groups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    category_id uuid NOT NULL,
+    name character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: product_brands; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_brands (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    retail_brand_id uuid,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: product_variants; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_variants (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    product_id uuid NOT NULL,
+    name character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    package_count integer,
+    quantity_value numeric(10,3),
+    comparison_unit_id uuid,
+    barcode character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT product_variants_package_count_positive CHECK (((package_count IS NULL) OR (package_count > 0))),
+    CONSTRAINT product_variants_quantity_value_positive CHECK (((quantity_value IS NULL) OR (quantity_value > (0)::numeric)))
+);
+
+
+--
+-- Name: products; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.products (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    product_brand_id uuid NOT NULL,
+    manufacturer_id uuid,
+    category_id uuid NOT NULL,
+    name character varying NOT NULL,
+    normalized_name character varying NOT NULL,
+    slug character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: receipt_line_matches; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.receipt_line_matches (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    receipt_line_id uuid NOT NULL,
+    product_variant_id uuid,
+    status public.receipt_line_match_status NOT NULL,
+    source public.receipt_line_match_source NOT NULL,
+    confidence numeric(5,4),
+    label_snapshot text NOT NULL,
+    decided_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    normalized_label_snapshot character varying NOT NULL,
+    CONSTRAINT receipt_line_matches_confidence_probability CHECK (((confidence IS NULL) OR ((confidence >= (0)::numeric) AND (confidence <= (1)::numeric)))),
+    CONSTRAINT receipt_line_matches_product_variant_presence CHECK ((((status = 'ignored'::public.receipt_line_match_status) AND (product_variant_id IS NULL)) OR ((status = ANY (ARRAY['suggested'::public.receipt_line_match_status, 'confirmed'::public.receipt_line_match_status, 'rejected'::public.receipt_line_match_status])) AND (product_variant_id IS NOT NULL))))
 );
 
 
@@ -450,6 +770,86 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 
 --
+-- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.categories
+    ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comparison_units comparison_units_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comparison_units
+    ADD CONSTRAINT comparison_units_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: manufacturers manufacturers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.manufacturers
+    ADD CONSTRAINT manufacturers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: price_observations price_observations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT price_observations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: product_alternative_group_memberships product_alternative_group_memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_alternative_group_memberships
+    ADD CONSTRAINT product_alternative_group_memberships_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: product_alternative_groups product_alternative_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_alternative_groups
+    ADD CONSTRAINT product_alternative_groups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: product_brands product_brands_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_brands
+    ADD CONSTRAINT product_brands_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: product_variants product_variants_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_variants
+    ADD CONSTRAINT product_variants_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT products_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: receipt_line_matches receipt_line_matches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_line_matches
+    ADD CONSTRAINT receipt_line_matches_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: receipt_lines receipt_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -547,6 +947,286 @@ CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_b
 --
 
 CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
+
+
+--
+-- Name: index_alt_group_memberships_on_group_and_variant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_alt_group_memberships_on_group_and_variant ON public.product_alternative_group_memberships USING btree (product_alternative_group_id, product_variant_id);
+
+
+--
+-- Name: index_alt_group_memberships_on_group_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alt_group_memberships_on_group_id ON public.product_alternative_group_memberships USING btree (product_alternative_group_id);
+
+
+--
+-- Name: index_alt_group_memberships_on_variant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alt_group_memberships_on_variant_id ON public.product_alternative_group_memberships USING btree (product_variant_id);
+
+
+--
+-- Name: index_categories_on_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_categories_on_normalized_name ON public.categories USING btree (normalized_name);
+
+
+--
+-- Name: index_categories_on_parent_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_categories_on_parent_id ON public.categories USING btree (parent_id);
+
+
+--
+-- Name: index_categories_on_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_categories_on_slug ON public.categories USING btree (slug);
+
+
+--
+-- Name: index_comparison_units_on_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_comparison_units_on_normalized_name ON public.comparison_units USING btree (normalized_name);
+
+
+--
+-- Name: index_comparison_units_on_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_comparison_units_on_slug ON public.comparison_units USING btree (slug);
+
+
+--
+-- Name: index_comparison_units_on_symbol; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_comparison_units_on_symbol ON public.comparison_units USING btree (symbol);
+
+
+--
+-- Name: index_manufacturers_on_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_manufacturers_on_normalized_name ON public.manufacturers USING btree (normalized_name);
+
+
+--
+-- Name: index_manufacturers_on_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_manufacturers_on_slug ON public.manufacturers USING btree (slug);
+
+
+--
+-- Name: index_price_observations_on_comparison_unit_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_price_observations_on_comparison_unit_id ON public.price_observations USING btree (comparison_unit_id);
+
+
+--
+-- Name: index_price_observations_on_product_variant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_price_observations_on_product_variant_id ON public.price_observations USING btree (product_variant_id);
+
+
+--
+-- Name: index_price_observations_on_receipt_line_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_price_observations_on_receipt_line_id ON public.price_observations USING btree (receipt_line_id);
+
+
+--
+-- Name: index_price_observations_on_receipt_line_match_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_price_observations_on_receipt_line_match_id ON public.price_observations USING btree (receipt_line_match_id);
+
+
+--
+-- Name: index_price_observations_on_store_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_price_observations_on_store_id ON public.price_observations USING btree (store_id);
+
+
+--
+-- Name: index_price_observations_on_store_observed_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_price_observations_on_store_observed_at ON public.price_observations USING btree (store_id, observed_at);
+
+
+--
+-- Name: index_price_observations_on_variant_store_observed_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_price_observations_on_variant_store_observed_at ON public.price_observations USING btree (product_variant_id, store_id, observed_at);
+
+
+--
+-- Name: index_product_alternative_groups_on_category_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_product_alternative_groups_on_category_id ON public.product_alternative_groups USING btree (category_id);
+
+
+--
+-- Name: index_product_alternative_groups_on_category_id_and_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_alternative_groups_on_category_id_and_name ON public.product_alternative_groups USING btree (category_id, name);
+
+
+--
+-- Name: index_product_brands_on_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_brands_on_normalized_name ON public.product_brands USING btree (normalized_name);
+
+
+--
+-- Name: index_product_brands_on_retail_brand_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_product_brands_on_retail_brand_id ON public.product_brands USING btree (retail_brand_id);
+
+
+--
+-- Name: index_product_brands_on_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_brands_on_slug ON public.product_brands USING btree (slug);
+
+
+--
+-- Name: index_product_variants_on_barcode; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_variants_on_barcode ON public.product_variants USING btree (barcode) WHERE (barcode IS NOT NULL);
+
+
+--
+-- Name: index_product_variants_on_comparison_unit_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_product_variants_on_comparison_unit_id ON public.product_variants USING btree (comparison_unit_id);
+
+
+--
+-- Name: index_product_variants_on_normalized_name_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_product_variants_on_normalized_name_trgm ON public.product_variants USING gin (normalized_name public.gin_trgm_ops);
+
+
+--
+-- Name: index_product_variants_on_product_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_product_variants_on_product_id ON public.product_variants USING btree (product_id);
+
+
+--
+-- Name: index_product_variants_on_product_id_and_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_variants_on_product_id_and_normalized_name ON public.product_variants USING btree (product_id, normalized_name);
+
+
+--
+-- Name: index_product_variants_on_product_id_and_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_product_variants_on_product_id_and_slug ON public.product_variants USING btree (product_id, slug);
+
+
+--
+-- Name: index_products_on_brand_category_normalized_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_products_on_brand_category_normalized_name ON public.products USING btree (product_brand_id, category_id, normalized_name);
+
+
+--
+-- Name: index_products_on_brand_category_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_products_on_brand_category_slug ON public.products USING btree (product_brand_id, category_id, slug);
+
+
+--
+-- Name: index_products_on_category_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_products_on_category_id ON public.products USING btree (category_id);
+
+
+--
+-- Name: index_products_on_manufacturer_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_products_on_manufacturer_id ON public.products USING btree (manufacturer_id);
+
+
+--
+-- Name: index_products_on_product_brand_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_products_on_product_brand_id ON public.products USING btree (product_brand_id);
+
+
+--
+-- Name: index_receipt_line_matches_on_product_variant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_line_matches_on_product_variant_id ON public.receipt_line_matches USING btree (product_variant_id);
+
+
+--
+-- Name: index_receipt_line_matches_on_product_variant_id_and_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_line_matches_on_product_variant_id_and_status ON public.receipt_line_matches USING btree (product_variant_id, status);
+
+
+--
+-- Name: index_receipt_line_matches_on_receipt_line_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_line_matches_on_receipt_line_id ON public.receipt_line_matches USING btree (receipt_line_id);
+
+
+--
+-- Name: index_receipt_line_matches_on_receipt_line_id_and_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_line_matches_on_receipt_line_id_and_status ON public.receipt_line_matches USING btree (receipt_line_id, status);
+
+
+--
+-- Name: index_receipt_line_matches_on_status_normalized_label; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_receipt_line_matches_on_status_normalized_label ON public.receipt_line_matches USING btree (status, normalized_label_snapshot);
+
+
+--
+-- Name: index_receipt_line_matches_on_terminal_decision; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_receipt_line_matches_on_terminal_decision ON public.receipt_line_matches USING btree (receipt_line_id) WHERE (status = ANY (ARRAY['confirmed'::public.receipt_line_match_status, 'ignored'::public.receipt_line_match_status]));
 
 
 --
@@ -669,6 +1349,20 @@ CREATE INDEX index_text_extractions_on_source_document_id ON public.text_extract
 
 
 --
+-- Name: categories categories_prevent_cycle; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER categories_prevent_cycle AFTER INSERT OR UPDATE OF parent_id ON public.categories FOR EACH ROW EXECUTE FUNCTION public.prevent_category_cycle();
+
+
+--
+-- Name: price_observations price_observations_match_consistency; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER price_observations_match_consistency BEFORE INSERT OR UPDATE OF receipt_line_match_id, receipt_line_id, product_variant_id ON public.price_observations FOR EACH ROW EXECUTE FUNCTION public.enforce_price_observation_match_consistency();
+
+
+--
 -- Name: source_documents source_documents_evidence_immutable; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -707,11 +1401,51 @@ ALTER TABLE ONLY public.receipts
 
 
 --
+-- Name: products fk_rails_1ac0ad410f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT fk_rails_1ac0ad410f FOREIGN KEY (product_brand_id) REFERENCES public.product_brands(id);
+
+
+--
+-- Name: price_observations fk_rails_1d21289250; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT fk_rails_1d21289250 FOREIGN KEY (receipt_line_id) REFERENCES public.receipt_lines(id);
+
+
+--
+-- Name: product_alternative_group_memberships fk_rails_23ff1e1723; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_alternative_group_memberships
+    ADD CONSTRAINT fk_rails_23ff1e1723 FOREIGN KEY (product_alternative_group_id) REFERENCES public.product_alternative_groups(id);
+
+
+--
+-- Name: products fk_rails_33082c31de; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT fk_rails_33082c31de FOREIGN KEY (manufacturer_id) REFERENCES public.manufacturers(id);
+
+
+--
 -- Name: source_documents fk_rails_479c8da4db; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.source_documents
     ADD CONSTRAINT fk_rails_479c8da4db FOREIGN KEY (store_id) REFERENCES public.stores(id);
+
+
+--
+-- Name: price_observations fk_rails_4dabc178e7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT fk_rails_4dabc178e7 FOREIGN KEY (store_id) REFERENCES public.stores(id);
 
 
 --
@@ -739,6 +1473,38 @@ ALTER TABLE ONLY public.receipt_lines
 
 
 --
+-- Name: receipt_line_matches fk_rails_695792acf1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_line_matches
+    ADD CONSTRAINT fk_rails_695792acf1 FOREIGN KEY (receipt_line_id) REFERENCES public.receipt_lines(id);
+
+
+--
+-- Name: product_variants fk_rails_6d98312429; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_variants
+    ADD CONSTRAINT fk_rails_6d98312429 FOREIGN KEY (comparison_unit_id) REFERENCES public.comparison_units(id);
+
+
+--
+-- Name: price_observations fk_rails_822332e720; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT fk_rails_822332e720 FOREIGN KEY (product_variant_id) REFERENCES public.product_variants(id);
+
+
+--
+-- Name: categories fk_rails_82f48f7407; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.categories
+    ADD CONSTRAINT fk_rails_82f48f7407 FOREIGN KEY (parent_id) REFERENCES public.categories(id);
+
+
+--
 -- Name: text_extractions fk_rails_848b654367; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -755,11 +1521,67 @@ ALTER TABLE ONLY public.active_storage_variant_records
 
 
 --
+-- Name: price_observations fk_rails_a0cce9a33a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT fk_rails_a0cce9a33a FOREIGN KEY (receipt_line_match_id) REFERENCES public.receipt_line_matches(id);
+
+
+--
+-- Name: price_observations fk_rails_a1d6cd6649; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.price_observations
+    ADD CONSTRAINT fk_rails_a1d6cd6649 FOREIGN KEY (comparison_unit_id) REFERENCES public.comparison_units(id);
+
+
+--
+-- Name: product_alternative_group_memberships fk_rails_b05436b857; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_alternative_group_memberships
+    ADD CONSTRAINT fk_rails_b05436b857 FOREIGN KEY (product_variant_id) REFERENCES public.product_variants(id);
+
+
+--
 -- Name: active_storage_attachments fk_rails_c3b3935057; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.active_storage_attachments
     ADD CONSTRAINT fk_rails_c3b3935057 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
+-- Name: product_brands fk_rails_c55d12d216; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_brands
+    ADD CONSTRAINT fk_rails_c55d12d216 FOREIGN KEY (retail_brand_id) REFERENCES public.retail_brands(id);
+
+
+--
+-- Name: receipt_line_matches fk_rails_c564eea3b7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipt_line_matches
+    ADD CONSTRAINT fk_rails_c564eea3b7 FOREIGN KEY (product_variant_id) REFERENCES public.product_variants(id);
+
+
+--
+-- Name: product_variants fk_rails_dae52f850b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_variants
+    ADD CONSTRAINT fk_rails_dae52f850b FOREIGN KEY (product_id) REFERENCES public.products(id);
+
+
+--
+-- Name: product_alternative_groups fk_rails_df07e520b6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_alternative_groups
+    ADD CONSTRAINT fk_rails_df07e520b6 FOREIGN KEY (category_id) REFERENCES public.categories(id);
 
 
 --
@@ -779,16 +1601,24 @@ ALTER TABLE ONLY public.receipt_promotions
 
 
 --
+-- Name: products fk_rails_fb915499a4; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT fk_rails_fb915499a4 FOREIGN KEY (category_id) REFERENCES public.categories(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XcTvZlKfwzFA58DrQgftAigeSJFtpOBaQynk1v7oiMVh2qf85wKgqd2OTsOKWJ1
+\unrestrict 4FB27pPuleIeFeYB92gaAGDBgw7RDSo30Hd62yGacjGfvoc8jwYW68khW6RhfGS
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict Dba4tiLI2KxAo7ovJdFLmSDHt9PSPxNcnVS9RZV06XKVUrkWa08UGFYlawd1hs1
+\restrict OH0dkfk8WanQOwWphQCsifMpyWvPiWJDldvk4ny3vs9BdA30FfeYR8AQCMW3ooF
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -803,6 +1633,14 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Data for Name: ar_internal_metadata; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('environment', 'test', '2026-06-17 20:45:31.447697', '2026-06-17 20:45:31.4477');
+INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('schema_sha1', '26f1f5b5f43a3e381ddab05d4634e4d852b6b98d', '2026-06-17 20:45:31.449223', '2026-06-17 20:45:31.449224');
+
 
 --
 -- Data for Name: schema_migrations; Type: TABLE DATA; Schema: public; Owner: -
@@ -820,12 +1658,28 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260601113500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601124500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260601130500');
 INSERT INTO public.schema_migrations (version) VALUES ('20260606200500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608120000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608121000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608122000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608123000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608124000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608125000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609090000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609091000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609092000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609093000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609094000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609095000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609100000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609101000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260614130000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260615191000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260617220000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260617221000');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Dba4tiLI2KxAo7ovJdFLmSDHt9PSPxNcnVS9RZV06XKVUrkWa08UGFYlawd1hs1
+\unrestrict OH0dkfk8WanQOwWphQCsifMpyWvPiWJDldvk4ny3vs9BdA30FfeYR8AQCMW3ooF

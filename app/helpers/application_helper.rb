@@ -37,4 +37,30 @@ module ApplicationHelper
       )
     end
   end
+
+  def hc_pagy_nav(pagy)
+    return if pagy.pages <= 1
+
+    content_tag(:nav, class: "hc-pagination mt-4", aria: { label: t("app.pagination.label") }) do
+      safe_join(
+        [
+          hc_pagy_link(pagy.previous, t("app.pagination.previous"), disabled: pagy.previous.blank?),
+          content_tag(:span,
+            t("app.pagination.status", count: pagy.count, page: pagy.page, pages: pagy.pages),
+            class: "hc-pagination-status"),
+          hc_pagy_link(pagy.next, t("app.pagination.next"), disabled: pagy.next.blank?)
+        ]
+      )
+    end
+  end
+
+  private
+
+  def hc_pagy_link(page, label, disabled:)
+    classes = "hc-button hc-button--subtle hc-button--compact hc-pagination-link"
+
+    return content_tag(:span, label, class: class_names(classes, "hc-pagination-link--disabled"), aria: { disabled: "true" }) if disabled
+
+    link_to label, url_for(request.query_parameters.merge(page: page)), class: classes
+  end
 end

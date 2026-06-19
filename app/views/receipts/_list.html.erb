@@ -1,5 +1,7 @@
 <% current_sort_column = local_assigns.fetch(:sort_column, "purchased_at") %>
 <% current_sort_direction = local_assigns.fetch(:sort_direction, "desc") %>
+<% pagy = local_assigns[:pagy] %>
+<% receipt_count = pagy ? pagy.count : receipts.size %>
 <% sort_link_params = lambda do |column|
      next_direction = current_sort_column == column && current_sort_direction == "asc" ? "desc" : "asc"
      { parser_status: selected_parser_status, sort: column, direction: next_direction }.compact
@@ -31,7 +33,7 @@
           <% end %>
         </p>
       </div>
-      <p class="hc-badge hc-badge--neutral"><%= t("receipts.index.workbench.count", count: receipts.size) %></p>
+      <p class="hc-badge hc-badge--neutral"><%= t("receipts.index.workbench.count", count: receipt_count) %></p>
     </div>
 
     <% if receipts.any? %>
@@ -93,5 +95,7 @@
         <p class="hc-body text-sm"><%= t("receipts.index.empty") %></p>
       </div>
     <% end %>
+
+    <%= hc_pagy_nav(pagy) if pagy %>
   </div>
 </div>
