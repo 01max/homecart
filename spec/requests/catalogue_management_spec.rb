@@ -2,15 +2,19 @@ require "rails_helper"
 
 RSpec.describe "Catalogue management", type: :request do
   describe "catalogue dashboard" do
-    it "links to the catalogue management screens" do
+    before do
       get catalogue_root_path
+    end
 
+    it "renders successfully" do
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(%(href="/catalogue/categories"))
-      expect(response.body).to include(%(href="/catalogue/product_brands"))
-      expect(response.body).to include(%(href="/catalogue/products"))
-      expect(response.body).to include(%(href="/catalogue/product_variants"))
-      expect(response.body).to include(%(href="/catalogue/product_alternative_groups"))
+    end
+
+    it "links to the catalogue management screens" do
+      expect(response.body).to include(*catalogue_dashboard_links)
+    end
+
+    it "shows the management section without page-level actions" do
       expect(response.body).to include(I18n.t("product_catalog.dashboard.index.sections.manage.categories"))
       expect(response.body).not_to include(%(class="hc-page-actions"))
     end
@@ -162,6 +166,16 @@ RSpec.describe "Catalogue management", type: :request do
       catalogue_products_path,
       catalogue_product_variants_path,
       catalogue_product_alternative_groups_path
+    ]
+  end
+
+  def catalogue_dashboard_links
+    [
+      %(href="/catalogue/categories"),
+      %(href="/catalogue/product_brands"),
+      %(href="/catalogue/products"),
+      %(href="/catalogue/product_variants"),
+      %(href="/catalogue/product_alternative_groups")
     ]
   end
 
