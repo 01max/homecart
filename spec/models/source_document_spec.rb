@@ -7,12 +7,22 @@ RSpec.describe SourceDocument do
     expect(source_document.store.source_documents).to contain_exactly(source_document)
   end
 
+  it "owns source detection attempts" do
+    detection = create(:source_document_detection, source_document: source_document)
+
+    expect(source_document.source_document_detections).to contain_exactly(detection)
+  end
+
   it "declares accepted MIME types" do
     expect(described_class.mime_types).to include("pdf" => "application/pdf", "png" => "image/png", "jpeg" => "image/jpeg")
   end
 
   it "declares parser formats" do
     expect(described_class.parser_formats.keys).to include("auchan_paper_v1", "leclerc_paper_v1", "u_paper_v2")
+  end
+
+  it "declares source detection statuses" do
+    expect(described_class.source_detection_statuses.keys).to contain_exactly("pending", "classified", "needs_classification")
   end
 
   it "validates content hash format" do
@@ -27,8 +37,26 @@ RSpec.describe SourceDocument do
 
     expect(document).not_to be_valid
     expect(document.errors[:mime_type]).to include("can't be blank")
-    expect(document.errors[:parser_format]).to include("can't be blank")
     expect(document.errors[:ingested_at]).to include("can't be blank")
+  end
+
+  it "requires a source detection status" do
+    document = build(:source_document, source_detection_status: nil)
+
+    expect(document).not_to be_valid
+    expect(document.errors[:source_detection_status]).to include("can't be blank")
+  end
+
+  it "requires store and parser format when classified" do
+    document = build(:source_document, :pending_classification, source_detection_status: "classified")
+
+    expect(document).not_to be_valid
+    expect(document.errors[:store]).to include("can't be blank")
+    expect(document.errors[:parser_format]).to include("can't be blank")
+  end
+
+  it "allows pending classification without store or parser format" do
+    expect(build(:source_document, :pending_classification)).to be_valid
   end
 
   it "requires content hash uniqueness" do
