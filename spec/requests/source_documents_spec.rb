@@ -2,10 +2,10 @@ require "rails_helper"
 require "digest"
 
 RSpec.describe "Source documents", type: :request do
-  let(:retail_brand) { create(:retail_brand, slug: "leclerc").tap { |brand| brand.update!(name: "E.Leclerc") } }
-  let(:store) { create(:store, retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
-  let(:auchan_brand) { create(:retail_brand, slug: "auchan").tap { |brand| brand.update!(name: "Auchan") } }
-  let(:u_brand) { create(:retail_brand, slug: "magasins-u").tap { |brand| brand.update!(name: "Magasins U") } }
+  let(:retail_brand) { catalog_brand(slug: "leclerc", name: "E.Leclerc") }
+  let(:store) { catalog_store(retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
+  let(:auchan_brand) { catalog_brand(slug: "auchan", name: "Auchan") }
+  let(:u_brand) { catalog_brand(slug: "magasins-u", name: "Magasins U") }
   let(:fixture_path) { Rails.root.join("spec/fixtures/files/receipt_text.pdf") }
 
   before do
@@ -18,6 +18,25 @@ RSpec.describe "Source documents", type: :request do
 
   def post_upload(params)
     post source_documents_path, params: { source_document: params }
+  end
+
+  def catalog_brand(slug:, name:)
+    RetailBrand.find_or_initialize_by(slug: slug).tap do |brand|
+      brand.name = name
+      brand.aliases ||= []
+      brand.save!
+    end
+  end
+
+  def catalog_store(retail_brand:, location_name:, channel:, identifiers: {})
+    Store.find_or_initialize_by(
+      retail_brand: retail_brand,
+      location_name: location_name,
+      channel: channel
+    ).tap do |store|
+      store.identifiers = identifiers
+      store.save!
+    end
   end
 
   def expect_upload_form
@@ -44,10 +63,10 @@ RSpec.describe "Source documents", type: :request do
 
   def create_parser_hint_stores
     store
-    create(:store, retail_brand: auchan_brand, location_name: "Villeneuve sur Lot", channel: "physical")
-    create(:store, retail_brand: retail_brand, location_name: "PARISDIF", channel: "drive")
-    create(:store, retail_brand: u_brand, location_name: "Pujols", channel: "physical")
-    create(:store,
+    catalog_store(retail_brand: auchan_brand, location_name: "Villeneuve sur Lot", channel: "physical")
+    catalog_store(retail_brand: retail_brand, location_name: "PARISDIF", channel: "drive")
+    catalog_store(retail_brand: u_brand, location_name: "Pujols", channel: "physical")
+    catalog_store(
       retail_brand: retail_brand,
       location_name: "Legacy override",
       channel: "physical",
@@ -56,16 +75,9 @@ RSpec.describe "Source documents", type: :request do
   end
 
   def create_unknown_parser_hint_store
-    brand = RetailBrand.find_or_create_by!(slug: "retailer-a") do |retail_brand|
-      retail_brand.name = "Retailer A"
-      retail_brand.aliases = []
-    end
+    brand = catalog_brand(slug: "retailer-a", name: "Retailer A")
 
-    Store.find_or_create_by!(
-      retail_brand: brand,
-      location_name: "Location 01",
-      channel: "physical"
-    )
+    catalog_store(retail_brand: brand, location_name: "Location 01", channel: "physical")
   end
 
   def expect_option_default(label, parser_format)
@@ -86,7 +98,15 @@ RSpec.describe "Source documents", type: :request do
 
   def expect_created_source_document(source_document)
     expect(source_document).to have_attributes(store: store)
+    expect(source_document).to be_pending
     expect(source_document).to be_parser_format_leclerc_paper_v1
+    expect(source_document.content_hash).to eq(Digest::SHA256.file(fixture_path).hexdigest)
+    expect(source_document.original_file).to be_attached
+  end
+
+  def expect_pending_source_document(source_document)
+    expect(source_document).to have_attributes(store: nil, parser_format: nil)
+    expect(source_document).to be_pending
     expect(source_document.content_hash).to eq(Digest::SHA256.file(fixture_path).hexdigest)
     expect(source_document.original_file).to be_attached
   end
@@ -194,14 +214,25 @@ RSpec.describe "Source documents", type: :request do
     expect(Receipt::ProcessSourceDocumentJob).not_to have_received(:perform_later)
   end
 
-  it "rejects uploads without a store or parser format before creating a source document" do
+  it "accepts uploads without a store or parser format as pending source detection" do
     expect do
       post_upload(file: upload_file)
+    end.to change(SourceDocument, :count).by(1)
+
+    source_document = SourceDocument.last
+    expect_pending_source_document(source_document)
+    expect(Receipt::ProcessSourceDocumentJob).to have_received(:perform_later).with(source_document)
+    expect(response).to redirect_to(source_document_path(source_document))
+  end
+
+  it "rejects invalid classification hints before creating a source document" do
+    expect do
+      post_upload(file: upload_file, store_id: "00000000-0000-0000-0000-000000000000", parser_format: "unknown.paper.v1")
     end.not_to change(SourceDocument, :count)
 
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.body).to include(I18n.t("source_documents.create.errors.missing_store"))
-    expect(response.body).to include(I18n.t("source_documents.create.errors.missing_parser_format"))
+    expect(response.body).to include(I18n.t("source_documents.create.errors.invalid_store"))
+    expect(response.body).to include(I18n.t("source_documents.create.errors.invalid_parser_format"))
     expect(Receipt::ProcessSourceDocumentJob).not_to have_received(:perform_later)
   end
 

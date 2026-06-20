@@ -33,17 +33,24 @@ RSpec.describe ReceiptIngestion::UploadService do
     expect(source_document).to have_attributes(store: store, content_hash: Digest::SHA256.hexdigest(content))
     expect(source_document).to be_mime_type_pdf
     expect(source_document).to be_parser_format_leclerc_paper_v1
+    expect(source_document).to be_pending
     expect(source_document.original_file).to be_attached
   end
 
-  def call_service(file)
+  def call_service(file, store: self.store, parser_format: "leclerc.paper.v1")
     described_class.call(
       file: file,
       store: store,
-      parser_format: "leclerc.paper.v1",
+      parser_format: parser_format,
       job_class: job_class,
       broadcaster: broadcaster
     )
+  end
+
+  def expect_pending_detection_source_document(source_document, content:)
+    expect(source_document).to have_attributes(store: nil, parser_format: nil, content_hash: Digest::SHA256.hexdigest(content))
+    expect(source_document).to be_pending
+    expect(source_document.original_file).to be_attached
   end
 
   def expect_queued_broadcast(source_document)
@@ -65,6 +72,18 @@ RSpec.describe ReceiptIngestion::UploadService do
     expect_uploaded_source_document(source_document, content: content)
     expect(job_class).to have_received(:perform_later).with(source_document)
     expect_queued_broadcast(source_document)
+  end
+
+  it "allows source classification hints to be omitted" do
+    content = "automatic classification receipt"
+    file = uploaded_file(content: content)
+
+    result = call_service(file, store: nil, parser_format: nil)
+
+    expect(result.duplicate).to be(false)
+    expect_pending_detection_source_document(result.source_document, content: content)
+    expect(job_class).to have_received(:perform_later).with(result.source_document)
+    expect_queued_broadcast(result.source_document)
   end
 
   it "returns an existing source document for duplicate content without enqueueing processing" do

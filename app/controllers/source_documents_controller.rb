@@ -1,8 +1,8 @@
 # Handles user-facing receipt source uploads.
 #
 # The controller keeps HTTP concerns local: loading dropdown choices, validating
-# required form fields, and shaping redirects/renders. Upload persistence,
-# content hashing, deduplication, attachment, and job enqueueing stay in
+# submitted hints, and shaping redirects/renders. Upload persistence, content
+# hashing, deduplication, attachment, and job enqueueing stay in
 # ReceiptIngestion::UploadService.
 class SourceDocumentsController < ApplicationController
   helper_method :store_option_label, :store_options_for_select
@@ -57,8 +57,8 @@ class SourceDocumentsController < ApplicationController
   def upload_form_errors
     [
       missing_file_error,
-      missing_store_error,
-      missing_parser_format_error
+      invalid_store_error,
+      invalid_parser_format_error
     ].compact
   end
 
@@ -68,16 +68,17 @@ class SourceDocumentsController < ApplicationController
     t(".errors.missing_file")
   end
 
-  def missing_store_error
-    return if selected_store.present?
+  def invalid_store_error
+    return if upload_params[:store_id].blank? || selected_store.present?
 
-    t(".errors.missing_store")
+    t(".errors.invalid_store")
   end
 
-  def missing_parser_format_error
-    return if @parser_formats.include?(selected_parser_format)
+  def invalid_parser_format_error
+    parser_format = selected_parser_format
+    return if parser_format.blank? || @parser_formats.include?(parser_format)
 
-    t(".errors.missing_parser_format")
+    t(".errors.invalid_parser_format")
   end
 
   def selected_store
@@ -87,7 +88,7 @@ class SourceDocumentsController < ApplicationController
   end
 
   def selected_parser_format
-    upload_params[:parser_format]
+    upload_params[:parser_format].presence
   end
 
   def load_source_document

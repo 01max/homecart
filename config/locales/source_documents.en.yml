@@ -30,6 +30,8 @@ en:
         missing_file: "Choose a receipt file."
         missing_store: "Choose a store."
         missing_parser_format: "Choose a parser format."
+        invalid_store: "Choose an existing store."
+        invalid_parser_format: "Choose a supported parser format."
     show:
       eyebrow: "Receipt source"
       title: "Source document"
