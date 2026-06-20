@@ -208,6 +208,17 @@ CREATE TYPE public.receipt_promotion_unit AS ENUM (
 
 
 --
+-- Name: source_detection_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.source_detection_status AS ENUM (
+    'pending',
+    'classified',
+    'needs_classification'
+);
+
+
+--
 -- Name: source_document_detection_confidence; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -740,9 +751,11 @@ CREATE TABLE public.source_documents (
     ingested_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    parser_format public.parser_format NOT NULL,
+    parser_format public.parser_format,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    store_id uuid NOT NULL
+    store_id uuid,
+    source_detection_status public.source_detection_status DEFAULT 'pending'::public.source_detection_status NOT NULL,
+    CONSTRAINT source_documents_classified_source_present CHECK (((source_detection_status <> 'classified'::public.source_detection_status) OR ((store_id IS NOT NULL) AND (parser_format IS NOT NULL))))
 );
 
 
@@ -1786,6 +1799,7 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260615191000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260617220000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260617221000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260620090000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260620091000');
 
 
 --
