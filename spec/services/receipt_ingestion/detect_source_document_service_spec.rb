@@ -34,6 +34,23 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     create(:source_document, :pending_classification, store: create(:store))
   end
 
+  def source_document_with_parser_hint(parser_format = nil)
+    parser_format ||= leclerc_paper_format
+    create(:source_document, :pending_classification, parser_format: parser_format)
+  end
+
+  def leclerc_paper_format
+    "leclerc.paper.v1"
+  end
+
+  def leclerc_web_format
+    "leclerc.web.v1"
+  end
+
+  def store_match_sources(result)
+    result.evidence.filter_map { |entry| entry["source"] if entry["code"] == "store_metadata_match" }
+  end
+
   def expect_detection_matches_result(result)
     detection = result.detection
 
@@ -43,6 +60,24 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
       store: result.store,
       store_confidence: result.store_confidence,
       evidence: result.evidence
+    )
+  end
+
+  def expect_detected_store(result, store)
+    expect(result).to have_attributes(store: store, store_confidence: "high")
+    expect(result.detection.store).to eq(store)
+    expect(result.source_document.store).to eq(store)
+    expect(result.evidence).to include(
+      a_hash_including("code" => "store_metadata_match", "store_id" => store.id)
+    )
+  end
+
+  def expect_identifier_match_sources(result)
+    expect(store_match_sources(result)).to include(
+      "store.identifiers.receipt_store_codes",
+      "store.identifiers.legal_entities",
+      "store.identifiers.detection_hints.channel_markers",
+      "store.identifiers.private_detection_hints.cashier_names"
     )
   end
 
@@ -75,7 +110,7 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
       store: nil,
       store_confidence: "none"
     )
-    expect(evidence_codes(result)).to contain_exactly("parser_format_not_detected", "store_detection_pending")
+    expect(evidence_codes(result)).to contain_exactly("parser_format_not_detected", "store_not_detected")
     expect_detection_matches_result(result)
   end
 
@@ -87,6 +122,17 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
       store_confidence: "manual"
     )
     expect(evidence_codes(result)).to contain_exactly("parser_format_not_detected", "explicit_store")
+  end
+
+  def detector_identifier_store
+    create(:store,
+      identifiers: {
+        "receipt_store_codes" => [ "95191" ],
+        "legal_entities" => [ "PRIVATE ENTITY" ],
+        "detection_hints" => { "channel_markers" => [ "HEADER MARKER" ] },
+        "private_detection_hints" => { "cashier_names" => [ "PRIVATE CASHIER" ] }
+      }
+    )
   end
 
   parser_fixture_examples.each do |parser_format, filename|
@@ -153,6 +199,61 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     expect(source_document.reload.store).to eq(store)
   end
 
+  it "detects a store from receipt header patterns" do
+    store = create(:store, identifiers: header_pattern_identifiers)
+    text_extraction = text_extraction_for("PRIVATE HEADER", source_document: source_document_with_parser_hint)
+
+    result = call_service(text_extraction)
+
+    expect(result).to be_classified
+    expect_detected_store(result, store)
+    expect(evidence_codes(result)).to include("store_default_parser_format")
+  end
+
+  it "detects a store from detector-friendly identifier values" do
+    store = detector_identifier_store
+    text_extraction = text_extraction_for(identifier_match_text, source_document: source_document_with_parser_hint)
+
+    result = call_service(text_extraction)
+
+    expect_detected_store(result, store)
+    expect_identifier_match_sources(result)
+  end
+
+  it "detects a store from its location name" do
+    store = create(:store, location_name: "Downtown Market")
+    text_extraction = text_extraction_for("Receipt DOWNTOWN MARKET", source_document: source_document_with_parser_hint)
+
+    result = call_service(text_extraction)
+
+    expect_detected_store(result, store)
+    expect(store_match_sources(result)).to include("store.location_name")
+  end
+
+  it "uses parser-format channel narrowing for retail brand alias matches" do
+    brand = create(:retail_brand, aliases: [ "Retailer Web" ])
+    drive_store = create(:store, retail_brand: brand, channel: "drive")
+    create(:store, retail_brand: brand, channel: "physical")
+    text_extraction = text_extraction_for("Retailer Web", source_document: source_document_with_parser_hint(leclerc_web_format))
+
+    result = call_service(text_extraction)
+
+    expect_detected_store(result, drive_store)
+    expect(store_match_sources(result)).to include("retail_brand.aliases")
+  end
+
+  it "blocks store selection when multiple stores remain plausible" do
+    brand = create(:retail_brand, aliases: [ "Retailer Same" ])
+    create_list(:store, 2, retail_brand: brand, channel: "physical")
+    text_extraction = text_extraction_for("Retailer Same", source_document: source_document_with_parser_hint)
+
+    result = call_service(text_extraction)
+
+    expect(result).to be_needs_classification
+    expect(result).to have_attributes(store: nil, store_confidence: "none")
+    expect(evidence_codes(result)).to include("store_ambiguous")
+  end
+
   it "keeps a detected parser format when store classification is still missing" do
     source_document = create(:source_document, :pending_classification)
     text_extraction = text_extraction_for(fixture_text("leclerc_web_v1_drive.txt"), source_document: source_document)
@@ -174,5 +275,16 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     expect(result).to have_attributes(parser_format: nil, parser_confidence: "none")
     expect(evidence_codes(result)).to include("parser_format_ambiguous")
     expect(result.source_document.parser_format).to be_nil
+  end
+
+  def header_pattern_identifiers
+    {
+      "default_parser_format" => leclerc_paper_format,
+      "receipt_header_patterns" => [ "PRIVATE HEADER" ]
+    }
+  end
+
+  def identifier_match_text
+    "Magasin 95191\nPRIVATE ENTITY\nHEADER MARKER\nPRIVATE CASHIER"
   end
 end
