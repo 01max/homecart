@@ -152,15 +152,17 @@ module ReceiptIngestion
 
     def select_parser_format
       parser_format = explicit_parser_format
-      return manual_selection(parser_format, explicit_parser_format_evidence(parser_format)) if parser_format.present?
+      detected_selection = detected_parser_selection
+      return explicit_parser_selection(parser_format, detected_selection) if parser_format.present?
 
-      detected_parser_selection
+      detected_selection
     end
 
     def select_store(parser_format:)
-      return manual_selection(source_document.store, explicit_store_evidence) if source_document.store.present?
+      detected_selection = detected_store_selection(parser_format: parser_format)
+      return explicit_store_selection(source_document.store, detected_selection) if source_document.store.present?
 
-      detected_store_selection(parser_format: parser_format)
+      detected_selection
     end
 
     def explicit_parser_format
@@ -227,8 +229,28 @@ module ReceiptIngestion
       evidence
     end
 
+    def explicit_parser_selection(parser_format, detected_selection)
+      evidence = [ explicit_parser_format_evidence(parser_format) ]
+      evidence.concat(detector_evidence(detected_selection, ignored_code: "parser_format_not_detected"))
+      detected_parser_formats = parser_format_values(detected_selection)
+      if explicit_conflict?(parser_format, detected_parser_formats)
+        evidence << explicit_parser_format_conflict_evidence(parser_format, detected_parser_formats)
+      end
+
+      manual_selection(parser_format, evidence)
+    end
+
+    def explicit_store_selection(store, detected_selection)
+      evidence = [ explicit_store_evidence ]
+      evidence.concat(detector_evidence(detected_selection, ignored_code: "store_not_detected"))
+      detected_store_ids = store_ids(detected_selection)
+      evidence << explicit_store_conflict_evidence(store, detected_store_ids) if explicit_conflict?(store.id, detected_store_ids)
+
+      manual_selection(store, evidence)
+    end
+
     def manual_selection(value, evidence)
-      Selection.new(value, SourceDocumentDetection::CONFIDENCES.fetch(:manual), [ evidence ])
+      Selection.new(value, SourceDocumentDetection::CONFIDENCES.fetch(:manual), Array(evidence))
     end
 
     def high_confidence_selection(value, evidence)
@@ -257,6 +279,36 @@ module ReceiptIngestion
       }
 
       Selection.new(nil, SourceDocumentDetection::CONFIDENCES.fetch(:none), evidence)
+    end
+
+    def detector_evidence(selection, ignored_code:)
+      selection.evidence.reject { |entry| entry["code"] == ignored_code }
+    end
+
+    def parser_format_values(selection)
+      values = []
+      values << selection.value if selection.value.present?
+      selection.evidence.each do |entry|
+        values << entry["parser_format"] if entry["parser_format"].present?
+        values.concat(entry["parser_formats"]) if entry["parser_formats"].present?
+      end
+
+      values.compact.uniq.sort
+    end
+
+    def store_ids(selection)
+      ids = []
+      ids << selection.value.id if selection.value.respond_to?(:id)
+      selection.evidence.each do |entry|
+        ids << entry["store_id"] if entry["store_id"].present?
+        ids.concat(entry["store_ids"]) if entry["store_ids"].present?
+      end
+
+      ids.compact.map(&:to_s).uniq.sort
+    end
+
+    def explicit_conflict?(explicit_value, detected_values)
+      detected_values.present? && detected_values != [ explicit_value.to_s ]
     end
 
     def none_selection(code:)
@@ -390,10 +442,26 @@ module ReceiptIngestion
       }
     end
 
+    def explicit_parser_format_conflict_evidence(parser_format, detected_parser_formats)
+      {
+        "code" => "explicit_parser_format_conflict",
+        "explicit_parser_format" => parser_format,
+        "detected_parser_formats" => detected_parser_formats
+      }
+    end
+
     def explicit_store_evidence
       {
         "code" => "explicit_store",
         "store_id" => source_document.store_id
+      }
+    end
+
+    def explicit_store_conflict_evidence(store, detected_store_ids)
+      {
+        "code" => "explicit_store_conflict",
+        "explicit_store_id" => store.id,
+        "detected_store_ids" => detected_store_ids
       }
     end
 

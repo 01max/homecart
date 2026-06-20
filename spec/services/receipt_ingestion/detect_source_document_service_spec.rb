@@ -39,6 +39,14 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     create(:source_document, :pending_classification, parser_format: parser_format)
   end
 
+  def source_document_with_explicit_parser(parser_format)
+    create(:source_document, :pending_classification, parser_format: parser_format, store: create(:store))
+  end
+
+  def source_document_with_explicit_store(store)
+    create(:source_document, :pending_classification, parser_format: leclerc_paper_format, store: store)
+  end
+
   def leclerc_paper_format
     "leclerc.paper.v1"
   end
@@ -49,6 +57,10 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
 
   def store_match_sources(result)
     result.evidence.filter_map { |entry| entry["source"] if entry["code"] == "store_metadata_match" }
+  end
+
+  def evidence_entry(result, code)
+    result.evidence.find { |entry| entry["code"] == code }
   end
 
   def expect_detection_matches_result(result)
@@ -78,6 +90,20 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
       "store.identifiers.legal_entities",
       "store.identifiers.detection_hints.channel_markers",
       "store.identifiers.private_detection_hints.cashier_names"
+    )
+  end
+
+  def expect_parser_conflict(result, explicit_format:, detected_format:)
+    expect(evidence_entry(result, "explicit_parser_format_conflict")).to include(
+      "explicit_parser_format" => explicit_format,
+      "detected_parser_formats" => [ detected_format ]
+    )
+  end
+
+  def expect_store_conflict(result, explicit_store:, detected_store:)
+    expect(evidence_entry(result, "explicit_store_conflict")).to include(
+      "explicit_store_id" => explicit_store.id,
+      "detected_store_ids" => [ detected_store.id ]
     )
   end
 
@@ -146,7 +172,7 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
   end
 
   it "persists a classified detection from explicit source document fields" do
-    text_extraction = create(:text_extraction)
+    text_extraction = create(:text_extraction, text: "NO SOURCE MARKERS")
     result = nil
 
     expect { result = call_service(text_extraction) }
@@ -197,6 +223,29 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
 
     expect_partial_store_result(result, store: store)
     expect(source_document.reload.store).to eq(store)
+  end
+
+  it "keeps an explicit parser format while recording confirming detector evidence" do
+    source_document = source_document_with_explicit_parser(leclerc_web_format)
+    text_extraction = text_extraction_for(fixture_text("leclerc_web_v1_drive.txt"), source_document: source_document)
+
+    result = call_service(text_extraction)
+
+    expect(result).to have_attributes(parser_format: leclerc_web_format, parser_confidence: "manual")
+    expect(result.source_document).to be_parser_format_leclerc_web_v1
+    expect(evidence_codes(result)).to include("parser_format_marker")
+    expect(evidence_entry(result, "explicit_parser_format_conflict")).to be_nil
+  end
+
+  it "keeps an explicit parser format while recording detector conflicts" do
+    source_document = source_document_with_explicit_parser(leclerc_paper_format)
+    text_extraction = text_extraction_for(fixture_text("u_paper_v2_single_payment.txt"), source_document: source_document)
+
+    result = call_service(text_extraction)
+
+    expect(result).to have_attributes(parser_format: leclerc_paper_format, parser_confidence: "manual")
+    expect(result.source_document).to be_parser_format_leclerc_paper_v1
+    expect_parser_conflict(result, explicit_format: leclerc_paper_format, detected_format: "u.paper.v2")
   end
 
   it "detects a store from receipt header patterns" do
@@ -252,6 +301,19 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     expect(result).to be_needs_classification
     expect(result).to have_attributes(store: nil, store_confidence: "none")
     expect(evidence_codes(result)).to include("store_ambiguous")
+  end
+
+  it "keeps an explicit store while recording detector conflicts" do
+    explicit_store = create(:store)
+    detected_store = create(:store, identifiers: header_pattern_identifiers)
+    source_document = source_document_with_explicit_store(explicit_store)
+    text_extraction = text_extraction_for("PRIVATE HEADER", source_document: source_document)
+
+    result = call_service(text_extraction)
+
+    expect(result).to have_attributes(store: explicit_store, store_confidence: "manual")
+    expect(result.source_document.store).to eq(explicit_store)
+    expect_store_conflict(result, explicit_store: explicit_store, detected_store: detected_store)
   end
 
   it "keeps a detected parser format when store classification is still missing" do
