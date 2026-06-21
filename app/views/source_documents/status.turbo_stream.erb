@@ -11,6 +11,12 @@
              latest_text_extraction: @latest_text_extraction %>
 <% end %>
 
+<%= turbo_stream.replace dom_id(@source_document, :classification_panel) do %>
+  <%= render "source_documents/classification_panel",
+             source_document: @source_document,
+             latest_source_document_detection: @latest_source_document_detection %>
+<% end %>
+
 <%= turbo_stream.replace dom_id(@source_document, :receipt_summary) do %>
   <%= render "source_documents/receipt_summary",
              source_document: @source_document,

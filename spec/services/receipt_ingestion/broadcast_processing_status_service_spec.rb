@@ -68,6 +68,15 @@ RSpec.describe ReceiptIngestion::BroadcastProcessingStatusService do
     )
   end
 
+  def expect_classification_panel_replace(source_document)
+    expect_source_document_replace(
+      source_document,
+      target: dom_id(source_document, :classification_panel),
+      partial: "source_documents/classification_panel",
+      locals: { latest_source_document_detection: nil }
+    )
+  end
+
   def expect_receipt_summary_replace(source_document)
     expect_source_document_replace(
       source_document,
@@ -85,6 +94,7 @@ RSpec.describe ReceiptIngestion::BroadcastProcessingStatusService do
 
     expect_processing_status_replace(source_document, text_extraction)
     expect_latest_extraction_replace(source_document, text_extraction)
+    expect_classification_panel_replace(source_document)
     expect_receipt_summary_replace(source_document)
   end
 

@@ -1,0 +1,63 @@
+<% latest_source_document_detection = local_assigns[:latest_source_document_detection] || source_document.source_document_detections.includes(:store).order(created_at: :desc, id: :desc).first %>
+<% current_store_label = source_document.store ? store_option_label(source_document.store) : t("source_documents.show.classification.empty") %>
+<% current_parser_format = source_document.parser_format_before_type_cast.presence || t("source_documents.show.classification.empty") %>
+<% detection_evidence = Array(latest_source_document_detection&.evidence) %>
+
+<section id="<%= dom_id(source_document, :classification_panel) %>" class="hc-detail-block hc-block text-sm">
+  <div class="hc-block-heading">
+    <h2 class="hc-block-title"><%= t("source_documents.show.classification.heading") %></h2>
+    <p class="hc-block-description"><%= t("source_documents.show.classification.description") %></p>
+  </div>
+
+  <dl class="hc-detail-grid mt-4">
+    <div class="hc-detail-item">
+      <dt class="hc-detail-term"><%= t("source_documents.show.classification.current_status") %></dt>
+      <dd class="hc-detail-value">
+        <span class="hc-badge hc-badge--<%= source_document.classified? ? "complete" : "neutral" %>">
+          <%= t("source_documents.show.processing.states.#{source_document.source_detection_status}") %>
+        </span>
+      </dd>
+    </div>
+    <div class="hc-detail-item">
+      <dt class="hc-detail-term"><%= t("source_documents.show.classification.current_store") %></dt>
+      <dd class="hc-detail-value"><%= current_store_label %></dd>
+    </div>
+    <div class="hc-detail-item">
+      <dt class="hc-detail-term"><%= t("source_documents.show.classification.current_parser_format") %></dt>
+      <dd class="hc-detail-value hc-code"><%= current_parser_format %></dd>
+    </div>
+  </dl>
+
+  <% if latest_source_document_detection %>
+    <div class="hc-divider-top mt-4 pt-3">
+      <h3 class="hc-detail-term"><%= t("source_documents.show.classification.latest_detection") %></h3>
+      <dl class="hc-detail-grid mt-3">
+        <div class="hc-detail-item">
+          <dt class="hc-detail-term"><%= t("source_documents.show.classification.detection_status") %></dt>
+          <dd class="hc-detail-value"><%= t("source_documents.show.processing.states.#{latest_source_document_detection.status}") %></dd>
+        </div>
+        <div class="hc-detail-item">
+          <dt class="hc-detail-term"><%= t("source_documents.show.classification.parser_confidence") %></dt>
+          <dd class="hc-detail-value"><%= t("source_documents.show.classification.confidences.#{latest_source_document_detection.parser_confidence}") %></dd>
+        </div>
+        <div class="hc-detail-item">
+          <dt class="hc-detail-term"><%= t("source_documents.show.classification.store_confidence") %></dt>
+          <dd class="hc-detail-value"><%= t("source_documents.show.classification.confidences.#{latest_source_document_detection.store_confidence}") %></dd>
+        </div>
+        <div class="hc-detail-item">
+          <dt class="hc-detail-term"><%= t("source_documents.show.classification.detected_at") %></dt>
+          <dd class="hc-detail-value"><%= l(latest_source_document_detection.created_at, format: :short) %></dd>
+        </div>
+      </dl>
+
+      <h3 class="hc-detail-term mt-4"><%= t("source_documents.show.classification.evidence") %></h3>
+      <% if detection_evidence.any? %>
+        <pre class="hc-evidence-pane mt-2 max-h-96"><%= JSON.pretty_generate(detection_evidence) %></pre>
+      <% else %>
+        <p class="hc-body mt-2 text-sm"><%= t("source_documents.show.classification.evidence_empty") %></p>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="hc-body mt-4 text-sm"><%= t("source_documents.show.classification.no_detection") %></p>
+  <% end %>
+</section>

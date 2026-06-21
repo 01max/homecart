@@ -5,7 +5,7 @@
 # hashing, deduplication, attachment, and job enqueueing stay in
 # ReceiptIngestion::UploadService.
 class SourceDocumentsController < ApplicationController
-  helper_method :store_option_label, :store_options_for_select
+  helper_method :store_options_for_select
 
   before_action :load_form_options, only: %i[new create]
   before_action :load_source_document, only: %i[show status]
@@ -92,23 +92,19 @@ class SourceDocumentsController < ApplicationController
   end
 
   def load_source_document
-    @source_document = SourceDocument.includes(:receipts, text_extractions: :receipt).find(params[:id])
+    @source_document = SourceDocument.includes(:receipts, :source_document_detections, text_extractions: :receipt).find(params[:id])
     @latest_text_extraction = @source_document.text_extractions.order(ran_at: :desc, created_at: :desc).first
+    @latest_source_document_detection = @source_document
+      .source_document_detections
+      .includes(:store)
+      .order(created_at: :desc, id: :desc)
+      .first
     @receipt = @source_document.receipts.order(created_at: :desc).first
-  end
-
-  def store_option_label(store)
-    t(
-      "source_documents.form.store_option",
-      brand: store.retail_brand.name,
-      location: store.location_name,
-      channel: store.channel
-    )
   end
 
   def store_options_for_select
     @stores.map do |store|
-      [ store_option_label(store), store.id ]
+      [ helpers.store_option_label(store), store.id ]
     end
   end
 

@@ -60,6 +60,11 @@ module ReceiptIngestion
         locals: source_document_locals
       )
       broadcast_source_document_replace(
+        target: dom_id(source_document, :classification_panel),
+        partial: "source_documents/classification_panel",
+        locals: source_document_locals
+      )
+      broadcast_source_document_replace(
         target: dom_id(source_document, :receipt_summary),
         partial: "source_documents/receipt_summary",
         locals: source_document_locals
@@ -79,6 +84,7 @@ module ReceiptIngestion
       {
         source_document: source_document,
         latest_text_extraction: latest_text_extraction,
+        latest_source_document_detection: latest_source_document_detection,
         receipt: current_receipt,
         extraction_state: extraction_state,
         parsing_state: parsing_state,
@@ -88,6 +94,14 @@ module ReceiptIngestion
 
     def latest_text_extraction
       text_extraction || source_document.text_extractions.order(ran_at: :desc, created_at: :desc).first
+    end
+
+    def latest_source_document_detection
+      @latest_source_document_detection ||= source_document
+        .source_document_detections
+        .includes(:store)
+        .order(created_at: :desc, id: :desc)
+        .first
     end
 
     def current_receipt

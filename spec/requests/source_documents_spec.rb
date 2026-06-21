@@ -112,6 +112,27 @@ RSpec.describe "Source documents", type: :request do
     expect(response.body).to include(%(href="/receipts/#{receipt.id}"))
   end
 
+  def expect_latest_detection_panel(source_document)
+    expect(response.body).to include(
+      I18n.t("source_documents.show.classification.heading"),
+      I18n.t("source_documents.show.processing.states.classified"),
+      store_option_label_text(source_document.store),
+      "leclerc.paper.v1",
+      I18n.t("source_documents.show.classification.confidences.high"),
+      "latest_parser_marker"
+    )
+    expect(response.body).not_to include("older_parser_marker")
+  end
+
+  def store_option_label_text(store)
+    I18n.t(
+      "source_documents.form.store_option",
+      brand: store.retail_brand.name,
+      location: store.location_name,
+      channel: store.channel
+    )
+  end
+
   def create_showable_source_document
     source_document = create(:source_document, store: store)
     attach_original_file(source_document)
@@ -120,6 +141,27 @@ RSpec.describe "Source documents", type: :request do
     receipt = create(:receipt, store: store, source_document: source_document, text_extraction: latest_extraction)
 
     [ source_document, receipt ]
+  end
+
+  def create_source_document_with_detection_evidence
+    source_document = create(:source_document, store: store)
+    text_extraction = create_extraction(source_document: source_document, text: "latest extraction", ran_at: 1.minute.ago)
+    create_detection(source_document, text_extraction, marker: "older_parser_marker", created_at: 2.hours.ago)
+    create_detection(source_document, text_extraction, marker: "latest_parser_marker", created_at: 1.hour.ago, confidence: "high")
+
+    source_document
+  end
+
+  def create_detection(source_document, text_extraction, marker:, created_at:, confidence: "manual")
+    create(
+      :source_document_detection,
+      source_document: source_document,
+      text_extraction: text_extraction,
+      parser_confidence: confidence,
+      store_confidence: confidence,
+      evidence: [ { "code" => marker } ],
+      created_at: created_at
+    )
   end
 
   def expect_source_document_evidence_to_be_read_only
@@ -142,6 +184,7 @@ RSpec.describe "Source documents", type: :request do
     expect(response.body).to include(
       %(target="#{dom_id(source_document, :processing_status)}"),
       %(target="#{dom_id(source_document, :latest_text_extraction)}"),
+      %(target="#{dom_id(source_document, :classification_panel)}"),
       %(target="#{dom_id(source_document, :receipt_summary)}")
     )
   end
@@ -247,8 +290,17 @@ RSpec.describe "Source documents", type: :request do
     expect_source_document_evidence_to_be_read_only
   end
 
+  it "shows current classification and latest detector evidence" do
+    source_document = create_source_document_with_detection_evidence
+
+    get source_document_path(source_document)
+
+    expect(response).to have_http_status(:ok)
+    expect_latest_detection_panel(source_document)
+  end
+
   it "shows empty states before extraction and parsing complete" do
-    source_document = create(:source_document, store: store)
+    source_document = create(:source_document, :pending_classification)
 
     get source_document_path(source_document)
 
@@ -256,6 +308,7 @@ RSpec.describe "Source documents", type: :request do
     expect(response.body).to include(I18n.t("source_documents.show.preview.missing_file"))
     expect(response.body).to include(I18n.t("source_documents.show.latest_extraction.empty"))
     expect(response.body).to include(I18n.t("source_documents.show.receipt.empty"))
+    expect(response.body).to include(I18n.t("source_documents.show.classification.no_detection"))
   end
 
   it "renders turbo stream status replacements for source document polling" do
