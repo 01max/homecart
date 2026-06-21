@@ -5,19 +5,21 @@ RSpec.describe Receipt::ProcessSourceDocumentJob do
   let(:parse_job_class) { class_spy(Receipt::ParseJob) }
   let(:source_detector) { class_spy(ReceiptIngestion::DetectSourceDocumentService) }
 
-  def stub_extraction(source_document, success: true)
+  def stub_extraction(source_document, success: true, text: nil)
     factory_arguments = success ? [ :text_extraction ] : [ :text_extraction, :failed ]
+    attributes = { source_document: source_document }
+    attributes[:text] = text if text
 
-    create(*factory_arguments, source_document: source_document).tap do |text_extraction|
+    create(*factory_arguments, **attributes).tap do |text_extraction|
       allow(ReceiptIngestion::ExtractTextService).to receive(:call).and_return(text_extraction)
     end
   end
 
-  def perform_job(source_document)
+  def perform_job(source_document, detector: source_detector)
     described_class.perform_now(
       source_document,
       broadcaster: broadcaster,
-      source_detector: source_detector,
+      source_detector: detector,
       parse_job_class: parse_job_class
     )
   end
@@ -44,6 +46,15 @@ RSpec.describe Receipt::ProcessSourceDocumentJob do
       extraction_state: extraction_state,
       parsing_state: parsing_state
     )
+  end
+
+  def expect_real_detection_blocked_parsing(source_document, text_extraction)
+    detection = SourceDocumentDetection.sole
+    expect(source_document.reload).to be_needs_classification
+    expect(detection).to have_attributes(source_document: source_document, text_extraction: text_extraction)
+    expect(detection).to be_needs_classification
+    expect(parse_job_class).not_to have_received(:perform_later)
+    expect_finished_broadcast(source_document, text_extraction, extraction_state: "complete", parsing_state: "needs_classification")
   end
 
   it "runs on the receipt handling queue" do
@@ -81,6 +92,18 @@ RSpec.describe Receipt::ProcessSourceDocumentJob do
     expect_finished_broadcast(source_document, text_extraction, extraction_state: "complete", parsing_state: "queued")
   end
 
+  it "enqueues parsing after real source detection classifies the document" do
+    source_document = create(:source_document, :pending_classification, store: create(:store))
+    text_extraction = stub_extraction(source_document, text: "Code HT TVA TTC")
+
+    perform_job(source_document, detector: ReceiptIngestion::DetectSourceDocumentService)
+
+    expect(source_document.reload).to be_classified
+    expect(source_document).to be_parser_format_leclerc_paper_v2
+    expect(parse_job_class).to have_received(:perform_later).with(text_extraction.id)
+    expect_finished_broadcast(source_document, text_extraction, extraction_state: "complete", parsing_state: "queued")
+  end
+
   it "does not enqueue parsing when source detection needs classification" do
     source_document = create(:source_document, :needs_classification)
     text_extraction = stub_extraction(source_document)
@@ -90,6 +113,15 @@ RSpec.describe Receipt::ProcessSourceDocumentJob do
 
     expect(parse_job_class).not_to have_received(:perform_later)
     expect_finished_broadcast(source_document, text_extraction, extraction_state: "complete", parsing_state: "needs_classification")
+  end
+
+  it "blocks parsing when real source detection needs manual classification" do
+    source_document = create(:source_document, :pending_classification)
+    text_extraction = stub_extraction(source_document, text: "Unrecognized receipt text")
+
+    perform_job(source_document, detector: ReceiptIngestion::DetectSourceDocumentService)
+
+    expect_real_detection_blocked_parsing(source_document, text_extraction)
   end
 
   it "does not enqueue parsing for a failed text extraction" do

@@ -21,6 +21,17 @@ RSpec.describe ReceiptIngestion::ManualClassifySourceDocumentService do
     { source_document: source_document, older_extraction: older_extraction, latest_extraction: latest_extraction, store: store, parser_format: parser_format }
   end
 
+  def classification_context_after_detection_block
+    classification_context.tap do |context|
+      create(
+        :source_document_detection,
+        :needs_classification,
+        source_document: context.fetch(:source_document),
+        text_extraction: context.fetch(:latest_extraction)
+      )
+    end
+  end
+
   def expect_manual_classification(result, context)
     expect(result.source_document).to be_classified
     expect(result.source_document).to have_attributes(store: context.fetch(:store))
@@ -53,6 +64,17 @@ RSpec.describe ReceiptIngestion::ManualClassifySourceDocumentService do
     result = call_service(source_document: context.fetch(:source_document), store: context.fetch(:store))
 
     expect_manual_classification(result, context)
+    expect_parse_enqueued_for_latest_extraction(context)
+  end
+
+  it "queues parsing when manual classification resolves a detector block" do
+    context = classification_context_after_detection_block
+
+    result = call_service(source_document: context.fetch(:source_document), store: context.fetch(:store))
+
+    expect_manual_classification(result, context)
+    expect(context.fetch(:source_document).source_document_detections.pluck(:status))
+      .to contain_exactly("needs_classification", "classified")
     expect_parse_enqueued_for_latest_extraction(context)
   end
 
