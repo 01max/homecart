@@ -108,37 +108,7 @@ class SourceDocumentsController < ApplicationController
 
   def store_options_for_select
     @stores.map do |store|
-      [
-        store_option_label(store),
-        store.id,
-        { data: { default_parser_format: default_parser_format_for(store) } }
-      ]
-    end
-  end
-
-  def default_parser_format_for(store)
-    default_parser_format_from_identifiers(store) || default_parser_format_from_store_profile(store)
-  end
-
-  def default_parser_format_from_identifiers(store)
-    parser_format = store.identifiers["default_parser_format"]
-    return unless @parser_formats.include?(parser_format)
-
-    parser_format
-  end
-
-  def default_parser_format_from_store_profile(store)
-    case [ store.retail_brand.slug, store.channel ]
-    in [ "auchan", "physical" ]
-      "auchan.paper.v1"
-    in [ "leclerc" | "e-leclerc", "drive" | "click_collect" ]
-      "leclerc.web.v1"
-    in [ "leclerc" | "e-leclerc", "physical" ]
-      "leclerc.paper.v2"
-    in [ "magasins-u" | "systeme-u" | "u", "physical" ]
-      "u.paper.v2"
-    else
-      nil
+      [ store_option_label(store), store.id ]
     end
   end
 

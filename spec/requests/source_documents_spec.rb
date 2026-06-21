@@ -4,8 +4,6 @@ require "digest"
 RSpec.describe "Source documents", type: :request do
   let(:retail_brand) { catalog_brand(slug: "leclerc", name: "E.Leclerc") }
   let(:store) { catalog_store(retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
-  let(:auchan_brand) { catalog_brand(slug: "auchan", name: "Auchan") }
-  let(:u_brand) { catalog_brand(slug: "magasins-u", name: "Magasins U") }
   let(:fixture_path) { Rails.root.join("spec/fixtures/files/receipt_text.pdf") }
 
   before do
@@ -43,8 +41,12 @@ RSpec.describe "Source documents", type: :request do
     expected_content = [
       I18n.t("source_documents.new.file_label"),
       I18n.t("source_documents.new.workflow.heading"),
+      I18n.t("source_documents.new.store_prompt"),
+      I18n.t("source_documents.new.store_hint"),
+      I18n.t("source_documents.new.parser_format_prompt"),
+      I18n.t("source_documents.new.parser_format_hint"),
+      I18n.t("source_documents.new.workflow.processing_value"),
       "hc-filter-block",
-      'data-controller="parser-format-suggestion"',
       "E.Leclerc — Villeneuve sur Lot (physical)",
       "auchan.paper.v1",
       "leclerc.paper.v1",
@@ -55,45 +57,20 @@ RSpec.describe "Source documents", type: :request do
     ]
 
     expect(response.body).to include(*expected_content)
+    expect(response.body).not_to include("parser-format-suggestion", "data-default-parser-format")
   end
 
   def option_for(label)
     Nokogiri::HTML(response.body).css("option").find { |option| option.text == label }
   end
 
-  def create_parser_hint_stores
-    store
-    catalog_store(retail_brand: auchan_brand, location_name: "Villeneuve sur Lot", channel: "physical")
-    catalog_store(retail_brand: retail_brand, location_name: "PARISDIF", channel: "drive")
-    catalog_store(retail_brand: u_brand, location_name: "Pujols", channel: "physical")
+  def store_with_default_parser_format
     catalog_store(
       retail_brand: retail_brand,
       location_name: "Legacy override",
       channel: "physical",
       identifiers: { "default_parser_format" => "leclerc.paper.v1" }
     )
-  end
-
-  def create_unknown_parser_hint_store
-    brand = catalog_brand(slug: "retailer-a", name: "Retailer A")
-
-    catalog_store(retail_brand: brand, location_name: "Location 01", channel: "physical")
-  end
-
-  def expect_option_default(label, parser_format)
-    expect(option_for(label)["data-default-parser-format"]).to eq(parser_format)
-  end
-
-  def expect_option_without_default(label)
-    expect(option_for(label)["data-default-parser-format"]).to be_nil
-  end
-
-  def expect_known_parser_format_defaults
-    expect_option_default("Auchan — Villeneuve sur Lot (physical)", "auchan.paper.v1")
-    expect_option_default("E.Leclerc — Villeneuve sur Lot (physical)", "leclerc.paper.v2")
-    expect_option_default("E.Leclerc — PARISDIF (drive)", "leclerc.web.v1")
-    expect_option_default("Magasins U — Pujols (physical)", "u.paper.v2")
-    expect_option_default("E.Leclerc — Legacy override (physical)", "leclerc.paper.v1")
   end
 
   def expect_created_source_document(source_document)
@@ -193,15 +170,14 @@ RSpec.describe "Source documents", type: :request do
     expect_upload_form
   end
 
-  it "renders default parser format hints for the upload form controller" do
-    create_parser_hint_stores
-    create_unknown_parser_hint_store
+  it "keeps parser format as an explicit override instead of a store-driven default" do
+    store_with_default_parser_format
 
     get new_source_document_path
 
     expect(response).to have_http_status(:ok)
-    expect_known_parser_format_defaults
-    expect_option_without_default("Retailer A — Location 01 (physical)")
+    expect(option_for("E.Leclerc — Legacy override (physical)")["data-default-parser-format"]).to be_nil
+    expect(option_for(I18n.t("source_documents.new.parser_format_prompt"))).to be_present
   end
 
   it "creates a source document, attaches the upload, and enqueues processing" do

@@ -1,8 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Source document upload", type: :system do
-  let(:retail_brand) { create(:retail_brand, slug: "auchan").tap { |brand| brand.update!(name: "Auchan") } }
-  let(:store) { create(:store, retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
+  let(:retail_brand) { catalog_brand(slug: "auchan", name: "Auchan") }
+  let(:store) { catalog_store(retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
   let(:fixture_path) { Rails.root.join("spec/fixtures/files/receipt_image.png") }
   let(:extracted_text) { Rails.root.join("spec/fixtures/files/parser/auchan_paper_v1_cashier.txt").read }
 
@@ -16,6 +16,22 @@ RSpec.describe "Source document upload", type: :system do
       engine: "tesseract-test-fra-psm6"
     )
     allow(ReceiptIngestion::ExtractImageWithTesseractService).to receive(:call).and_return(result)
+  end
+
+  def catalog_brand(slug:, name:)
+    RetailBrand.find_or_initialize_by(slug: slug).tap do |brand|
+      brand.name = name
+      brand.aliases ||= []
+      brand.save!
+    end
+  end
+
+  def catalog_store(retail_brand:, location_name:, channel:)
+    Store.find_or_initialize_by(
+      retail_brand: retail_brand,
+      location_name: location_name,
+      channel: channel
+    ).tap(&:save!)
   end
 
   def upload_receipt
