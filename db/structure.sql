@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 4FB27pPuleIeFeYB92gaAGDBgw7RDSo30Hd62yGacjGfvoc8jwYW68khW6RhfGS
+\restrict tvWih6r4w99GIlmvfmxMKi02EitPZNaZuxfnKRaaCiXRrnywqQbqGhnO0xPCntw
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -334,6 +334,19 @@ BEGIN
   END IF;
 
   RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: prevent_source_document_detection_evidence_update(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.prevent_source_document_detection_evidence_update() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  RAISE EXCEPTION 'source_document_detections evidence columns are immutable';
 END;
 $$;
 
@@ -737,7 +750,10 @@ CREATE TABLE public.source_document_detections (
     evidence jsonb DEFAULT '[]'::jsonb NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    CONSTRAINT source_document_detections_evidence_array CHECK ((jsonb_typeof(evidence) = 'array'::text))
+    CONSTRAINT source_document_detections_classified_source_present CHECK (((status <> 'classified'::public.source_document_detection_status) OR ((store_id IS NOT NULL) AND (parser_format IS NOT NULL)))),
+    CONSTRAINT source_document_detections_evidence_array CHECK ((jsonb_typeof(evidence) = 'array'::text)),
+    CONSTRAINT source_document_detections_parser_confidence_consistent CHECK ((((parser_format IS NULL) AND (parser_confidence = 'none'::public.source_document_detection_confidence)) OR ((parser_format IS NOT NULL) AND (parser_confidence <> 'none'::public.source_document_detection_confidence)))),
+    CONSTRAINT source_document_detections_store_confidence_consistent CHECK ((((store_id IS NULL) AND (store_confidence = 'none'::public.source_document_detection_confidence)) OR ((store_id IS NOT NULL) AND (store_confidence <> 'none'::public.source_document_detection_confidence))))
 );
 
 
@@ -1461,6 +1477,13 @@ CREATE TRIGGER price_observations_match_consistency BEFORE INSERT OR UPDATE OF r
 
 
 --
+-- Name: source_document_detections source_document_detections_evidence_immutable; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER source_document_detections_evidence_immutable BEFORE UPDATE OF source_document_id, text_extraction_id, status, parser_format, parser_confidence, store_id, store_confidence, evidence ON public.source_document_detections FOR EACH ROW EXECUTE FUNCTION public.prevent_source_document_detection_evidence_update();
+
+
+--
 -- Name: source_documents source_documents_evidence_immutable; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -1734,13 +1757,13 @@ ALTER TABLE ONLY public.products
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 4FB27pPuleIeFeYB92gaAGDBgw7RDSo30Hd62yGacjGfvoc8jwYW68khW6RhfGS
+\unrestrict tvWih6r4w99GIlmvfmxMKi02EitPZNaZuxfnKRaaCiXRrnywqQbqGhnO0xPCntw
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict OH0dkfk8WanQOwWphQCsifMpyWvPiWJDldvk4ny3vs9BdA30FfeYR8AQCMW3ooF
+\restrict 7Sg1sfYmM2wMAGJ0mVPIdO5UOTDSzq4i5eKZdvybcyWANh2eBpn8ihacUyvYXaq
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -1760,8 +1783,8 @@ SET row_security = off;
 -- Data for Name: ar_internal_metadata; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('environment', 'test', '2026-06-17 20:45:31.447697', '2026-06-17 20:45:31.4477');
-INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('schema_sha1', '02eb545469bc4d7e717afaa440d5eccda129c8e2', '2026-06-17 20:45:31.449223', '2026-06-17 21:51:24.607269');
+INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('environment', 'development', '2026-06-03 21:07:33.464585', '2026-06-03 21:07:33.464587');
+INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('schema_sha1', '264f20968604ad4dd6fcd4a0eeaa5fa36b3d9e33', '2026-06-03 21:07:33.467199', '2026-06-03 21:07:33.4672');
 
 
 --
@@ -1800,10 +1823,11 @@ INSERT INTO public.schema_migrations (version) VALUES ('20260617220000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260617221000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260620090000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260620091000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260621140000');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict OH0dkfk8WanQOwWphQCsifMpyWvPiWJDldvk4ny3vs9BdA30FfeYR8AQCMW3ooF
+\unrestrict 7Sg1sfYmM2wMAGJ0mVPIdO5UOTDSzq4i5eKZdvybcyWANh2eBpn8ihacUyvYXaq

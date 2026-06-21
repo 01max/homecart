@@ -28,6 +28,14 @@ RSpec.describe SourceDocumentDetection do
     expect(create(:source_document_detection, :needs_classification)).to be_persisted
   end
 
+  it "requires selected source fields when classified" do
+    detection = classified_detection_without_source_fields
+
+    expect(detection).not_to be_valid
+    expect(detection.errors.of_kind?(:parser_format, :blank)).to be(true)
+    expect(detection.errors.of_kind?(:store, :blank)).to be(true)
+  end
+
   it "applies database defaults for confidence and evidence" do
     source_document = create(:source_document, :needs_classification)
     text_extraction = create(:text_extraction, source_document: source_document)
@@ -46,12 +54,27 @@ RSpec.describe SourceDocumentDetection do
   end
 
   it "enforces evidence array shape at the database level" do
+    source_document = create(:source_document, :needs_classification)
+    text_extraction = create(:text_extraction, source_document: source_document)
+
+    expect { execute_in_savepoint(insert_with_non_array_evidence_sql(source_document, text_extraction)) }
+      .to raise_error(ActiveRecord::StatementInvalid, /source_document_detections_evidence_array/)
+  end
+
+  it "rejects evidence changes through Active Record" do
+    detection = create(:source_document_detection)
+
+    expect { detection.update!(evidence: [ { "code" => "manual_edit" } ]) }
+      .to raise_error(ActiveRecord::RecordInvalid, /Evidence is immutable/)
+  end
+
+  it "rejects evidence changes through direct SQL" do
     detection = create(:source_document_detection)
     quoted_id = ActiveRecord::Base.connection.quote(detection.id)
-    sql = "UPDATE source_document_detections SET evidence = '{}'::jsonb WHERE id = #{quoted_id}"
+    sql = "UPDATE source_document_detections SET evidence = '[{\"code\":\"manual_edit\"}]'::jsonb WHERE id = #{quoted_id}"
 
     expect { execute_in_savepoint(sql) }
-      .to raise_error(ActiveRecord::StatementInvalid, /source_document_detections_evidence_array/)
+      .to raise_error(ActiveRecord::StatementInvalid, /source_document_detections evidence columns are immutable/)
   end
 
   it "requires the text extraction to belong to the source document" do
@@ -81,6 +104,30 @@ RSpec.describe SourceDocumentDetection do
     expect(without_confidence.errors.of_kind?(:store_confidence, :must_not_be_none_with_store)).to be(true)
   end
 
+  it "enforces classified source fields at the database level" do
+    source_document = create(:source_document, :needs_classification)
+    text_extraction = create(:text_extraction, source_document: source_document)
+
+    expect { execute_in_savepoint(classified_insert_without_source_fields_sql(source_document, text_extraction)) }
+      .to raise_error(ActiveRecord::StatementInvalid, /source_document_detections_classified_source_present/)
+  end
+
+  it "enforces parser confidence consistency at the database level" do
+    source_document = create(:source_document, :needs_classification)
+    text_extraction = create(:text_extraction, source_document: source_document)
+
+    expect { execute_in_savepoint(insert_with_parser_confidence_mismatch_sql(source_document, text_extraction)) }
+      .to raise_error(ActiveRecord::StatementInvalid, /source_document_detections_parser_confidence_consistent/)
+  end
+
+  it "enforces store confidence consistency at the database level" do
+    source_document = create(:source_document, :needs_classification)
+    text_extraction = create(:text_extraction, source_document: source_document)
+
+    expect { execute_in_savepoint(insert_with_store_confidence_mismatch_sql(source_document, text_extraction)) }
+      .to raise_error(ActiveRecord::StatementInvalid, /source_document_detections_store_confidence_consistent/)
+  end
+
   def insert_detection_with_defaults(source_document, text_extraction)
     ActiveRecord::Base.connection.execute(<<~SQL.squish)
       INSERT INTO source_document_detections (
@@ -100,8 +147,101 @@ RSpec.describe SourceDocumentDetection do
     SQL
   end
 
+  def classified_detection_without_source_fields
+    build(
+      :source_document_detection,
+      status: "classified",
+      parser_format: nil,
+      parser_confidence: "none",
+      store: nil,
+      store_confidence: "none"
+    )
+  end
+
+  def insert_with_non_array_evidence_sql(source_document, text_extraction)
+    <<~SQL.squish
+      INSERT INTO source_document_detections (
+        source_document_id,
+        text_extraction_id,
+        status,
+        evidence,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        #{quote(source_document.id)},
+        #{quote(text_extraction.id)},
+        'needs_classification',
+        '{}'::jsonb,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+      )
+    SQL
+  end
+
+  def classified_insert_without_source_fields_sql(source_document, text_extraction)
+    <<~SQL.squish
+      INSERT INTO source_document_detections (
+        source_document_id,
+        text_extraction_id,
+        status,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        #{quote(source_document.id)},
+        #{quote(text_extraction.id)},
+        'classified',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+      )
+    SQL
+  end
+
+  def insert_with_parser_confidence_mismatch_sql(source_document, text_extraction)
+    <<~SQL.squish
+      INSERT INTO source_document_detections (
+        source_document_id,
+        text_extraction_id,
+        status,
+        parser_confidence,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        #{quote(source_document.id)},
+        #{quote(text_extraction.id)},
+        'needs_classification',
+        'high',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+      )
+    SQL
+  end
+
+  def insert_with_store_confidence_mismatch_sql(source_document, text_extraction)
+    <<~SQL.squish
+      INSERT INTO source_document_detections (
+        source_document_id,
+        text_extraction_id,
+        status,
+        store_confidence,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        #{quote(source_document.id)},
+        #{quote(text_extraction.id)},
+        'needs_classification',
+        'high',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+      )
+    SQL
+  end
+
   def enum_values(type_name)
-    quoted_type_name = ActiveRecord::Base.connection.quote(type_name)
+    quoted_type_name = quote(type_name)
 
     ActiveRecord::Base.connection.select_values(<<~SQL.squish)
       SELECT enumlabel
@@ -110,5 +250,9 @@ RSpec.describe SourceDocumentDetection do
       WHERE pg_type.typname = #{quoted_type_name}
       ORDER BY enumsortorder
     SQL
+  end
+
+  def quote(value)
+    ActiveRecord::Base.connection.quote(value)
   end
 end

@@ -338,6 +338,15 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     expect(store_match_sources(result)).to include("retail_brand.aliases")
   end
 
+  it "prefers one store-specific match over generic brand matches" do
+    store, text_extraction = generic_brand_with_specific_store_context
+
+    result = call_service(text_extraction)
+
+    expect_detected_store(result, store)
+    expect(store_match_sources(result)).to include("retail_brand.aliases", "store.identifiers.receipt_store_codes")
+  end
+
   it "blocks store selection when multiple stores remain plausible" do
     brand = create(:retail_brand, aliases: [ "Retailer Same" ])
     stores = create_list(:store, 2, retail_brand: brand, channel: "physical")
@@ -416,5 +425,19 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     text = "#{fixture_text('u_paper_v2_single_payment.txt')}\nPRIVATE HEADER"
 
     [ explicit_store, detected_store, text_extraction_for(text, source_document: source_document) ]
+  end
+
+  def generic_brand_with_specific_store_context
+    brand = create(:retail_brand, aliases: [ "Retailer Same" ])
+    store = create(
+      :store,
+      retail_brand: brand,
+      channel: "physical",
+      identifiers: { "receipt_store_codes" => [ "95191" ] }
+    )
+    create(:store, retail_brand: brand, channel: "physical")
+    text_extraction = text_extraction_for("Retailer Same\nMagasin 95191", source_document: source_document_with_parser_hint)
+
+    [ store, text_extraction ]
   end
 end

@@ -1,5 +1,7 @@
 # Persisted source-classification attempt derived from extracted receipt text.
 class SourceDocumentDetection < ApplicationRecord
+  include EvidenceImmutable
+
   STATUSES = {
     classified: "classified",
     needs_classification: "needs_classification"
@@ -17,11 +19,21 @@ class SourceDocumentDetection < ApplicationRecord
   enum :parser_confidence, CONFIDENCES, prefix: true, validate: true
   enum :store_confidence, CONFIDENCES, prefix: true, validate: true
 
+  immutable_evidence_attributes :source_document_id,
+                                :text_extraction_id,
+                                :status,
+                                :parser_format,
+                                :parser_confidence,
+                                :store_id,
+                                :store_confidence,
+                                :evidence
+
   belongs_to :source_document, inverse_of: :source_document_detections
   belongs_to :text_extraction, inverse_of: :source_document_detections
   belongs_to :store, inverse_of: :source_document_detections, optional: true
 
   validates :status, :parser_confidence, :store_confidence, presence: true
+  validate :classified_source_fields_present
   validate :evidence_is_an_array
   validate :text_extraction_belongs_to_source_document
   validate :parser_confidence_matches_parser_format
@@ -31,6 +43,13 @@ class SourceDocumentDetection < ApplicationRecord
 
   def evidence_is_an_array
     errors.add(:evidence, :not_an_array) unless evidence.is_a?(Array)
+  end
+
+  def classified_source_fields_present
+    return unless classified?
+
+    errors.add(:parser_format, :blank) if parser_format.blank?
+    errors.add(:store, :blank) if store.blank?
   end
 
   def text_extraction_belongs_to_source_document

@@ -105,6 +105,10 @@ module ReceiptIngestion
       legal_entities
     ].freeze
 
+    GENERIC_STORE_MATCH_SOURCES = %w[
+      retail_brand.aliases
+    ].freeze
+
     STORE_HINT_OBJECT_KEYS = %w[
       detection_hints
       private_detection_hints
@@ -196,7 +200,7 @@ module ReceiptIngestion
     end
 
     def detected_store_selection(parser_format:)
-      matches = store_matches(parser_format: parser_format)
+      matches = preferred_store_matches(store_matches(parser_format: parser_format))
 
       return none_selection(code: "store_not_detected") if matches.empty?
       return high_confidence_selection(matches.sole.store, matches.sole.evidence) if matches.one?
@@ -208,6 +212,18 @@ module ReceiptIngestion
       store_scope(parser_format: parser_format).filter_map do |store|
         evidence = store_evidence(store, parser_format: parser_format)
         StoreMatch.new(store, evidence) if evidence.any?
+      end
+    end
+
+    def preferred_store_matches(matches)
+      store_specific_matches = matches.select { |match| store_specific_match?(match) }
+      store_specific_matches.presence || matches
+    end
+
+    def store_specific_match?(match)
+      match.evidence.any? do |entry|
+        entry["code"] == "store_metadata_match" &&
+          GENERIC_STORE_MATCH_SOURCES.exclude?(entry["source"])
       end
     end
 
