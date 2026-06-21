@@ -73,6 +73,14 @@ en:
         evidence_empty: "No evidence was recorded for this detection."
         no_detection: "No source detection has run yet."
         empty: "Not classified yet"
+        manual:
+          heading: "Manual classification"
+          description: "Choose the store and parser format to resume parsing this source document."
+          store_label: "Store"
+          store_prompt: "Choose a store"
+          parser_format_label: "Parser format"
+          parser_format_prompt: "Choose a parser format"
+          submit: "Save classification"
         confidences:
           none: "None"
           low: "Low"
@@ -110,3 +118,8 @@ en:
         link: "View receipt"
         review_link: "Review receipt"
         empty: "No receipt has been parsed from this source document yet."
+    classify:
+      success: "Source classification saved. Parsing has been queued."
+      errors:
+        invalid_store: "Choose an existing store."
+        invalid_parser_format: "Choose a supported parser format."

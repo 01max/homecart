@@ -124,6 +124,18 @@ RSpec.describe "Source documents", type: :request do
     expect(response.body).not_to include("older_parser_marker")
   end
 
+  def expect_manual_classification_form(source_document)
+    expect(response.body).to include(
+      %(action="/source_documents/#{source_document.id}/classify"),
+      I18n.t("source_documents.show.classification.manual.heading"),
+      I18n.t("source_documents.show.classification.manual.store_label"),
+      store_option_label_text(store),
+      I18n.t("source_documents.show.classification.manual.parser_format_label"),
+      "u.paper.v2",
+      I18n.t("source_documents.show.classification.manual.submit")
+    )
+  end
+
   def store_option_label_text(store)
     I18n.t(
       "source_documents.form.store_option",
@@ -131,6 +143,52 @@ RSpec.describe "Source documents", type: :request do
       location: store.location_name,
       channel: store.channel
     )
+  end
+
+  def create_manual_classification_source_document
+    source_document = create(:source_document, :needs_classification)
+    text_extraction = create_extraction(source_document: source_document, text: "manual review", ran_at: 1.minute.ago)
+
+    [ source_document, text_extraction ]
+  end
+
+  def patch_manual_classification(source_document, store_id: store.id, parser_format: "u.paper.v2")
+    patch classify_source_document_path(source_document),
+      params: {
+        source_document: {
+          store_id: store_id,
+          parser_format: parser_format
+        }
+      }
+  end
+
+  def expect_successful_manual_classification(source_document, text_extraction)
+    expect(response).to redirect_to(source_document_path(source_document))
+    expect(flash[:notice]).to eq(I18n.t("source_documents.classify.success"))
+    expect(source_document.reload).to have_attributes(store: store, source_detection_status: "classified")
+    expect(source_document.parser_format_before_type_cast).to eq("u.paper.v2")
+    expect_manual_classification_detection(source_document, text_extraction)
+    expect(Receipt::ParseJob).to have_received(:perform_later).with(text_extraction.id)
+  end
+
+  def expect_manual_classification_detection(source_document, text_extraction)
+    detection = source_document.source_document_detections.order(created_at: :desc).first
+
+    expect(detection).to have_attributes(source_document: source_document, text_extraction: text_extraction, store: store)
+    expect(detection).to be_classified
+    expect(detection).to be_parser_format_u_paper_v2
+    expect(detection.evidence.sole).to include("code" => "manual_classification")
+  end
+
+  def expect_invalid_manual_classification(source_document)
+    expect(response).to redirect_to(source_document_path(source_document))
+    expect(flash[:alert]).to include(
+      I18n.t("source_documents.classify.errors.invalid_store"),
+      I18n.t("source_documents.classify.errors.invalid_parser_format")
+    )
+    expect(source_document.reload).to be_needs_classification
+    expect(source_document.source_document_detections).to be_empty
+    expect(Receipt::ParseJob).not_to have_received(:perform_later)
   end
 
   def create_showable_source_document
@@ -297,6 +355,37 @@ RSpec.describe "Source documents", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect_latest_detection_panel(source_document)
+  end
+
+  it "shows manual classification controls when source detection needs review" do
+    source_document = create(:source_document, :needs_classification)
+
+    get source_document_path(source_document)
+
+    expect(response).to have_http_status(:ok)
+    expect_manual_classification_form(source_document)
+  end
+
+  it "classifies a source document manually and enqueues parsing" do
+    allow(Receipt::ParseJob).to receive(:perform_later)
+    source_document, text_extraction = create_manual_classification_source_document
+
+    patch_manual_classification(source_document)
+
+    expect_successful_manual_classification(source_document, text_extraction)
+  end
+
+  it "rejects invalid manual classification values" do
+    allow(Receipt::ParseJob).to receive(:perform_later)
+    source_document, = create_manual_classification_source_document
+
+    patch_manual_classification(
+      source_document,
+      store_id: "00000000-0000-0000-0000-000000000000",
+      parser_format: "unknown.paper.v1"
+    )
+
+    expect_invalid_manual_classification(source_document)
   end
 
   it "shows empty states before extraction and parsing complete" do
