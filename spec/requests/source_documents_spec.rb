@@ -115,13 +115,16 @@ RSpec.describe "Source documents", type: :request do
   def expect_latest_detection_panel(source_document)
     expect(response.body).to include(
       I18n.t("source_documents.show.classification.heading"),
-      I18n.t("source_documents.show.processing.states.classified"),
+      I18n.t("source_documents.show.classification.statuses.classified"),
       store_option_label_text(source_document.store),
       "leclerc.paper.v1",
       I18n.t("source_documents.show.classification.confidences.high"),
-      "latest_parser_marker"
+      I18n.t("source_documents.show.classification.evidence_codes.parser_format_marker"),
+      I18n.t("source_documents.show.classification.evidence_fields.marker"),
+      I18n.t("source_documents.show.classification.evidence_markers.leclerc_paper_legacy_ticket_line"),
+      I18n.t("source_documents.show.classification.evidence_raw")
     )
-    expect(response.body).not_to include("older_parser_marker")
+    expect(response.body).not_to include("u_legacy_hash_footer")
   end
 
   def expect_manual_classification_form(source_document)
@@ -204,20 +207,39 @@ RSpec.describe "Source documents", type: :request do
   def create_source_document_with_detection_evidence
     source_document = create(:source_document, store: store)
     text_extraction = create_extraction(source_document: source_document, text: "latest extraction", ran_at: 1.minute.ago)
-    create_detection(source_document, text_extraction, marker: "older_parser_marker", created_at: 2.hours.ago)
-    create_detection(source_document, text_extraction, marker: "latest_parser_marker", created_at: 1.hour.ago, confidence: "high")
+    create_detection(
+      source_document,
+      text_extraction,
+      marker: "u_legacy_hash_footer",
+      parser_format: "u.paper.v1",
+      created_at: 2.hours.ago
+    )
+    create_detection(
+      source_document,
+      text_extraction,
+      marker: "leclerc_paper_legacy_ticket_line",
+      parser_format: "leclerc.paper.v1",
+      created_at: 1.hour.ago,
+      confidence: "high"
+    )
 
     source_document
   end
 
-  def create_detection(source_document, text_extraction, marker:, created_at:, confidence: "manual")
+  def create_detection(source_document, text_extraction, marker:, parser_format:, created_at:, confidence: "manual")
     create(
       :source_document_detection,
       source_document: source_document,
       text_extraction: text_extraction,
       parser_confidence: confidence,
       store_confidence: confidence,
-      evidence: [ { "code" => marker } ],
+      evidence: [
+        {
+          "code" => "parser_format_marker",
+          "parser_format" => parser_format,
+          "marker" => marker
+        }
+      ],
       created_at: created_at
     )
   end
