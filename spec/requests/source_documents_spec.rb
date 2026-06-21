@@ -165,9 +165,23 @@ RSpec.describe "Source documents", type: :request do
     expect(response.body).to include(
       %(target="#{dom_id(source_document, :processing_status)}"),
       %(target="#{dom_id(source_document, :latest_text_extraction)}"),
-      %(target="#{dom_id(source_document, :receipt_summary)}"),
-      %(data-processing-complete="false")
+      %(target="#{dom_id(source_document, :receipt_summary)}")
     )
+  end
+
+  def get_status_stream(source_document)
+    get status_source_document_path(source_document, format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    expect_status_streams_for(source_document)
+  end
+
+  def expect_processing_state_labels(*labels, complete:)
+    expect(response.body).to include(%(data-processing-complete="#{complete}"))
+    labels.each do |label|
+      expect(response.body).to include(label)
+    end
   end
 
   it "renders a single upload form with store and parser format dropdowns" do
@@ -271,10 +285,39 @@ RSpec.describe "Source documents", type: :request do
   it "renders turbo stream status replacements for source document polling" do
     source_document = create(:source_document, store: store)
 
-    get status_source_document_path(source_document, format: :turbo_stream)
+    get_status_stream(source_document)
 
-    expect(response).to have_http_status(:ok)
-    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
-    expect_status_streams_for(source_document)
+    expect_processing_state_labels(
+      I18n.t("source_documents.show.processing.states.queued"),
+      I18n.t("source_documents.show.processing.states.classified"),
+      I18n.t("source_documents.show.processing.states.waiting"),
+      complete: false
+    )
+  end
+
+  it "renders pending source classification in processing status before extraction" do
+    source_document = create(:source_document, :pending_classification)
+
+    get_status_stream(source_document)
+
+    expect_processing_state_labels(
+      I18n.t("source_documents.show.processing.states.queued"),
+      I18n.t("source_documents.show.processing.states.pending"),
+      I18n.t("source_documents.show.processing.states.waiting"),
+      complete: false
+    )
+  end
+
+  it "renders needs-classification processing status after successful extraction" do
+    source_document = create(:source_document, :needs_classification)
+    create_extraction(source_document: source_document, text: "needs review", ran_at: 1.minute.ago)
+
+    get_status_stream(source_document)
+
+    expect_processing_state_labels(
+      I18n.t("source_documents.show.processing.states.complete"),
+      I18n.t("source_documents.show.processing.states.needs_classification"),
+      complete: true
+    )
   end
 end

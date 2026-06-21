@@ -53,7 +53,8 @@ RSpec.describe ReceiptIngestion::BroadcastProcessingStatusService do
         source_document: source_document,
         latest_text_extraction: text_extraction,
         extraction_state: "complete",
-        parsing_state: "queued"
+        parsing_state: "queued",
+        source_detection_state: "classified"
       }
     )
   end

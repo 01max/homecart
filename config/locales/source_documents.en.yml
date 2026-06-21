@@ -44,6 +44,7 @@ en:
         heading: "Processing"
         description: "Current extraction and parsing state for this source document."
         extraction: "Text extraction"
+        classification: "Source classification"
         parsing: "Parsing"
         states:
           queued: "Queued"
@@ -52,6 +53,9 @@ en:
           failed: "Failed"
           blocked: "Blocked"
           waiting: "Waiting"
+          pending: "Pending"
+          classified: "Classified"
+          needs_classification: "Needs classification"
       preview:
         heading: "Original file"
         description: "Immutable uploaded receipt evidence."

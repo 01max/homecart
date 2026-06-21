@@ -24,7 +24,7 @@ class Receipt::ProcessSourceDocumentJob < ApplicationJob
     if text_extraction.success?
       detection_result = source_detector.call(text_extraction: text_extraction)
       source_document = detection_result.source_document
-      parsing_state = detection_result.classified? ? "queued" : "blocked"
+      parsing_state = detection_result.classified? ? "queued" : "needs_classification"
       parse_job_class.perform_later(text_extraction.id) if detection_result.classified?
 
       broadcaster.call(

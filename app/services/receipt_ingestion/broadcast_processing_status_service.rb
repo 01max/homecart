@@ -81,7 +81,8 @@ module ReceiptIngestion
         latest_text_extraction: latest_text_extraction,
         receipt: current_receipt,
         extraction_state: extraction_state,
-        parsing_state: parsing_state
+        parsing_state: parsing_state,
+        source_detection_state: source_document.source_detection_status
       }
     end
 

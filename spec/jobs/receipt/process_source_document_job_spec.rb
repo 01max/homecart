@@ -89,7 +89,7 @@ RSpec.describe Receipt::ProcessSourceDocumentJob do
     perform_job(source_document)
 
     expect(parse_job_class).not_to have_received(:perform_later)
-    expect_finished_broadcast(source_document, text_extraction, extraction_state: "complete", parsing_state: "blocked")
+    expect_finished_broadcast(source_document, text_extraction, extraction_state: "complete", parsing_state: "needs_classification")
   end
 
   it "does not enqueue parsing for a failed text extraction" do
