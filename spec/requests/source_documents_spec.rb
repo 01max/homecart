@@ -380,6 +380,7 @@ RSpec.describe "Source documents", type: :request do
   end
 
   it "shows manual classification controls when source detection needs review" do
+    store
     source_document = create(:source_document, :needs_classification)
 
     get source_document_path(source_document)
