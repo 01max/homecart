@@ -28,6 +28,7 @@ en:
     parse:
       errors:
         missing_promotion_linked_line: "promotion linked_line_position %{position} did not match a persisted line"
+        unclassified_source_document: "source document must have a classified store and parser format before parsing"
     rerun_parser:
       errors:
         missing_successful_text_extraction: "receipt has no successful text extraction to parse"
