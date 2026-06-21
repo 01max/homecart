@@ -10,6 +10,31 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     "u.paper.v2" => "u_paper_v2_single_payment.txt"
   }
 
+  parser_marker_examples = {
+    "leclerc.web.v1" => {
+      "leclerc_web_payment" => "CB Web Drive"
+    },
+    "leclerc.paper.v2" => {
+      "leclerc_paper_vat_table" => "Code HT TVA TTC"
+    },
+    "leclerc.paper.v1" => {
+      "leclerc_paper_legacy_ticket_line" => "01/02/26 1 ABCD 12ABC"
+    },
+    "u.paper.v2" => {
+      "u_omnipos_version" => "OmniPOS version",
+      "u_omnipos_sale_banner" => "*** VENTE ***"
+    },
+    "u.paper.v1" => {
+      "u_legacy_hash_footer" => "Hash:",
+      "u_legacy_section_marker" => ">>>> EPICERIE"
+    },
+    "auchan.paper.v1" => {
+      "auchan_waaoh_account" => "WAAOH",
+      "auchan_selfscan_section" => "Selfscan",
+      "auchan_tr_totals" => "TOT. ARTICLES ELIGIBLES TR"
+    }
+  }
+
   def call_service(text_extraction)
     described_class.call(text_extraction: text_extraction)
   end
@@ -116,6 +141,17 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     )
   end
 
+  def expect_detected_parser_marker(result, parser_format:, marker:)
+    expect_detected_parser_format(result, parser_format)
+    expect(result.evidence).to include(
+      a_hash_including(
+        "code" => "parser_format_marker",
+        "parser_format" => parser_format,
+        "marker" => marker
+      )
+    )
+  end
+
   def expect_classified_result(result, store:)
     expect(result).to be_classified
     expect(result).to have_attributes(
@@ -168,6 +204,17 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
       expect(result).to be_classified
       expect_detected_parser_format(result, parser_format)
       expect(result.detection.parser_confidence).to eq("high")
+    end
+  end
+
+  parser_marker_examples.each do |parser_format, markers|
+    markers.each do |marker, text|
+      it "detects #{parser_format} from the #{marker} marker" do
+        result = call_service(text_extraction_for(text))
+
+        expect(result).to be_classified
+        expect_detected_parser_marker(result, parser_format: parser_format, marker: marker)
+      end
     end
   end
 
@@ -293,7 +340,7 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
 
   it "blocks store selection when multiple stores remain plausible" do
     brand = create(:retail_brand, aliases: [ "Retailer Same" ])
-    create_list(:store, 2, retail_brand: brand, channel: "physical")
+    stores = create_list(:store, 2, retail_brand: brand, channel: "physical")
     text_extraction = text_extraction_for("Retailer Same", source_document: source_document_with_parser_hint)
 
     result = call_service(text_extraction)
@@ -301,6 +348,7 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     expect(result).to be_needs_classification
     expect(result).to have_attributes(store: nil, store_confidence: "none")
     expect(evidence_codes(result)).to include("store_ambiguous")
+    expect(evidence_entry(result, "store_ambiguous")["store_ids"]).to match_array(stores.map(&:id))
   end
 
   it "keeps an explicit store while recording detector conflicts" do
@@ -316,15 +364,26 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     expect_store_conflict(result, explicit_store: explicit_store, detected_store: detected_store)
   end
 
+  it "keeps explicit source fields while recording parser and store conflicts" do
+    explicit_store, detected_store, text_extraction = combined_conflict_context
+
+    result = call_service(text_extraction)
+
+    expect(result).to have_attributes(parser_format: leclerc_paper_format, store: explicit_store)
+    expect_parser_conflict(result, explicit_format: leclerc_paper_format, detected_format: "u.paper.v2")
+    expect_store_conflict(result, explicit_store: explicit_store, detected_store: detected_store)
+  end
+
   it "keeps a detected parser format when store classification is still missing" do
     source_document = create(:source_document, :pending_classification)
-    text_extraction = text_extraction_for(fixture_text("leclerc_web_v1_drive.txt"), source_document: source_document)
+    text_extraction = text_extraction_for("CB Web Drive", source_document: source_document)
 
     result = call_service(text_extraction)
 
     expect(result).to be_needs_classification
     expect_detected_parser_format(result, "leclerc.web.v1")
     expect(result.store).to be_nil
+    expect(evidence_codes(result)).to include("store_not_detected")
   end
 
   it "blocks parser selection when incompatible hard markers match" do
@@ -348,5 +407,14 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
 
   def identifier_match_text
     "Magasin 95191\nPRIVATE ENTITY\nHEADER MARKER\nPRIVATE CASHIER"
+  end
+
+  def combined_conflict_context
+    explicit_store = create(:store)
+    detected_store = create(:store, identifiers: header_pattern_identifiers)
+    source_document = source_document_with_explicit_store(explicit_store)
+    text = "#{fixture_text('u_paper_v2_single_payment.txt')}\nPRIVATE HEADER"
+
+    [ explicit_store, detected_store, text_extraction_for(text, source_document: source_document) ]
   end
 end
