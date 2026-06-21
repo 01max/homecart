@@ -25,6 +25,18 @@ RSpec.describe SourceDocument do
     expect(described_class.source_detection_statuses.keys).to contain_exactly("pending", "classified", "needs_classification")
   end
 
+  it "uses the expected database enum values for source detection status" do
+    enum_values = ActiveRecord::Base.connection.select_values(<<~SQL.squish)
+      SELECT enumlabel
+      FROM pg_enum
+      JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+      WHERE pg_type.typname = 'source_detection_status'
+      ORDER BY enumsortorder
+    SQL
+
+    expect(enum_values).to eq(%w[pending classified needs_classification])
+  end
+
   it "validates content hash format" do
     document = described_class.new(store: source_document.store, content_hash: "not-sha")
 
@@ -59,6 +71,17 @@ RSpec.describe SourceDocument do
     expect(build(:source_document, :pending_classification)).to be_valid
   end
 
+  it "persists pending classification without store or parser format" do
+    document = create(:source_document, :pending_classification)
+
+    expect(document.reload).to have_attributes(store: nil, parser_format: nil, source_detection_status: "pending")
+  end
+
+  it "enforces classified source fields at the database level" do
+    expect { execute_in_savepoint(classified_insert_without_source_fields_sql) }
+      .to raise_error(ActiveRecord::StatementInvalid, /source_documents_classified_source_present/)
+  end
+
   it "requires content hash uniqueness" do
     duplicate = source_document.dup
 
@@ -83,5 +106,26 @@ RSpec.describe SourceDocument do
 
   it "allows Rails bookkeeping changes" do
     expect(source_document.update!(updated_at: 1.minute.from_now)).to be(true)
+  end
+
+  def classified_insert_without_source_fields_sql
+    <<~SQL.squish
+      INSERT INTO source_documents (
+        content_hash,
+        mime_type,
+        ingested_at,
+        source_detection_status,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        '#{'d' * 64}',
+        'application/pdf',
+        CURRENT_TIMESTAMP,
+        'classified',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+      )
+    SQL
   end
 end
