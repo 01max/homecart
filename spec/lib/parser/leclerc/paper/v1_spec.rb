@@ -27,6 +27,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       expect(result.warnings).to be_empty
     end
 
+    it "keeps eco-contribution detail rows out of receipt lines" do
+      result = described_class.new(text: eco_contribution_detail_text).call
+
+      expect(result.receipt).to include(eco_contribution_detail_receipt_attributes)
+      expect(result.lines).to contain_exactly(
+        unsectioned_line("KINDER DELICE COCONUT T10", 352),
+        unsectioned_line("DOUDOU BALTA RENARD H23 BN6020", 1_195)
+      )
+      expect(result.payments).to contain_exactly(card_payment(amount_cents: 1_547))
+      expect(result.warnings).to be_empty
+    end
+
     it "does not infer a tickets promotion from displayed CUMUL DISPONIBLE balances" do
       text = Rails.root.join("spec/fixtures/files/parser/leclerc_paper_v1_without_sections.txt").read
                  .sub("CUMUL DISPONIBLE", "CUMUL DISPONIBLE AU 03/09/24 : 0.00 €")
@@ -140,6 +152,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
     }
   end
 
+  def eco_contribution_detail_receipt_attributes
+    {
+      parser_format: "leclerc.paper.v1",
+      purchased_at: Time.zone.local(2025, 9, 6, 15, 45),
+      register_number: "305-3005",
+      ticket_number: "8Q56 05900",
+      total_cents: 1_547,
+      declared_article_count: 2,
+      parser_status: "parsed"
+    }
+  end
+
   def ticket_restaurant_receipt_attributes
     {
       parser_format: "leclerc.paper.v1",
@@ -229,6 +253,24 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
 
       CYCLEEN                                0.16
       CB                                     9.84
+    TEXT
+  end
+
+  def eco_contribution_detail_text
+    <<~TEXT
+      ANONYMIZED STORE
+      TEL:00.00.00.00.00
+      Caisse 305-3005 06 septembre 2025 15:45
+      06/09/25 0 8Q56 05900
+
+      KINDER DELICE COCONUT T10           3.52
+      DOUDOU BALTA RENARD H23 BN6020    11.95
+      (A) Dont DEEE / DEA :              0.02
+      (Z) Prix hors contributions :     11.93
+                                      ----------
+      Total 2 articles                  15.47
+
+      CB                                15.47
     TEXT
   end
 

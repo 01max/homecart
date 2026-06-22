@@ -11,6 +11,7 @@ module Parser
         REMISES_SECTION_PATTERN = /\AREMISES\z/
         BONS_REDUCTION_SECTION_PATTERN = /\ABONS DE REDUCTION\z/
         DETAIL_TOTAL_PATTERN = /\ATotal\b/
+        CONTRIBUTION_DETAIL_PATTERN = %r{\A\([A-Z]\)\s+(?:Dont\s+DEEE\s*/\s*DEA|Prix\s+hors\s+contributions)\s*:}i
         BON_ACHAT_PATTERN = /\ABon achat carte\s+(?<amount>\d+\.\d{2})\z/
         TICKET_CUMUL_PATTERN = /\ACUMUL DISPONIBLE\z/i
         LOYALTY_POINTS_SECTION_PATTERN = %r{\ACumul points fidélité (?<campaign>Amazones/Jeannerie)\z}i
@@ -70,6 +71,7 @@ module Parser
 
         def skip_line?(line, state)
           return true if body_marker?(line) || line.match?(SECTION_PATTERN)
+          return true if line.match?(CONTRIBUTION_DETAIL_PATTERN)
           return true if state.items_finished?
           return true unless state.items_started? || implicit_items_start?(line)
 
