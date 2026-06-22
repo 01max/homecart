@@ -44,6 +44,5 @@ module Homecart
 
     # Preserve PostgreSQL-specific schema features such as triggers/functions.
     config.active_record.schema_format = :sql
-    config.active_record.dump_schema_after_migration = false
   end
 end

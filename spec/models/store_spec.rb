@@ -12,8 +12,10 @@ RSpec.describe Store do
     store = create(:store)
     source_document = create(:source_document, store: store)
     receipt = create(:receipt, store: store, source_document: source_document)
+    detection = create(:source_document_detection, source_document: source_document, store: store)
 
     expect(store.source_documents).to include(source_document)
+    expect(store.source_document_detections).to include(detection)
     expect(store.receipts).to include(receipt)
   end
 

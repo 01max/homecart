@@ -13,6 +13,19 @@ brands:
       - Retailer C
 
 stores:
+  # Store identifiers feed source detection. Keep tracked values anonymized.
+  #
+  # Supported detector keys:
+  # - default_parser_format
+  # - receipt_header_patterns
+  # - receipt_store_codes
+  # - legal_entities
+  # - detection_hints
+  #
+  # Real receipt headers, store codes, legal names, and other private hints
+  # belong in ignored db/seeds/retail_locations.local.yml. Local stores are
+  # merged by brand_slug/location_name/channel, and identifiers are merged with
+  # these anonymized tracked identifiers.
   - brand_slug: retailer-a
     location_name: Location 01
     channel: physical

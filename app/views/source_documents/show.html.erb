@@ -57,6 +57,10 @@
                  latest_text_extraction: @latest_text_extraction,
                  receipt: @receipt %>
 
+      <%= render "source_documents/classification_panel",
+                 source_document: @source_document,
+                 latest_source_document_detection: @latest_source_document_detection %>
+
       <section class="hc-detail-block hc-block text-sm">
         <div class="hc-block-heading">
           <h2 class="hc-block-title"><%= t(".details.heading") %></h2>
@@ -65,11 +69,13 @@
         <dl class="hc-detail-grid mt-4">
           <div class="hc-detail-item">
             <dt class="hc-detail-term"><%= t(".details.store") %></dt>
-            <dd class="hc-detail-value"><%= store_option_label(@source_document.store) %></dd>
+            <dd class="hc-detail-value">
+              <%= @source_document.store ? store_option_label(@source_document.store) : t(".classification.empty") %>
+            </dd>
           </div>
           <div class="hc-detail-item">
             <dt class="hc-detail-term"><%= t(".details.parser_format") %></dt>
-            <dd class="hc-detail-value hc-code"><%= @source_document.parser_format_before_type_cast %></dd>
+            <dd class="hc-detail-value hc-code"><%= @source_document.parser_format_before_type_cast.presence || t(".classification.empty") %></dd>
           </div>
           <div class="hc-detail-item">
             <dt class="hc-detail-term"><%= t(".details.mime_type") %></dt>
