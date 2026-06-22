@@ -113,7 +113,7 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
   def create_inline_catalogue_records
     {
       category: create(:category, name: "Compotes"),
-      retail_brand: create(:retail_brand, name: "E.Leclerc")
+      retail_brand: create(:retail_brand, name: "Leclerc Matching #{Faker::Alphanumeric.unique.alpha(number: 8)}")
     }
   end
 

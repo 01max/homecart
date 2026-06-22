@@ -17,6 +17,15 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
       expect(result.warnings).to be_empty
     end
 
+    it "does not let eco-contribution detail rows replace pending quantity labels" do
+      result = described_class.new(text: eco_contribution_quantity_text).call
+
+      expect(result.receipt).to include(eco_contribution_quantity_receipt_attributes)
+      expect(result.lines).to contain_exactly(eco_contribution_quantity_line)
+      expect(result.payments).to contain_exactly(card_payment(amount_cents: 2_390))
+      expect(result.warnings).to be_empty
+    end
+
     it "parses section markers, direct item lines, split payments, and VAT codes" do
       result = parse_fixture("parser/leclerc_paper_v2_sections_vat.txt")
 
@@ -64,6 +73,18 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
     }
   end
 
+  def eco_contribution_quantity_receipt_attributes
+    {
+      parser_format: "leclerc.paper.v2",
+      purchased_at: Time.zone.local(2025, 9, 6, 15, 45),
+      register_number: "305-3005",
+      ticket_number: "8Q56 05900",
+      total_cents: 2_390,
+      declared_article_count: 2,
+      parser_status: "parsed"
+    }
+  end
+
   def ticket_restaurant_receipt_attributes
     {
       parser_format: "leclerc.paper.v2",
@@ -100,6 +121,28 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
     TEXT
   end
 
+  def eco_contribution_quantity_text
+    <<~TEXT
+      ANONYMIZED STORE
+      TEL:00.00.00.00.00
+      Caisse 305-3005 06 septembre 2025 15:45
+      Ticket 06/09/25 0 8Q56 05900
+
+      TTC   TVA
+      DOUDOU BALTA RENARD H23 BN6020 ..
+      (A) Dont DEEE / DEA :              0.02
+      (Z) Prix hors contributions :     11.93
+      2 X 11.95€                        23.90 3
+      ----------
+      Total 2 articles                  23.90
+
+      CB                                23.90
+
+      Code               HT       TVA           TTC
+      3 20%00         19.92      3.98         23.90
+    TEXT
+  end
+
   def quantity_line
     hash_including(
       position: 1,
@@ -108,6 +151,20 @@ RSpec.describe Parser::Leclerc::Paper::V2 do
       quantity: BigDecimal("2"),
       unit_price_cents: 535,
       total_cents: 1_070,
+      vat_rate_bp: 2_000,
+      section_label: nil
+    )
+  end
+
+  def eco_contribution_quantity_line
+    hash_including(
+      position: 1,
+      raw_text: "DOUDOU BALTA RENARD H23 BN6020 ..\n2 X 11.95€                        23.90 3",
+      label: "DOUDOU BALTA RENARD H23 BN6020",
+      label_truncated: true,
+      quantity: BigDecimal("2"),
+      unit_price_cents: 1_195,
+      total_cents: 2_390,
       vat_rate_bp: 2_000,
       section_label: nil
     )

@@ -13,22 +13,22 @@ module ReceiptIngestion
     Result = Data.define(:source_document, :duplicate)
 
     # @param file [#path, #content_type, #original_filename] uploaded file-like object
-    # @param store [Store] user-selected store for the source document
-    # @param parser_format [String] dotted parser format selected at upload time
+    # @param store [Store, nil] optional user-selected store hint for the source document
+    # @param parser_format [String, nil] optional dotted parser format hint selected at upload time
     # @param job_class [Class] job class used to continue source-document processing
     # @param broadcaster [Class] service that broadcasts UI pipeline state
     # @param clock [#call] clock dependency returning the ingestion timestamp
     def initialize(
       file:,
-      store:,
-      parser_format:,
+      store: nil,
+      parser_format: nil,
       job_class: Receipt::ProcessSourceDocumentJob,
       broadcaster: BroadcastProcessingStatusService,
       clock: -> { Time.current }
     )
       @file = file
       @store = store
-      @parser_format = parser_format
+      @parser_format = parser_format.presence
       @job_class = job_class
       @broadcaster = broadcaster
       @clock = clock
@@ -79,6 +79,7 @@ module ReceiptIngestion
         content_hash: content_hash,
         mime_type: file.content_type,
         parser_format: parser_format,
+        source_detection_status: "pending",
         ingested_at: clock.call,
         original_file: {
           io: file,

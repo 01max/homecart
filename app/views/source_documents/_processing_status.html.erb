@@ -1,18 +1,34 @@
 <% latest_text_extraction = local_assigns.fetch(:latest_text_extraction) { source_document.text_extractions.order(ran_at: :desc, created_at: :desc).first } %>
 <% receipt = local_assigns.fetch(:receipt) { source_document.receipts.order(created_at: :desc).first } %>
+<% source_detection_state = local_assigns[:source_detection_state] || source_document.source_detection_status %>
 <% extraction_state = local_assigns[:extraction_state] %>
 <% extraction_state ||= latest_text_extraction&.success? ? "complete" : latest_text_extraction ? "failed" : "queued" %>
 <% parsing_state = local_assigns[:parsing_state] %>
-<% parsing_state ||= receipt ? "complete" : latest_text_extraction&.success? ? "queued" : latest_text_extraction ? "blocked" : "waiting" %>
+<%
+  parsing_state ||= if receipt
+    "complete"
+  elsif latest_text_extraction&.success? && source_detection_state == "classified"
+    "queued"
+  elsif latest_text_extraction&.success? && source_detection_state == "needs_classification"
+    "needs_classification"
+  elsif latest_text_extraction
+    "blocked"
+  else
+    "waiting"
+  end
+%>
 <% state_classes = {
   "queued" => "hc-badge--queued",
   "running" => "hc-badge--running",
   "complete" => "hc-badge--complete",
   "failed" => "hc-badge--failed",
   "blocked" => "hc-badge--neutral",
-  "waiting" => "hc-badge--neutral"
+  "waiting" => "hc-badge--neutral",
+  "pending" => "hc-badge--queued",
+  "classified" => "hc-badge--complete",
+  "needs_classification" => "hc-badge--warning"
 } %>
-<% processing_complete = %w[complete failed].include?(extraction_state) && %w[complete failed blocked].include?(parsing_state) %>
+<% processing_complete = %w[complete failed].include?(extraction_state) && %w[complete failed blocked needs_classification].include?(parsing_state) %>
 
 <section id="<%= dom_id(source_document, :processing_status) %>"
          data-source-document-processing-target="status"
@@ -27,6 +43,12 @@
       <dt class="hc-detail-term"><%= t("source_documents.show.processing.extraction") %></dt>
       <dd class="hc-badge <%= state_classes.fetch(extraction_state) %>">
         <%= t("source_documents.show.processing.states.#{extraction_state}") %>
+      </dd>
+    </div>
+    <div class="flex items-center justify-between gap-3">
+      <dt class="hc-detail-term"><%= t("source_documents.show.processing.classification") %></dt>
+      <dd class="hc-badge <%= state_classes.fetch(source_detection_state) %>">
+        <%= t("source_documents.show.processing.states.#{source_detection_state}") %>
       </dd>
     </div>
     <div class="flex items-center justify-between gap-3">

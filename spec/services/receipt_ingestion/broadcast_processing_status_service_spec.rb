@@ -53,7 +53,8 @@ RSpec.describe ReceiptIngestion::BroadcastProcessingStatusService do
         source_document: source_document,
         latest_text_extraction: text_extraction,
         extraction_state: "complete",
-        parsing_state: "queued"
+        parsing_state: "queued",
+        source_detection_state: "classified"
       }
     )
   end
@@ -64,6 +65,15 @@ RSpec.describe ReceiptIngestion::BroadcastProcessingStatusService do
       target: dom_id(source_document, :latest_text_extraction),
       partial: "source_documents/latest_extraction",
       locals: { latest_text_extraction: text_extraction }
+    )
+  end
+
+  def expect_classification_panel_replace(source_document)
+    expect_source_document_replace(
+      source_document,
+      target: dom_id(source_document, :classification_panel),
+      partial: "source_documents/classification_panel",
+      locals: { latest_source_document_detection: nil }
     )
   end
 
@@ -84,6 +94,7 @@ RSpec.describe ReceiptIngestion::BroadcastProcessingStatusService do
 
     expect_processing_status_replace(source_document, text_extraction)
     expect_latest_extraction_replace(source_document, text_extraction)
+    expect_classification_panel_replace(source_document)
     expect_receipt_summary_replace(source_document)
   end
 

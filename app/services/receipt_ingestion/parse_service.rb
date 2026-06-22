@@ -8,6 +8,7 @@ module ReceiptIngestion
     Result = Data.define(:receipt, :lines, :promotions, :payments)
 
     MissingPromotionLinkedLineError = Class.new(StandardError)
+    UnclassifiedSourceDocumentError = Class.new(StandardError)
 
     # @param text_extraction [TextExtraction] successful extraction to parse
     # @param parser_format [String, nil] optional registry key; defaults to source document format
@@ -22,7 +23,7 @@ module ReceiptIngestion
       validator: ValidateParseService
     )
       @text_extraction = text_extraction
-      @parser_format = parser_format || source_document_parser_format
+      @parser_format_override = parser_format.presence
       @parser_registry = parser_registry
       @duplicate_detector = duplicate_detector
       @validator = validator
@@ -30,9 +31,12 @@ module ReceiptIngestion
 
     # @return [Result] persisted receipt and child records
     # @raise [MissingPromotionLinkedLineError] when parser promotion references an unknown line
+    # @raise [UnclassifiedSourceDocumentError] when source classification is incomplete
     # @raise [ReceiptIngestion::DetectDuplicateService::DuplicateReceiptError] on strict duplicates
     # @raise [ActiveRecord::RecordInvalid] when parser output cannot be persisted
     def call
+      ensure_source_document_classified!
+
       parser_result = parse_text
 
       ActiveRecord::Base.transaction do
@@ -50,9 +54,16 @@ module ReceiptIngestion
 
     private
 
-    attr_reader :text_extraction, :parser_format, :parser_registry, :duplicate_detector, :validator
+    attr_reader :text_extraction, :parser_format_override, :parser_registry, :duplicate_detector, :validator
 
     delegate :source_document, to: :text_extraction
+
+    def ensure_source_document_classified!
+      return if source_document.classified? && source_document.store.present? && source_document.parser_format.present?
+
+      raise UnclassifiedSourceDocumentError,
+            I18n.t("receipt_ingestion.parse.errors.unclassified_source_document")
+    end
 
     def parse_text
       parser = parser_registry.for(parser_format).new(text: text_extraction.text)
@@ -85,6 +96,10 @@ module ReceiptIngestion
 
     def source_document_parser_format
       SourceDocument::PARSER_FORMATS.fetch(source_document.parser_format.to_sym)
+    end
+
+    def parser_format
+      parser_format_override || source_document_parser_format
     end
 
     def create_receipt(parser_result)

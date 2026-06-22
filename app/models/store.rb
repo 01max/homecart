@@ -11,6 +11,7 @@ class Store < ApplicationRecord
 
   belongs_to :retail_brand, inverse_of: :stores
   has_many :source_documents, inverse_of: :store, dependent: :restrict_with_exception
+  has_many :source_document_detections, inverse_of: :store, dependent: :restrict_with_exception
   has_many :receipts, inverse_of: :store, dependent: :restrict_with_exception
   has_many :price_observations, inverse_of: :store, dependent: :restrict_with_exception
 
@@ -24,7 +25,7 @@ class Store < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[price_observations receipts retail_brand source_documents]
+    %w[price_observations receipts retail_brand source_document_detections source_documents]
   end
 
   private
