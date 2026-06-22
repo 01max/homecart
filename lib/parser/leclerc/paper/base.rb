@@ -44,10 +44,10 @@ module Parser
 
         def parse_receipt_lines
           state = LineState.new
-          body_lines = text_lines.each_with_object([]) do |line, parsed|
+          body_lines = text_lines.each_with_index.each_with_object([]) do |(line, index), parsed|
             handle_body_marker(line, state)
             handle_section_marker(line, state)
-            next if skip_line?(line, state)
+            next if skip_line?(line, state, next_line: text_lines[index + 1])
 
             parse_receipt_line(line, state, parsed)
           end
@@ -69,11 +69,11 @@ module Parser
           state.section_label = section_match[:section]
         end
 
-        def skip_line?(line, state)
+        def skip_line?(line, state, next_line: nil)
           return true if body_marker?(line) || line.match?(SECTION_PATTERN)
           return true if line.match?(CONTRIBUTION_DETAIL_PATTERN)
           return true if state.items_finished?
-          return true unless state.items_started? || implicit_items_start?(line)
+          return true unless state.items_started? || implicit_items_start?(line) || quantity_label_start?(next_line)
 
           state.items_started = true
           return state.items_finished = true if line.match?(TOTAL_PATTERN)
@@ -458,6 +458,10 @@ module Parser
         def quantity_vat_rate_bp(_match) = nil
 
         def discount_vat_rate_bp(_match) = nil
+
+        def quantity_label_start?(next_line)
+          next_line&.match?(self.class::QUANTITY_LINE_PATTERN)
+        end
 
         def discount_line_pattern
           self.class.const_defined?(:DISCOUNT_LINE_PATTERN, false) ? self.class::DISCOUNT_LINE_PATTERN : /(?!)/

@@ -17,6 +17,12 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       expect(result.warnings).to be_empty
     end
 
+    it "parses unsectioned receipts that begin with a quantity continuation item" do
+      result = described_class.new(text: leading_quantity_text).call
+
+      expect_leading_quantity_result(result)
+    end
+
     it "parses receipts without section markers and split payments" do
       result = parse_fixture("parser/leclerc_paper_v1_without_sections.txt")
 
@@ -116,6 +122,22 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
     described_class.new(text: Rails.root.join("spec/fixtures/files", path).read).call
   end
 
+  def expect_leading_quantity_result(result)
+    expect(result.receipt).to include(leading_quantity_receipt_attributes)
+    expect(result.lines).to contain_exactly(
+      leading_quantity_line,
+      unsectioned_line("ITEM BRAVO", 1_295),
+      unsectioned_line("ITEM CHARLIE", 997),
+      unsectioned_line("ITEM DELTA", 2_490)
+    )
+    expect(result.promotions).to contain_exactly(leading_quantity_bon_immediat_promotion)
+    expect(result.payments).to contain_exactly(
+      hash_including(raw_label: "Bon immediat", category: "other", amount_cents: 244),
+      card_payment(amount_cents: 5_352)
+    )
+    expect(result.warnings).to be_empty
+  end
+
   def sectioned_receipt_attributes
     {
       parser_format: "leclerc.paper.v1",
@@ -136,6 +158,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       ticket_number: "8M8G 02U00",
       total_cents: 989,
       declared_article_count: 3,
+      parser_status: "parsed"
+    }
+  end
+
+  def leading_quantity_receipt_attributes
+    {
+      parser_format: "leclerc.paper.v1",
+      purchased_at: Time.zone.local(2024, 7, 8, 12, 1),
+      register_number: "303-3003",
+      ticket_number: "8N5B 01Q00",
+      total_cents: 5_596,
+      declared_article_count: 5,
       parser_status: "parsed"
     }
   end
@@ -256,6 +290,37 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
     TEXT
   end
 
+  def leading_quantity_text
+    <<~TEXT
+      ANONYMIZED STORE
+      TEL:00.00.00.00.00
+      Caisse 303-3003 08 juillet 2024 12:01
+      08/07/24 0 8N5B 01Q00
+
+      ANONYMIZED BARCODE
+
+      ITEM ALPHA BATONNETS T24
+      2 X 4.07€                   8.14
+      ITEM BRAVO                         12.95
+      ITEM CHARLIE                        9.97
+      ITEM DELTA                         24.90
+                                      ----------
+      Total 5 articles                   55.96
+
+      Bon immediat                        2.44
+                                      ----------
+      Reste à payer                      53.52
+
+      CB                                 53.52
+
+      ----------------------------------------
+                      BONS DE REDUCTION
+
+      ITEM ALPHA BATO (Lot de 2)          2.44
+      ----------------------------------------
+    TEXT
+  end
+
   def eco_contribution_detail_text
     <<~TEXT
       ANONYMIZED STORE
@@ -308,6 +373,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       unit_price_cents: 354,
       total_cents: 1_062,
       section_label: "EPICERIE"
+    )
+  end
+
+  def leading_quantity_line
+    hash_including(
+      position: 1,
+      raw_text: "ITEM ALPHA BATONNETS T24\n2 X 4.07€                   8.14",
+      label: "ITEM ALPHA BATONNETS T24",
+      quantity: BigDecimal("2"),
+      unit_price_cents: 407,
+      total_cents: 814,
+      section_label: nil
     )
   end
 
@@ -493,6 +570,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       unit: "euro_cents",
       delta: -149,
       label: "Lot LOT BRII 2M68PCT SAUCE MUTT",
+      kind: "immediate_discount",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def leading_quantity_bon_immediat_promotion
+    {
+      program: "leclerc_bon_immediat",
+      unit: "euro_cents",
+      delta: -244,
+      label: "ITEM ALPHA BATO (Lot de 2)",
       kind: "immediate_discount",
       linked_line_position: nil,
       linking_method: "unallocated"
