@@ -112,6 +112,21 @@ RSpec.describe ReceiptIngestion::ParseService do
     expect(ReceiptPayment.count).to eq(0)
   end
 
+  def expect_unclassified_parse_rejected(text_extraction, parser_format: "leclerc.paper.v1")
+    parser_class = parser_class_for(build_parser_result)
+    parser_registry = parser_registry_for(parser_class)
+
+    expect do
+      described_class.call(text_extraction: text_extraction, parser_format: parser_format, parser_registry: parser_registry)
+    end.to raise_error(
+      described_class::UnclassifiedSourceDocumentError,
+      I18n.t("receipt_ingestion.parse.errors.unclassified_source_document")
+    )
+
+    expect(parser_registry.requested_format).to be_nil
+    expect(parser_class.calls).to be_empty
+  end
+
   def receipt_attributes
     {
       purchased_at: Time.zone.local(2026, 6, 1, 12, 30, 0),
@@ -250,6 +265,22 @@ RSpec.describe ReceiptIngestion::ParseService do
     expect(context.fetch(:parser_registry).requested_format).to eq("u.paper.v2")
     expect(context.fetch(:result).receipt.store).to eq(source_document.store)
     expect(context.fetch(:result).receipt).to be_parser_format_u_paper_v2
+  end
+
+  it "refuses to parse source documents that still need classification" do
+    source_document = create(:source_document, :needs_classification)
+    text_extraction = create(:text_extraction, source_document: source_document)
+
+    expect_unclassified_parse_rejected(text_extraction)
+    expect_no_receipt_graph
+  end
+
+  it "refuses to parse source documents that have values but are not classified" do
+    source_document = create(:source_document, source_detection_status: "pending")
+    text_extraction = create(:text_extraction, source_document: source_document)
+
+    expect_unclassified_parse_rejected(text_extraction)
+    expect_no_receipt_graph
   end
 
   it "persists parser warnings onto the receipt" do

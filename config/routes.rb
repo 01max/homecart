@@ -3,6 +3,7 @@ Rails.application.routes.draw do
 
   resources :source_documents, only: %i[new create show] do
     get :status, on: :member
+    patch :classify, on: :member
   end
   resources :categories, only: %i[create update destroy]
   resources :receipts, only: %i[index show edit update destroy] do

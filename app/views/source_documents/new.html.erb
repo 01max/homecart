@@ -17,7 +17,7 @@
     <%= form_with url: source_documents_path,
                   scope: :source_document,
                   local: true,
-                  html: { multipart: true, data: { controller: "parser-format-suggestion" } },
+                  html: { multipart: true },
                   class: "hc-filter-block" do |form| %>
       <div class="hc-block-heading">
         <h2 class="hc-block-title"><%= t(".form.heading") %></h2>
@@ -36,10 +36,8 @@
                           store_options_for_select,
                           { prompt: t(".store_prompt"), selected: @selected_store_id },
                           class: "hc-select block",
-                          data: {
-                            parser_format_suggestion_target: "store",
-                            action: "parser-format-suggestion#suggest"
-                          } %>
+                          aria: { describedby: "source_document_store_id_hint" } %>
+          <p id="source_document_store_id_hint" class="hc-body mt-1 text-sm"><%= t(".store_hint") %></p>
         </div>
 
         <div class="hc-filter-group">
@@ -48,10 +46,8 @@
                           @parser_formats,
                           { prompt: t(".parser_format_prompt"), selected: @selected_parser_format },
                           class: "hc-select block",
-                          data: {
-                            parser_format_suggestion_target: "parserFormat",
-                            action: "parser-format-suggestion#markManualSelection"
-                          } %>
+                          aria: { describedby: "source_document_parser_format_hint" } %>
+          <p id="source_document_parser_format_hint" class="hc-body mt-1 text-sm"><%= t(".parser_format_hint") %></p>
         </div>
       </div>
 

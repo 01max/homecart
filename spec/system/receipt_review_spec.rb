@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "Receipt review", type: :system do
-  let(:retail_brand) { create(:retail_brand, slug: "leclerc").tap { |brand| brand.update!(name: "E.Leclerc") } }
+  let(:retail_brand) { create(:retail_brand, name: "E.Leclerc") }
   let(:store) { create(:store, retail_brand: retail_brand, location_name: "Villeneuve sur Lot", channel: "physical") }
 
   def create_reviewable_receipt

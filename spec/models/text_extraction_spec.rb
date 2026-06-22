@@ -14,6 +14,12 @@ RSpec.describe TextExtraction do
     expect(text_extraction.receipt).to eq(receipt)
   end
 
+  it "owns source detection attempts" do
+    detection = create(:source_document_detection, source_document: source_document, text_extraction: text_extraction)
+
+    expect(text_extraction.source_document_detections).to contain_exactly(detection)
+  end
+
   it "requires text when successful" do
     extraction = described_class.new(source_document: source_document, engine: "pdftotext-layout", ran_at: Time.current, success: true)
 

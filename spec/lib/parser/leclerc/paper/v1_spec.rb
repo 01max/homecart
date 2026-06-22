@@ -17,6 +17,12 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       expect(result.warnings).to be_empty
     end
 
+    it "parses unsectioned receipts that begin with a quantity continuation item" do
+      result = described_class.new(text: leading_quantity_text).call
+
+      expect_leading_quantity_result(result)
+    end
+
     it "parses receipts without section markers and split payments" do
       result = parse_fixture("parser/leclerc_paper_v1_without_sections.txt")
 
@@ -24,6 +30,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       expect(result.lines).to contain_exactly(unsectioned_line("ITEM SINGLE", 284), unsectioned_line("ITEM SECOND", 305), unsectioned_line("ITEM THIRD", 400))
       expect(result.promotions).to contain_exactly(bon_achat_promotion(193), tickets_promotion(193), royal_vkb_promotion)
       expect(result.payments).to contain_exactly(voucher_payment, card_payment(amount_cents: 796))
+      expect(result.warnings).to be_empty
+    end
+
+    it "keeps eco-contribution detail rows out of receipt lines" do
+      result = described_class.new(text: eco_contribution_detail_text).call
+
+      expect(result.receipt).to include(eco_contribution_detail_receipt_attributes)
+      expect(result.lines).to contain_exactly(
+        unsectioned_line("KINDER DELICE COCONUT T10", 352),
+        unsectioned_line("DOUDOU BALTA RENARD H23 BN6020", 1_195)
+      )
+      expect(result.payments).to contain_exactly(card_payment(amount_cents: 1_547))
       expect(result.warnings).to be_empty
     end
 
@@ -104,6 +122,22 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
     described_class.new(text: Rails.root.join("spec/fixtures/files", path).read).call
   end
 
+  def expect_leading_quantity_result(result)
+    expect(result.receipt).to include(leading_quantity_receipt_attributes)
+    expect(result.lines).to contain_exactly(
+      leading_quantity_line,
+      unsectioned_line("ITEM BRAVO", 1_295),
+      unsectioned_line("ITEM CHARLIE", 997),
+      unsectioned_line("ITEM DELTA", 2_490)
+    )
+    expect(result.promotions).to contain_exactly(leading_quantity_bon_immediat_promotion)
+    expect(result.payments).to contain_exactly(
+      hash_including(raw_label: "Bon immediat", category: "other", amount_cents: 244),
+      card_payment(amount_cents: 5_352)
+    )
+    expect(result.warnings).to be_empty
+  end
+
   def sectioned_receipt_attributes
     {
       parser_format: "leclerc.paper.v1",
@@ -128,6 +162,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
     }
   end
 
+  def leading_quantity_receipt_attributes
+    {
+      parser_format: "leclerc.paper.v1",
+      purchased_at: Time.zone.local(2024, 7, 8, 12, 1),
+      register_number: "303-3003",
+      ticket_number: "8N5B 01Q00",
+      total_cents: 5_596,
+      declared_article_count: 5,
+      parser_status: "parsed"
+    }
+  end
+
   def discounted_receipt_attributes
     {
       parser_format: "leclerc.paper.v1",
@@ -136,6 +182,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       ticket_number: "0AUU 00X00",
       total_cents: 1_428,
       declared_article_count: 4,
+      parser_status: "parsed"
+    }
+  end
+
+  def eco_contribution_detail_receipt_attributes
+    {
+      parser_format: "leclerc.paper.v1",
+      purchased_at: Time.zone.local(2025, 9, 6, 15, 45),
+      register_number: "305-3005",
+      ticket_number: "8Q56 05900",
+      total_cents: 1_547,
+      declared_article_count: 2,
       parser_status: "parsed"
     }
   end
@@ -232,6 +290,55 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
     TEXT
   end
 
+  def leading_quantity_text
+    <<~TEXT
+      ANONYMIZED STORE
+      TEL:00.00.00.00.00
+      Caisse 303-3003 08 juillet 2024 12:01
+      08/07/24 0 8N5B 01Q00
+
+      ANONYMIZED BARCODE
+
+      ITEM ALPHA BATONNETS T24
+      2 X 4.07€                   8.14
+      ITEM BRAVO                         12.95
+      ITEM CHARLIE                        9.97
+      ITEM DELTA                         24.90
+                                      ----------
+      Total 5 articles                   55.96
+
+      Bon immediat                        2.44
+                                      ----------
+      Reste à payer                      53.52
+
+      CB                                 53.52
+
+      ----------------------------------------
+                      BONS DE REDUCTION
+
+      ITEM ALPHA BATO (Lot de 2)          2.44
+      ----------------------------------------
+    TEXT
+  end
+
+  def eco_contribution_detail_text
+    <<~TEXT
+      ANONYMIZED STORE
+      TEL:00.00.00.00.00
+      Caisse 305-3005 06 septembre 2025 15:45
+      06/09/25 0 8Q56 05900
+
+      KINDER DELICE COCONUT T10           3.52
+      DOUDOU BALTA RENARD H23 BN6020    11.95
+      (A) Dont DEEE / DEA :              0.02
+      (Z) Prix hors contributions :     11.93
+                                      ----------
+      Total 2 articles                  15.47
+
+      CB                                15.47
+    TEXT
+  end
+
   def pyrex_vignette_operation_text
     <<~TEXT
       ANONYMIZED STORE
@@ -266,6 +373,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       unit_price_cents: 354,
       total_cents: 1_062,
       section_label: "EPICERIE"
+    )
+  end
+
+  def leading_quantity_line
+    hash_including(
+      position: 1,
+      raw_text: "ITEM ALPHA BATONNETS T24\n2 X 4.07€                   8.14",
+      label: "ITEM ALPHA BATONNETS T24",
+      quantity: BigDecimal("2"),
+      unit_price_cents: 407,
+      total_cents: 814,
+      section_label: nil
     )
   end
 
@@ -451,6 +570,18 @@ RSpec.describe Parser::Leclerc::Paper::V1 do
       unit: "euro_cents",
       delta: -149,
       label: "Lot LOT BRII 2M68PCT SAUCE MUTT",
+      kind: "immediate_discount",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def leading_quantity_bon_immediat_promotion
+    {
+      program: "leclerc_bon_immediat",
+      unit: "euro_cents",
+      delta: -244,
+      label: "ITEM ALPHA BATO (Lot de 2)",
       kind: "immediate_discount",
       linked_line_position: nil,
       linking_method: "unallocated"

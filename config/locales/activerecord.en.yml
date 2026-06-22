@@ -19,5 +19,17 @@ en:
           attributes:
             identifiers:
               not_an_object: "must be an object"
+        source_document_detection:
+          attributes:
+            evidence:
+              not_an_array: "must be an array"
+            parser_confidence:
+              must_be_none_without_parser_format: "must be none when parser format is blank"
+              must_not_be_none_with_parser_format: "must not be none when parser format is present"
+            store_confidence:
+              must_be_none_without_store: "must be none when store is blank"
+              must_not_be_none_with_store: "must not be none when store is present"
+            text_extraction:
+              source_document_mismatch: "must belong to the same source document"
       messages:
         immutable: "is immutable"
