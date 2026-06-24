@@ -74,6 +74,7 @@
             <%= button_to t(".ignore.group_action", count: @group.line_count),
                           matching_ignored_groups_path,
                           params: {
+                            return_to: return_to_path,
                             ignored_group: {
                               normalized_label: @group.normalized_label,
                               receipt_line_ids: @group.receipt_lines.map(&:id)
@@ -176,6 +177,7 @@
             <%= form_with scope: :bulk_confirmation,
                           url: matching_bulk_confirmations_path,
                           class: "hc-table-cell-actions mt-4 justify-start" do |form| %>
+              <%= hidden_field_tag :return_to, return_to_path %>
               <%= form.hidden_field :normalized_label, value: @entry.bulk_preview.normalized_label %>
               <%= form.hidden_field :product_variant_id, value: @entry.bulk_preview_variant.id %>
               <% @entry.bulk_preview.receipt_line_ids.each do |receipt_line_id| %>

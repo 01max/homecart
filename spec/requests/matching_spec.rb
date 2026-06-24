@@ -159,6 +159,16 @@ RSpec.describe "Matching", type: :request do
 
       expect(response).to redirect_to(matching_receipt_path(line.receipt))
     end
+
+    it "returns to the focused matching page" do
+      variant = create(:product_variant)
+      line = create_line(label: "Compote pomme")
+
+      post confirm_matching_receipt_line_path(line),
+           params: { product_variant_id: variant.id, return_to: matching_group_path(line) }
+
+      expect(response).to redirect_to(matching_group_path(line))
+    end
   end
 
   describe "POST /matching/receipt_lines/:id/ignore" do
@@ -230,6 +240,17 @@ RSpec.describe "Matching", type: :request do
       expect(flash[:notice]).to include("Confirmed 2 lines")
     end
 
+    it "returns to a focused matching page when requested" do
+      variant = create(:product_variant)
+      create_lait_lines
+      preview = ReceiptLineMatching::BulkConfirmService.preview(normalized_label: "Lait demi ecreme")
+      return_to = focused_group_path_for(preview)
+
+      post_bulk_confirmation("Lait demi ecreme", variant, receipt_line_ids: preview.receipt_line_ids, return_to: return_to)
+
+      expect(response).to redirect_to(return_to)
+    end
+
     it "rejects stale bulk confirmations" do
       variant = create(:product_variant)
       create_line(label: "Lait demi ecreme")
@@ -254,6 +275,16 @@ RSpec.describe "Matching", type: :request do
       end.to change(ReceiptLineMatch.ignored, :count).by(2)
 
       expect_group_ignore_success(counts)
+    end
+
+    it "returns to a focused matching page when requested" do
+      create_lait_lines
+      preview = ReceiptLineMatching::BulkConfirmService.preview(normalized_label: "Lait demi ecreme")
+      return_to = focused_group_path_for(preview)
+
+      post_ignored_group("Lait demi ecreme", receipt_line_ids: preview.receipt_line_ids, return_to: return_to)
+
+      expect(response).to redirect_to(return_to)
     end
 
     it "rejects stale grouped ignores" do
@@ -330,25 +361,31 @@ RSpec.describe "Matching", type: :request do
          params: { inline_product_variant: inline_variant_params(category: category, retail_brand: retail_brand) }
   end
 
-  def post_bulk_confirmation(normalized_label, variant, receipt_line_ids:)
+  def post_bulk_confirmation(normalized_label, variant, receipt_line_ids:, return_to: nil)
     post matching_bulk_confirmations_path,
          params: {
+           return_to: return_to,
            bulk_confirmation: {
              normalized_label: normalized_label,
              product_variant_id: variant.id,
              receipt_line_ids: receipt_line_ids
            }
-         }
+         }.compact
   end
 
-  def post_ignored_group(normalized_label, receipt_line_ids:)
+  def post_ignored_group(normalized_label, receipt_line_ids:, return_to: nil)
     post matching_ignored_groups_path,
          params: {
+           return_to: return_to,
            ignored_group: {
              normalized_label: normalized_label,
              receipt_line_ids: receipt_line_ids
            }
-         }
+         }.compact
+  end
+
+  def focused_group_path_for(preview)
+    matching_group_path(preview.receipt_lines.first)
   end
 
   def catalogue_and_price_counts

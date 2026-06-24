@@ -8,14 +8,14 @@ module Matching
         ReceiptLineMatching::IgnoreLineService.call(receipt_line: receipt_line)
       end
 
-      redirect_to matching_queue_path,
+      redirect_to decision_redirect_path,
                   notice: t(
                     "matching.ignored_groups.create.success",
                     count: current_preview.affected_count,
                     label: current_preview.representative_label
                   )
     rescue ArgumentError
-      redirect_to matching_queue_path, alert: t("matching.ignored_groups.create.errors.stale_preview")
+      redirect_to decision_redirect_path, alert: t("matching.ignored_groups.create.errors.stale_preview")
     end
 
     private
@@ -42,6 +42,10 @@ module Matching
 
     def current_receipt_line_ids
       current_preview.receipt_line_ids.map(&:to_s).sort
+    end
+
+    def decision_redirect_path
+      url_from(params[:return_to]) || matching_queue_path
     end
   end
 end
