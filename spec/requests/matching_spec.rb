@@ -75,6 +75,18 @@ RSpec.describe "Matching", type: :request do
       expect_focused_group(records)
     end
 
+    it "renders focused matching controls for the current group" do
+      records = create_actionable_focused_group_records
+
+      get matching_group_path(
+        records.fetch(:line),
+        variant_search_query: "Bio Village compote",
+        bulk_preview_variant_id: records.fetch(:search_variant).id
+      )
+
+      expect_focused_matching_controls(records)
+    end
+
     it "redirects stale focused groups back to the queue with localized feedback" do
       line = create_line(label: "Lait demi ecreme")
       create(:receipt_line_match, :ignored, receipt_line: line)
@@ -424,6 +436,16 @@ RSpec.describe "Matching", type: :request do
     { representative_line: representative_line, sibling_line: sibling_line, other_line: other_line }
   end
 
+  def create_actionable_focused_group_records
+    create_inline_catalogue_records
+    suggestion_variant = create_prior_confirmation(label: "Lait demi ecreme")
+    search_variant = create_variant(product_brand_name: "Bio Village", product_name: "Compotes pomme", variant_name: "12 x 90g")
+    line = create_line(label: "Lait demi écrémé")
+    create_line(label: "LAIT DEMI ECREME")
+
+    { line: line, suggestion_variant: suggestion_variant, search_variant: search_variant }
+  end
+
   def include_matching_queue_group
     include("Lait demi écrémé")
       .and include("lait demi ecreme")
@@ -460,6 +482,16 @@ RSpec.describe "Matching", type: :request do
     expect(response.body).to include(records.fetch(:representative_line).label)
     expect(response.body).to include(records.fetch(:sibling_line).label)
     expect(response.body).not_to include(records.fetch(:other_line).label)
+  end
+
+  def expect_focused_matching_controls(records)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(catalogue_product_variant_label_for_test(records.fetch(:suggestion_variant)))
+    expect(response.body).to include(catalogue_product_variant_label_for_test(records.fetch(:search_variant)))
+    expect(response.body).to include(I18n.t("matching.groups.show.suggestions.confirm"))
+    expect(response.body).to include(I18n.t("matching.groups.show.bulk.heading"))
+    expect(response.body).to include(I18n.t("matching.groups.show.ignore.group_action", count: 2))
+    expect(response.body).to include(I18n.t("matching.groups.show.inline_catalogue.heading"))
   end
 
   def focused_group_href(line, params)

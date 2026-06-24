@@ -105,6 +105,9 @@ en:
           back_to_queue: "Back to queue"
         errors:
           stale_group: "That matching queue item is no longer available."
+        actions_panel:
+          heading: "Matching actions"
+          description: "Review suggestions, search catalogue variants, create a missing variant, or ignore the current queue group."
         summary:
           heading: "Group context"
           description: "Current queue context for this normalized receipt-label group."
@@ -131,6 +134,51 @@ en:
           quantity: "Qty"
           quantity_value: "%{quantity} %{unit}"
           total: "Total"
+        suggestions:
+          empty: "No deterministic suggestions yet."
+          confirm: "Confirm"
+          reject: "Reject"
+          metadata: "%{reason}, %{confidence}"
+          reasons:
+            prior_confirmed_label: "Prior label match"
+            catalogue_search: "Catalogue search"
+        search:
+          query: "Search variants"
+          placeholder: "Product, brand, or variant"
+          submit: "Search"
+          confirm: "Confirm"
+          empty: "No existing variants matched this search."
+        bulk:
+          preview_action: "Preview bulk"
+          heading: "Bulk confirmation preview"
+          description:
+            one: "%{count} line will be confirmed as %{variant}."
+            other: "%{count} lines will be confirmed as %{variant}."
+          confirm:
+            one: "Confirm %{count} line"
+            other: "Confirm %{count} lines"
+        ignore:
+          heading: "Ignore"
+          description: "Remove receipt lines that should not map to a product variant."
+          line_action: "Ignore line"
+          group_action:
+            one: "Ignore %{count} line"
+            other: "Ignore %{count} lines"
+          group_confirm:
+            one: "Ignore %{count} line in this group?"
+            other: "Ignore %{count} lines in this group?"
+        inline_catalogue:
+          heading: "Create and confirm"
+          description: "Create a missing catalogue variant and confirm this receipt line in one step."
+          product_brand_name: "Product brand"
+          retail_brand: "Retail brand"
+          no_retail_brand: "National brand"
+          product_name: "Product name"
+          category: "Category"
+          select_category: "Select a category"
+          manufacturer_name: "Manufacturer"
+          variant_name: "Variant name"
+          create: "Create and confirm"
     receipt_lines:
       errors:
         receipt_not_reviewed: "Review the receipt before matching its lines."

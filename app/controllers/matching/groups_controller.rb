@@ -1,14 +1,30 @@
 module Matching
   # Focused page for one current global matching queue group.
   class GroupsController < ApplicationController
+    Entry = Data.define(
+      :group,
+      :receipt_line,
+      :suggestions,
+      :variant_search_query,
+      :variant_search_results,
+      :bulk_preview,
+      :bulk_preview_variant
+    )
+
     def show
       @receipt_line = ReceiptLine.find(params[:id])
       @queue_params = queue_context_params
+      @variant_search_query = params[:variant_search_query].to_s.strip
+      @bulk_preview_variant_id = params[:bulk_preview_variant_id].presence
       @group = current_group
 
       return redirect_to matching_queue_path(@queue_params), alert: t(".errors.stale_group") if @group.blank?
 
       @receipt_lines = @group.receipt_lines
+      @categories = Category.includes(:parent).order(:normalized_name)
+      @comparison_units = ComparisonUnit.order(:normalized_name)
+      @retail_brands = RetailBrand.order(:name)
+      @entry = build_entry
     end
 
     private
@@ -17,6 +33,41 @@ module Matching
       normalized_label = ProductCatalog::NormalizeTextService.call(@receipt_line.label)
 
       ReceiptLineMatching::QueueService.call.find { |group| group.normalized_label == normalized_label }
+    end
+
+    def build_entry
+      receipt_line = @group.receipt_lines.first
+
+      Entry.new(
+        group: @group,
+        receipt_line: receipt_line,
+        suggestions: ReceiptLineMatching::SuggestMatchesService.call(receipt_line: receipt_line, persist: false),
+        variant_search_query: variant_search_query_for,
+        variant_search_results: variant_search_results,
+        bulk_preview: bulk_preview,
+        bulk_preview_variant: bulk_preview_variant
+      )
+    end
+
+    def variant_search_query_for
+      @variant_search_query.presence || @group.representative_label
+    end
+
+    def variant_search_results
+      return [] if @variant_search_query.blank?
+
+      ProductCatalog::SearchService.call(query: @variant_search_query, limit: 20)
+        .filter_map { |result| result.record if result.record_type == :product_variant }
+    end
+
+    def bulk_preview
+      return if bulk_preview_variant.blank?
+
+      ReceiptLineMatching::BulkConfirmService.preview(normalized_label: @group.normalized_label)
+    end
+
+    def bulk_preview_variant
+      @bulk_preview_variant ||= ProductVariant.find_by(id: @bulk_preview_variant_id)
     end
 
     def queue_context_params
