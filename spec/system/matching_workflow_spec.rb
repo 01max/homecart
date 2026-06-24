@@ -61,6 +61,16 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
     expect_stale_focused_group_redirect
   end
 
+  it "navigates focused groups while preserving queue context" do
+    records = create_sequential_queue_group_records
+
+    visit sequential_group_path(records.fetch(:current_line))
+    expect(page).to have_current_path(sequential_group_path(records.fetch(:current_line)))
+    navigate_to_next_group(records)
+    navigate_to_previous_group(records)
+    return_to_sequential_queue
+  end
+
   it "matches only one reviewed receipt without auto-confirming suggestions" do
     records = create_receipt_specific_records
 
@@ -125,6 +135,33 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
     expect(page).to have_content(I18n.t("matching.queue.index.queue.empty"))
   end
 
+  def expect_focused_location(line)
+    expect(page).to have_current_path(sequential_group_path(line))
+    expect(page).to have_content(line.label)
+  end
+
+  def expect_end_of_queue_navigation
+    expect(page).to have_no_link(I18n.t("matching.groups.show.actions.next_group"))
+    expect(page).to have_link(I18n.t("matching.groups.show.actions.previous_group"))
+    expect(page).to have_link(I18n.t("matching.groups.show.actions.back_to_queue"), href: sequential_queue_path)
+  end
+
+  def navigate_to_next_group(records)
+    click_link I18n.t("matching.groups.show.actions.next_group")
+    expect_focused_location(records.fetch(:next_line))
+    expect_end_of_queue_navigation
+  end
+
+  def navigate_to_previous_group(records)
+    click_link I18n.t("matching.groups.show.actions.previous_group")
+    expect_focused_location(records.fetch(:current_line))
+  end
+
+  def return_to_sequential_queue
+    click_link I18n.t("matching.groups.show.actions.back_to_queue")
+    expect(page).to have_current_path(sequential_queue_path)
+  end
+
   def create_line(label:, receipt: create(:receipt, :reviewed, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12)))
     create(:receipt_line, receipt: receipt, label: label, quantity: 1, total_cents: 123, unit_price_cents: 123)
   end
@@ -159,6 +196,27 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
     ReceiptLineMatching::ConfirmMatchService.call(receipt_line: prior_line, product_variant: variant)
 
     { line: line, sibling_line: sibling_line, other_line: other_line }
+  end
+
+  def create_sequential_queue_group_records
+    {
+      current_line: create_line(label: "Fruit Banane"),
+      next_line: create_line(label: "Fruit Zeste"),
+      previous_line: create_line(label: "Fruit Abricot"),
+      filtered_out_line: create_line(label: "Compote pomme")
+    }
+  end
+
+  def sequential_group_path(line)
+    matching_group_path(line, sequential_queue_params)
+  end
+
+  def sequential_queue_path
+    matching_queue_path(sequential_queue_params)
+  end
+
+  def sequential_queue_params
+    { label_filter: "fruit", sort: "label", direction: "asc" }
   end
 
   def create_receipt_specific_records

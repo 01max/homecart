@@ -87,6 +87,22 @@ RSpec.describe "Matching", type: :request do
       expect_focused_matching_controls(records)
     end
 
+    it "renders previous and next navigation links with queue context" do
+      records = create_sequential_queue_group_records
+
+      get matching_group_path(records.fetch(:current_line), sequential_queue_params)
+
+      expect_focused_navigation_links(records)
+    end
+
+    it "omits next navigation at the end of the queue" do
+      records = create_sequential_queue_group_records
+
+      get matching_group_path(records.fetch(:next_line), sequential_queue_params)
+
+      expect_focused_end_of_queue_navigation(records)
+    end
+
     it "redirects stale focused groups back to the queue with localized feedback" do
       line = create_line(label: "Lait demi ecreme")
       create(:receipt_line_match, :ignored, receipt_line: line)
@@ -522,6 +538,15 @@ RSpec.describe "Matching", type: :request do
     create_line(label: "Banane")
   end
 
+  def create_sequential_queue_group_records
+    {
+      previous_line: create_line(label: "Fruit Abricot"),
+      current_line: create_line(label: "Fruit Banane"),
+      next_line: create_line(label: "Fruit Zeste"),
+      filtered_out_line: create_line(label: "Compote pomme")
+    }
+  end
+
   def create_focused_group_records
     representative_line = create_line(label: "Lait demi écrémé")
     sibling_line = create_line(label: "LAIT DEMI ECREME")
@@ -644,6 +669,23 @@ RSpec.describe "Matching", type: :request do
     expect(response.body).to include(I18n.t("matching.groups.show.inline_catalogue.heading"))
   end
 
+  def expect_focused_navigation_links(records)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(I18n.t("matching.groups.show.actions.previous_group"))
+    expect(response.body).to include(focused_group_href(records.fetch(:previous_line), sequential_queue_params))
+    expect(response.body).to include(I18n.t("matching.groups.show.actions.next_group"))
+    expect(response.body).to include(focused_group_href(records.fetch(:next_line), sequential_queue_params))
+    expect(response.body).to include(matching_queue_href(sequential_queue_params))
+  end
+
+  def expect_focused_end_of_queue_navigation(records)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(I18n.t("matching.groups.show.actions.previous_group"))
+    expect(response.body).not_to include(I18n.t("matching.groups.show.actions.next_group"))
+    expect(response.body).to include(matching_queue_href(sequential_queue_params))
+    expect(response.body).not_to include(focused_group_href(records.fetch(:filtered_out_line), sequential_queue_params))
+  end
+
   def expect_selected_line_decision(records, status:, evidence:)
     expect(response).to redirect_to(matching_group_path(records.fetch(:line)))
     expect_line_decided(records.fetch(:line), status)
@@ -704,6 +746,14 @@ RSpec.describe "Matching", type: :request do
 
   def focused_group_href(line, params)
     ERB::Util.html_escape(matching_group_path(line, params))
+  end
+
+  def matching_queue_href(params)
+    ERB::Util.html_escape(matching_queue_path(params))
+  end
+
+  def sequential_queue_params
+    { label_filter: "fruit", sort: "label", direction: "asc" }
   end
 
   def include_receipt_matching_page(line, variant)
