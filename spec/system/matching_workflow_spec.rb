@@ -34,6 +34,33 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
     expect_no_queue_action_controls
   end
 
+  it "opens a focused group with matching actions from the browse-only queue" do
+    records = create_focusable_group_records
+
+    visit matching_queue_path(label_filter: "lait")
+    click_link I18n.t("matching.queue.index.actions.open_group")
+
+    expect_focused_group_page(records)
+  end
+
+  it "keeps focused line actions scoped to one active receipt line" do
+    records = create_focusable_group_records
+
+    visit matching_group_path(records.fetch(:line), label_filter: "lait")
+    click_button I18n.t("matching.groups.show.ignore.line_action")
+
+    expect_one_focused_line_ignored(records)
+  end
+
+  it "returns stale focused groups to the queue" do
+    line = create_line(label: "Compote pomme")
+    create(:receipt_line_match, :ignored, receipt_line: line)
+
+    visit matching_group_path(line, label_filter: "compote")
+
+    expect_stale_focused_group_redirect
+  end
+
   it "matches only one reviewed receipt without auto-confirming suggestions" do
     records = create_receipt_specific_records
 
@@ -67,6 +94,37 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
     expect(page).to have_no_content(I18n.t("matching.queue.index.inline_catalogue.heading"))
   end
 
+  def expect_focused_group_page(records)
+    expect(page).to have_content(I18n.t("matching.groups.show.eyebrow"))
+    expect(page).to have_content(I18n.t("matching.groups.show.summary.count", count: 2))
+    expect(page).to have_content(records.fetch(:line).label)
+    expect(page).to have_content(records.fetch(:sibling_line).label)
+    expect(page).to have_no_content(records.fetch(:other_line).label)
+    expect_focused_action_controls
+  end
+
+  def expect_focused_action_controls
+    expect(page).to have_button(I18n.t("matching.groups.show.suggestions.confirm"))
+    expect(page).to have_button(I18n.t("matching.groups.show.suggestions.reject"))
+    expect(page).to have_link(I18n.t("matching.groups.show.bulk.preview_action"))
+    expect(page).to have_field(I18n.t("matching.groups.show.search.query"))
+    expect(page).to have_button(I18n.t("matching.groups.show.ignore.line_action"))
+    expect(page).to have_button(I18n.t("matching.groups.show.ignore.group_action", count: 2))
+    expect(page).to have_content(I18n.t("matching.groups.show.inline_catalogue.heading"))
+  end
+
+  def expect_one_focused_line_ignored(records)
+    expect(page).to have_content(I18n.t("matching.groups.show.summary.count", count: 1))
+    expect(ReceiptLineMatch.ignored.count).to eq(1)
+    expect(ReceiptLineMatch.ignored.exists?(receipt_line: records.fetch(:other_line))).to be(false)
+  end
+
+  def expect_stale_focused_group_redirect
+    expect(page).to have_current_path(matching_queue_path(label_filter: "compote", sort: "line_count", direction: "desc"))
+    expect(page).to have_content(I18n.t("matching.groups.show.errors.stale_group"))
+    expect(page).to have_content(I18n.t("matching.queue.index.queue.empty"))
+  end
+
   def create_line(label:, receipt: create(:receipt, :reviewed, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12)))
     create(:receipt_line, receipt: receipt, label: label, quantity: 1, total_cents: 123, unit_price_cents: 123)
   end
@@ -88,6 +146,19 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
     create_line(label: "Abricot")
     create_line(label: "Banane")
     create_line(label: "Banane")
+  end
+
+  def create_focusable_group_records
+    create(:category, name: "Dairy")
+    create(:retail_brand, name: "E.Leclerc")
+    variant = create_variant(product_brand_name: "Maison Dupont", product_name: "Lait demi ecreme", variant_name: "1 L")
+    prior_line = create_line(label: "Lait demi ecreme")
+    line = create_line(label: "Lait demi écrémé")
+    sibling_line = create_line(label: "LAIT DEMI ECREME")
+    other_line = create_line(label: "Compote pomme")
+    ReceiptLineMatching::ConfirmMatchService.call(receipt_line: prior_line, product_variant: variant)
+
+    { line: line, sibling_line: sibling_line, other_line: other_line }
   end
 
   def create_receipt_specific_records

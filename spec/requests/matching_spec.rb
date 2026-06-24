@@ -169,6 +169,15 @@ RSpec.describe "Matching", type: :request do
 
       expect(response).to redirect_to(matching_group_path(line))
     end
+
+    it "confirms only the focused line without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      post confirm_matching_receipt_line_path(records.fetch(:line)), params: focused_variant_decision_params(records)
+
+      expect_selected_line_decision(records, status: :confirmed, evidence: evidence)
+    end
   end
 
   describe "POST /matching/receipt_lines/:id/ignore" do
@@ -184,6 +193,15 @@ RSpec.describe "Matching", type: :request do
       expect_catalogue_and_price_counts(counts)
       expect(ReceiptLineMatching::QueueService.call.flat_map(&:receipt_lines)).not_to include(line)
     end
+
+    it "ignores only the focused line without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      post ignore_matching_receipt_line_path(records.fetch(:line)), params: focused_return_params(records)
+
+      expect_selected_line_decision(records, status: :ignored, evidence: evidence)
+    end
   end
 
   describe "POST /matching/receipt_lines/:id/reject" do
@@ -197,6 +215,15 @@ RSpec.describe "Matching", type: :request do
 
       expect(response).to redirect_to(matching_queue_path)
       expect(line.receipt_line_matches.rejected.last.product_variant).to eq(variant)
+    end
+
+    it "rejects only the focused line without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      post reject_matching_receipt_line_path(records.fetch(:line)), params: focused_variant_decision_params(records)
+
+      expect_selected_line_decision(records, status: :rejected, evidence: evidence)
     end
   end
 
@@ -224,6 +251,15 @@ RSpec.describe "Matching", type: :request do
       expect(response).to redirect_to(matching_queue_path)
       expect(flash[:alert]).to eq(I18n.t("matching.receipt_lines.create_variant.errors.category_required"))
     end
+
+    it "creates a variant only for the focused line without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      expect { post_focused_inline_variant(records) }.to change(ProductVariant, :count).by(1)
+
+      expect_selected_line_decision(records, status: :confirmed, evidence: evidence)
+    end
   end
 
   describe "POST /matching/bulk_confirmations" do
@@ -249,6 +285,15 @@ RSpec.describe "Matching", type: :request do
       post_bulk_confirmation("Lait demi ecreme", variant, receipt_line_ids: preview.receipt_line_ids, return_to: return_to)
 
       expect(response).to redirect_to(return_to)
+    end
+
+    it "confirms only the focused group without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      expect { post_focused_bulk_confirmation(records) }.to change(ReceiptLineMatch.confirmed, :count).by(2)
+
+      expect_group_decision(records, status: :confirmed, evidence: evidence)
     end
 
     it "rejects stale bulk confirmations" do
@@ -285,6 +330,15 @@ RSpec.describe "Matching", type: :request do
       post_ignored_group("Lait demi ecreme", receipt_line_ids: preview.receipt_line_ids, return_to: return_to)
 
       expect(response).to redirect_to(return_to)
+    end
+
+    it "ignores only the focused group without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      expect { post_focused_ignored_group(records) }.to change(ReceiptLineMatch.ignored, :count).by(2)
+
+      expect_group_decision(records, status: :ignored, evidence: evidence)
     end
 
     it "rejects stale grouped ignores" do
@@ -356,9 +410,12 @@ RSpec.describe "Matching", type: :request do
     }
   end
 
-  def post_create_inline_variant(line, category:, retail_brand: nil)
+  def post_create_inline_variant(line, category:, retail_brand: nil, return_to: nil)
     post create_variant_matching_receipt_line_path(line),
-         params: { inline_product_variant: inline_variant_params(category: category, retail_brand: retail_brand) }
+         params: {
+           return_to: return_to,
+           inline_product_variant: inline_variant_params(category: category, retail_brand: retail_brand)
+         }.compact
   end
 
   def post_bulk_confirmation(normalized_label, variant, receipt_line_ids:, return_to: nil)
@@ -483,6 +540,62 @@ RSpec.describe "Matching", type: :request do
     { line: line, suggestion_variant: suggestion_variant, search_variant: search_variant }
   end
 
+  def create_focused_action_records
+    store = create(:store, location_name: "Massy")
+    receipt = create(:receipt, :reviewed, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12))
+    inline_records = create_inline_catalogue_records
+
+    {
+      receipt: receipt,
+      line: create_line(store: store, receipt: receipt, label: "Lait demi écrémé", total_cents: 672),
+      sibling_line: create_line(store: store, receipt: receipt, label: "LAIT DEMI ECREME", total_cents: 695),
+      other_line: create_line(store: store, receipt: receipt, label: "Compote pomme", total_cents: 312),
+      variant: create_variant(product_brand_name: "Maison Dupont", product_name: "Lait demi ecreme", variant_name: "1 L")
+    }.merge(inline_records)
+  end
+
+  def focused_variant_decision_params(records)
+    focused_return_params(records).merge(product_variant_id: records.fetch(:variant).id)
+  end
+
+  def focused_return_params(records)
+    { return_to: matching_group_path(records.fetch(:line)) }
+  end
+
+  def post_focused_inline_variant(records)
+    post_create_inline_variant(
+      records.fetch(:line),
+      category: records.fetch(:category),
+      retail_brand: records.fetch(:retail_brand),
+      return_to: matching_group_path(records.fetch(:line))
+    )
+  end
+
+  def post_focused_bulk_confirmation(records)
+    preview = focused_group_preview(records)
+
+    post_bulk_confirmation(
+      preview.normalized_label,
+      records.fetch(:variant),
+      receipt_line_ids: preview.receipt_line_ids,
+      return_to: matching_group_path(records.fetch(:line))
+    )
+  end
+
+  def post_focused_ignored_group(records)
+    preview = focused_group_preview(records)
+
+    post_ignored_group(
+      preview.normalized_label,
+      receipt_line_ids: preview.receipt_line_ids,
+      return_to: matching_group_path(records.fetch(:line))
+    )
+  end
+
+  def focused_group_preview(records)
+    ReceiptLineMatching::BulkConfirmService.preview(normalized_label: records.fetch(:line).label)
+  end
+
   def include_matching_queue_group
     include("Lait demi écrémé")
       .and include("lait demi ecreme")
@@ -529,6 +642,64 @@ RSpec.describe "Matching", type: :request do
     expect(response.body).to include(I18n.t("matching.groups.show.bulk.heading"))
     expect(response.body).to include(I18n.t("matching.groups.show.ignore.group_action", count: 2))
     expect(response.body).to include(I18n.t("matching.groups.show.inline_catalogue.heading"))
+  end
+
+  def expect_selected_line_decision(records, status:, evidence:)
+    expect(response).to redirect_to(matching_group_path(records.fetch(:line)))
+    expect_line_decided(records.fetch(:line), status)
+    expect_lines_undecided(records.fetch_values(:sibling_line, :other_line), status)
+    expect_receipt_evidence_unchanged(evidence)
+  end
+
+  def expect_group_decision(records, status:, evidence:)
+    expect(response).to redirect_to(matching_group_path(records.fetch(:line)))
+    expect_lines_decided(records.fetch_values(:line, :sibling_line), status)
+    expect_lines_undecided([ records.fetch(:other_line) ], status)
+    expect_receipt_evidence_unchanged(evidence)
+  end
+
+  def expect_lines_decided(lines, status)
+    lines.each { |line| expect_line_decided(line, status) }
+  end
+
+  def expect_line_decided(line, status)
+    expect(ReceiptLineMatch.public_send(status).exists?(receipt_line: line)).to be(true)
+  end
+
+  def expect_lines_undecided(lines, status)
+    lines.each do |line|
+      expect(ReceiptLineMatch.public_send(status).exists?(receipt_line: line)).to be(false)
+    end
+  end
+
+  def receipt_evidence_snapshot(*receipts)
+    receipts.to_h { |receipt| [ receipt.id, receipt_evidence_attributes(receipt) ] }
+  end
+
+  def expect_receipt_evidence_unchanged(evidence)
+    current_evidence = evidence.keys.to_h { |receipt_id| [ receipt_id, receipt_evidence_attributes(Receipt.find(receipt_id)) ] }
+
+    expect(current_evidence).to eq(evidence)
+  end
+
+  def receipt_evidence_attributes(receipt)
+    {
+      receipt: receipt.reload.attributes.slice("parser_status", "purchased_at", "total_cents", "declared_article_count"),
+      lines: receipt.receipt_lines.order(:position, :id).map { |line| receipt_line_evidence_attributes(line) }
+    }
+  end
+
+  def receipt_line_evidence_attributes(line)
+    line.attributes.slice(
+      "label",
+      "raw_text",
+      "kind",
+      "quantity",
+      "unit_of_measure",
+      "total_cents",
+      "unit_price_cents",
+      "position"
+    )
   end
 
   def focused_group_href(line, params)
