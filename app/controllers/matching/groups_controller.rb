@@ -20,6 +20,7 @@ module Matching
 
       return redirect_to matching_queue_path(@queue_params), alert: t(".errors.stale_group") if @group.blank?
 
+      @previous_group, @next_group = adjacent_groups
       @receipt_lines = @group.receipt_lines
       @categories = Category.includes(:parent).order(:normalized_name)
       @comparison_units = ComparisonUnit.order(:normalized_name)
@@ -32,7 +33,33 @@ module Matching
     def current_group
       normalized_label = ProductCatalog::NormalizeTextService.call(@receipt_line.label)
 
-      ReceiptLineMatching::QueueService.call.find { |group| group.normalized_label == normalized_label }
+      queue_groups.find { |group| group.normalized_label == normalized_label }
+    end
+
+    def adjacent_groups
+      current_index = queue_groups.index { |group| group.normalized_label == @group.normalized_label }
+
+      [ previous_group(current_index), next_group(current_index) ]
+    end
+
+    def previous_group(current_index)
+      return if current_index.blank? || current_index.zero?
+
+      queue_groups[current_index - 1]
+    end
+
+    def next_group(current_index)
+      return if current_index.blank?
+
+      queue_groups[current_index + 1]
+    end
+
+    def queue_groups
+      @queue_groups ||= ReceiptLineMatching::QueueService.call(
+        label_filter: @queue_params[:label_filter],
+        sort: @queue_params[:sort],
+        direction: @queue_params[:direction]
+      )
     end
 
     def build_entry
