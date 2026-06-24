@@ -46,17 +46,17 @@ module Matching
       number_to_currency(cents / 100.0, unit: "€", separator: ",", delimiter: " ", format: "%n %u")
     end
 
-    def matching_queue_quantity_value(line)
-      matching_queue_decimal_label(line.quantity)
-    end
-
-    private
-
     def matching_queue_date_label(value)
       return t("matching.queue.index.empty_value") if value.blank?
 
       l(value.to_date, format: :short)
     end
+
+    def matching_queue_quantity_value(line)
+      matching_queue_decimal_label(line.quantity)
+    end
+
+    private
 
     def matching_queue_money_values(key, values)
       matching_queue_values(key, values.map { |value| matching_queue_money_label(value) })

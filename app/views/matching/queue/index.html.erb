@@ -1,4 +1,21 @@
 <% content_for :title, t(".title") %>
+<% sort_link_params = lambda do |column|
+     next_direction = @sort_column == column && @sort_direction == "asc" ? "desc" : "asc"
+     { label_filter: @label_filter.presence, sort: column, direction: next_direction }.compact
+   end %>
+<% sort_indicator = lambda do |column|
+     next "" unless @sort_column == column
+
+     @sort_direction == "asc" ? "↑" : "↓"
+   end %>
+<% sort_label = lambda do |column, label|
+     next_direction = @sort_column == column && @sort_direction == "asc" ? "desc" : "asc"
+     t(
+       ".sort.label",
+       column: label,
+       direction: t(".sort.directions.#{next_direction}")
+     )
+   end %>
 
 <section class="hc-stack">
   <%= render "catalogue/shared/page_header",
@@ -7,32 +24,94 @@
              description: t(".description"),
              actions: link_to(t(".actions.catalogue"), catalogue_root_path, class: "hc-button hc-button--secondary") %>
 
+  <%= form_with url: matching_queue_path, method: :get, local: true, class: "hc-filter-block" do |form| %>
+    <%= form.hidden_field :sort, value: @sort_column %>
+    <%= form.hidden_field :direction, value: @sort_direction %>
+
+    <div class="hc-block-heading">
+      <h2 class="hc-block-title"><%= t(".filters.heading") %></h2>
+      <p class="hc-block-description"><%= t(".filters.description") %></p>
+    </div>
+
+    <div class="hc-filter-row">
+      <div class="hc-filter-group">
+        <%= form.label :label_filter, t(".filters.label_filter"), class: "hc-label" %>
+        <%= form.search_field :label_filter,
+                              value: @label_filter,
+                              placeholder: t(".filters.label_placeholder"),
+                              class: "hc-input" %>
+      </div>
+
+      <div class="hc-filter-actions">
+        <%= form.submit t(".filters.submit"), class: "hc-button hc-button--secondary" %>
+        <% if @label_filter.present? %>
+          <%= link_to t(".filters.clear"),
+                      matching_queue_path(sort: @sort_column, direction: @sort_direction),
+                      class: "hc-button hc-button--subtle" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <section class="hc-table-block">
     <div class="hc-block-header">
       <div class="hc-block-heading">
         <h2 class="hc-block-title"><%= t(".queue.heading") %></h2>
-        <p class="hc-block-description"><%= t(".queue.description") %></p>
+        <p class="hc-block-description">
+          <% if @label_filter.present? %>
+            <%= t(".queue.filtered_description", label: @label_filter) %>
+          <% else %>
+            <%= t(".queue.description") %>
+          <% end %>
+        </p>
       </div>
       <p class="hc-badge hc-badge--neutral"><%= t(".queue.count", count: @line_count) %></p>
     </div>
 
-    <% if @entries.any? %>
+    <% if @groups.any? %>
       <div class="hc-table-frame">
-        <table class="hc-table hc-table--dense min-w-[88rem]">
+        <table class="hc-table hc-table--dense min-w-[76rem]">
           <thead>
             <tr>
-              <th><%= t(".table.label") %></th>
-              <th><%= t(".table.lines") %></th>
+              <th>
+                <%= link_to matching_queue_path(sort_link_params.call("label")),
+                            class: "hc-link whitespace-nowrap",
+                            aria: { label: sort_label.call("label", t(".table.label")) } do %>
+                  <%= t(".table.label") %>
+                  <span aria-hidden="true"><%= sort_indicator.call("label") %></span>
+                <% end %>
+              </th>
+              <th>
+                <%= link_to matching_queue_path(sort_link_params.call("line_count")),
+                            class: "hc-link whitespace-nowrap",
+                            aria: { label: sort_label.call("line_count", t(".table.lines")) } do %>
+                  <%= t(".table.lines") %>
+                  <span aria-hidden="true"><%= sort_indicator.call("line_count") %></span>
+                <% end %>
+              </th>
               <th><%= t(".table.stores") %></th>
-              <th><%= t(".table.dates") %></th>
+              <th>
+                <%= link_to matching_queue_path(sort_link_params.call("first_purchased_at")),
+                            class: "hc-link whitespace-nowrap",
+                            aria: { label: sort_label.call("first_purchased_at", t(".table.first_purchased_at")) } do %>
+                  <%= t(".table.first_purchased_at") %>
+                  <span aria-hidden="true"><%= sort_indicator.call("first_purchased_at") %></span>
+                <% end %>
+              </th>
+              <th>
+                <%= link_to matching_queue_path(sort_link_params.call("last_purchased_at")),
+                            class: "hc-link whitespace-nowrap",
+                            aria: { label: sort_label.call("last_purchased_at", t(".table.last_purchased_at")) } do %>
+                  <%= t(".table.last_purchased_at") %>
+                  <span aria-hidden="true"><%= sort_indicator.call("last_purchased_at") %></span>
+                <% end %>
+              </th>
               <th><%= t(".table.prices") %></th>
               <th><%= t(".table.quantities") %></th>
-              <th><%= t(".table.suggestions") %></th>
             </tr>
           </thead>
           <tbody>
-            <% @entries.each do |entry| %>
-              <% group = entry.group %>
+            <% @groups.each do |group| %>
               <tr>
                 <td>
                   <span class="font-semibold"><%= group.representative_label %></span>
@@ -40,135 +119,10 @@
                 </td>
                 <td class="whitespace-nowrap"><%= t(".table.line_count", count: group.line_count) %></td>
                 <td><%= matching_queue_store_list(group.stores) %></td>
-                <td class="whitespace-nowrap"><%= matching_queue_date_range(group) %></td>
+                <td class="whitespace-nowrap"><%= matching_queue_date_label(group.first_purchased_at) %></td>
+                <td class="whitespace-nowrap"><%= matching_queue_date_label(group.last_purchased_at) %></td>
                 <td><%= matching_queue_price_context(group.price_context) %></td>
                 <td><%= matching_queue_quantity_context(group.price_context) %></td>
-                <td>
-                  <div class="hc-stack-sm">
-                    <div class="hc-action-block hc-block--flat">
-                      <div class="hc-block-heading">
-                        <h3 class="hc-block-title"><%= t(".ignore.heading") %></h3>
-                        <p class="hc-block-description"><%= t(".ignore.description") %></p>
-                      </div>
-                      <div class="hc-table-cell-actions mt-3 justify-start">
-                        <%= button_to t(".ignore.line_action"),
-                                      ignore_matching_receipt_line_path(entry.receipt_line),
-                                      class: "hc-button hc-button--subtle" %>
-                        <%= button_to t(".ignore.group_action", count: group.line_count),
-                                      matching_ignored_groups_path,
-                                      params: {
-                                        ignored_group: {
-                                          normalized_label: group.normalized_label,
-                                          receipt_line_ids: group.receipt_lines.map(&:id)
-                                        }
-                                      },
-                                      class: "hc-button hc-button--warning",
-                                      form: { data: { turbo_confirm: t(".ignore.group_confirm", count: group.line_count) } } %>
-                      </div>
-                    </div>
-
-                    <% if entry.suggestions.any? %>
-                      <% entry.suggestions.each do |suggestion| %>
-                        <div class="hc-action-block hc-block--flat">
-                          <p class="font-semibold"><%= catalogue_product_variant_label(suggestion.product_variant) %></p>
-                          <p class="mt-1 text-xs text-[var(--hc-on-surface-variant)]">
-                            <%= t(".suggestions.metadata",
-                                  reason: matching_queue_suggestion_reason(suggestion.reason),
-                                  confidence: matching_queue_confidence_label(suggestion.confidence)) %>
-                          </p>
-                          <div class="hc-table-cell-actions mt-3 justify-start">
-                            <%= button_to t(".suggestions.confirm"),
-                                          confirm_matching_receipt_line_path(entry.receipt_line),
-                                          params: { product_variant_id: suggestion.product_variant.id },
-                                          class: "hc-button hc-button--primary" %>
-                            <%= link_to t(".bulk.preview_action"),
-                                        matching_queue_path(
-                                          bulk_preview_label: group.normalized_label,
-                                          bulk_preview_variant_id: suggestion.product_variant.id
-                                        ),
-                                        class: "hc-button hc-button--secondary" %>
-                            <%= button_to t(".suggestions.reject"),
-                                          reject_matching_receipt_line_path(entry.receipt_line),
-                                          params: { product_variant_id: suggestion.product_variant.id },
-                                          class: "hc-button hc-button--subtle" %>
-                          </div>
-                        </div>
-                      <% end %>
-                    <% else %>
-                      <p class="hc-body text-sm"><%= t(".suggestions.empty") %></p>
-                    <% end %>
-
-                    <div class="hc-action-block hc-block--flat">
-                      <%= form_with url: matching_queue_path, method: :get, local: true, class: "hc-filter-row" do |form| %>
-                        <%= form.hidden_field :variant_search_label, value: group.normalized_label %>
-                        <div class="hc-filter-group">
-                          <%= form.label :variant_search_query, t(".search.query"), class: "hc-label" %>
-                          <%= form.search_field :variant_search_query,
-                                                value: entry.variant_search_query,
-                                                placeholder: t(".search.placeholder"),
-                                                class: "hc-input" %>
-                        </div>
-                        <div class="hc-filter-actions">
-                          <%= form.submit t(".search.submit"), class: "hc-button hc-button--secondary" %>
-                        </div>
-                      <% end %>
-
-                      <% if entry.variant_search_results.any? %>
-                        <div class="mt-3 space-y-3">
-                          <% entry.variant_search_results.each do |product_variant| %>
-                            <div class="border-t border-[var(--hc-outline-variant)] pt-3">
-                              <p class="font-semibold"><%= catalogue_product_variant_label(product_variant) %></p>
-                              <div class="hc-table-cell-actions mt-2 justify-start">
-                                <%= button_to t(".search.confirm"),
-                                              confirm_matching_receipt_line_path(entry.receipt_line),
-                                              params: { product_variant_id: product_variant.id },
-                                              class: "hc-button hc-button--primary" %>
-                                <%= link_to t(".bulk.preview_action"),
-                                            matching_queue_path(
-                                              bulk_preview_label: group.normalized_label,
-                                              bulk_preview_variant_id: product_variant.id
-                                            ),
-                                            class: "hc-button hc-button--secondary" %>
-                              </div>
-                            </div>
-                          <% end %>
-                        </div>
-                      <% elsif entry.variant_search_query.present? && @variant_search_label == group.normalized_label %>
-                        <p class="hc-body mt-3 text-sm"><%= t(".search.empty") %></p>
-                      <% end %>
-                    </div>
-
-                    <% if entry.bulk_preview && entry.bulk_preview_variant %>
-                      <div class="hc-action-block hc-block--flat">
-                        <div class="hc-block-heading">
-                          <h3 class="hc-block-title"><%= t(".bulk.heading") %></h3>
-                          <p class="hc-block-description">
-                            <%= t(".bulk.description",
-                                  count: entry.bulk_preview.affected_count,
-                                  variant: catalogue_product_variant_label(entry.bulk_preview_variant)) %>
-                          </p>
-                        </div>
-
-                        <%= form_with scope: :bulk_confirmation,
-                                      url: matching_bulk_confirmations_path,
-                                      class: "hc-table-cell-actions mt-4 justify-start" do |form| %>
-                          <%= form.hidden_field :normalized_label, value: entry.bulk_preview.normalized_label %>
-                          <%= form.hidden_field :product_variant_id, value: entry.bulk_preview_variant.id %>
-                          <% entry.bulk_preview.receipt_line_ids.each do |receipt_line_id| %>
-                            <%= form.hidden_field :receipt_line_ids, multiple: true, value: receipt_line_id %>
-                          <% end %>
-                          <%= form.submit t(".bulk.confirm", count: entry.bulk_preview.affected_count), class: "hc-button hc-button--primary" %>
-                        <% end %>
-                      </div>
-                    <% end %>
-
-                    <%= render "inline_catalogue_form",
-                               entry: entry,
-                               categories: @categories,
-                               comparison_units: @comparison_units,
-                               retail_brands: @retail_brands %>
-                  </div>
-                </td>
               </tr>
             <% end %>
           </tbody>

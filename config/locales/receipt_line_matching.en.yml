@@ -9,9 +9,17 @@ en:
         date_range: "%{first} to %{last}"
         actions:
           catalogue: "Catalogue"
+        filters:
+          heading: "Queue filters"
+          description: "Narrow the backlog by receipt label while keeping the current queue order."
+          label_filter: "Receipt label"
+          label_placeholder: "Milk, bread, yoghurt"
+          submit: "Apply filters"
+          clear: "Clear"
         queue:
           heading: "Unmatched item labels"
           description: "Item receipt lines grouped by normalized label. Fees, discounts, confirmed lines, and ignored lines are left out."
+          filtered_description: "Item receipt lines grouped by normalized label and filtered by \"%{label}\". Fees, discounts, confirmed lines, and ignored lines are left out."
           empty: "No unmatched item lines are waiting for product matching."
           count:
             one: "%{count} line"
@@ -21,12 +29,19 @@ en:
           lines: "Lines"
           stores: "Stores"
           dates: "Dates"
+          first_purchased_at: "First purchased"
+          last_purchased_at: "Last purchased"
           prices: "Prices"
           quantities: "Quantities"
           suggestions: "Suggestions"
           line_count:
             one: "%{count} line"
             other: "%{count} lines"
+        sort:
+          label: "Sort by %{column} %{direction}"
+          directions:
+            asc: "ascending"
+            desc: "descending"
         suggestions:
           empty: "No deterministic suggestions yet."
           confirm: "Confirm"
