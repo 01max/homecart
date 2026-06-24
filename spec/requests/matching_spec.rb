@@ -31,56 +31,29 @@ RSpec.describe "Matching", type: :request do
       expect(response.body).not_to include("Immediate discount")
     end
 
-    it "renders deterministic suggestions with confirm and reject actions" do
-      create_prior_jambon_confirmation
-      create_line(label: "JAMBON BLANC 4 TRANCHES")
+    it "filters the queue by receipt label while keeping non-item and terminal lines excluded" do
+      create_filterable_queue_groups
 
-      expect do
-        get matching_root_path
-      end.not_to change(ReceiptLineMatch.suggested, :count)
+      get matching_root_path, params: { label_filter: "lait" }
 
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include_matching_suggestion_actions
+      expect_filtered_matching_queue
     end
 
-    it "renders existing variant search results for the selected group" do
-      create_variant(product_brand_name: "Bio Village", product_name: "Compotes pomme", variant_name: "12 x 90g")
-      create_line(label: "Compote pomme")
+    it "falls back to the default queue order for unsupported ordering params" do
+      create_orderable_queue_groups
 
-      get matching_root_path, params: variant_search_params("Compote pomme", "Bio Village compote")
-
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include_variant_search_result
-    end
-
-    it "renders a bulk confirmation preview with the affected line count" do
-      variant = create_variant(product_brand_name: "Bio Village", product_name: "Compotes pomme", variant_name: "12 x 90g")
-      create_lait_lines
-
-      get matching_root_path, params: bulk_preview_params("Lait demi ecreme", variant)
+      get matching_root_path, params: { sort: "unsupported", direction: "sideways" }
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include_bulk_preview
+      expect_queue_labels_in_order([ "Banane", "Abricot", "Zeste citron" ])
     end
 
-    it "renders ignore actions for one line and the current group" do
-      create_lait_lines
+    it "omits full matching action forms from the queue index" do
+      create_action_ready_queue_group
 
       get matching_root_path
 
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include_ignore_actions
-    end
-
-    it "renders inline catalogue creation controls" do
-      create(:category, name: "Compotes")
-      create(:retail_brand, name: "E.Leclerc")
-      create_line(label: "Compote pomme")
-
-      get matching_root_path
-
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include_inline_catalogue_form
+      expect_browse_only_matching_queue
     end
   end
 
@@ -390,22 +363,28 @@ RSpec.describe "Matching", type: :request do
     create_line(store: store, label: "LAIT DEMI ECREME", total_cents: 695, unit_price_cents: 695)
   end
 
-  def create_prior_jambon_confirmation
-    create_prior_confirmation(label: "Jambon blanc 4 tranches")
+  def create_filterable_queue_groups
+    create_lait_lines
+    create_line(label: "Compote pomme")
+    create_line(label: "Lait reusable bag", kind: "fee")
+    ignored_line = create_line(label: "Lait ignored")
+    create(:receipt_line_match, :ignored, receipt_line: ignored_line)
+    confirmed_line = create_line(label: "Lait confirmed")
+    create(:receipt_line_match, receipt_line: confirmed_line)
   end
 
-  def variant_search_params(label, query)
-    {
-      variant_search_label: ProductCatalog::NormalizeTextService.call(label),
-      variant_search_query: query
-    }
+  def create_action_ready_queue_group
+    create_prior_confirmation(label: "Lait demi ecreme")
+    create_lait_lines
+    create(:category, name: "Dairy")
+    create(:retail_brand, name: "E.Leclerc")
   end
 
-  def bulk_preview_params(label, variant)
-    {
-      bulk_preview_label: ProductCatalog::NormalizeTextService.call(label),
-      bulk_preview_variant_id: variant.id
-    }
+  def create_orderable_queue_groups
+    create_line(label: "Zeste citron")
+    create_line(label: "Abricot")
+    create_line(label: "Banane")
+    create_line(label: "Banane")
   end
 
   def include_matching_queue_group
@@ -417,29 +396,25 @@ RSpec.describe "Matching", type: :request do
       .and include("6,95 €")
   end
 
-  def include_matching_suggestion_actions
-    include("Maison Dupont")
-      .and include(I18n.t("matching.queue.index.suggestions.reasons.prior_confirmed_label"))
-      .and include(I18n.t("matching.queue.index.suggestions.confirm"))
-      .and include(I18n.t("matching.queue.index.suggestions.reject"))
+  def expect_filtered_matching_queue
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include_matching_queue_group
+    expect(response.body).not_to include("Compote pomme")
+    expect(response.body).not_to include("Lait reusable bag")
+    expect(response.body).not_to include("Lait ignored")
+    expect(response.body).not_to include("Lait confirmed")
   end
 
-  def include_variant_search_result
-    include("Bio Village")
-      .and include("12 x 90g")
-      .and include(I18n.t("matching.queue.index.search.confirm"))
-  end
-
-  def include_bulk_preview
-    include(I18n.t("matching.queue.index.bulk.heading"))
-      .and include(I18n.t("matching.queue.index.bulk.confirm", count: 2))
-      .and include("2 lines will be confirmed")
-  end
-
-  def include_ignore_actions
-    include(I18n.t("matching.queue.index.ignore.heading"))
-      .and include(I18n.t("matching.queue.index.ignore.line_action"))
-      .and include(I18n.t("matching.queue.index.ignore.group_action", count: 2))
+  def expect_browse_only_matching_queue
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include_matching_queue_group
+    expect(response.body).not_to match(%r{action="/matching/receipt_lines/[^"]+"})
+    expect(response.body).not_to include(%(action="#{matching_bulk_confirmations_path}"))
+    expect(response.body).not_to include(%(action="#{matching_ignored_groups_path}"))
+    expect(response.body).not_to include(I18n.t("matching.queue.index.bulk.preview_action"))
+    expect(response.body).not_to include(I18n.t("matching.queue.index.search.query"))
+    expect(response.body).not_to include(I18n.t("matching.queue.index.ignore.line_action"))
+    expect(response.body).not_to include(I18n.t("matching.queue.index.inline_catalogue.heading"))
   end
 
   def include_receipt_matching_page(line, variant)
@@ -455,12 +430,17 @@ RSpec.describe "Matching", type: :request do
     expect(response.body).not_to include("Other receipt line")
   end
 
-  def include_inline_catalogue_form
-    include(I18n.t("matching.queue.index.inline_catalogue.heading"))
-      .and include(I18n.t("matching.queue.index.inline_catalogue.product_brand_name"))
-      .and include(I18n.t("matching.queue.index.inline_catalogue.no_retail_brand"))
-      .and include("E.Leclerc")
-      .and include("Compotes")
+  def queue_rows
+    response.body.scan(%r{<tr(?:\s[^>]*)?>.*?</tr>}m)
+  end
+
+  def expect_queue_labels_in_order(labels)
+    positions = labels.map do |label|
+      queue_rows.index { |row| row.include?(label) }
+    end
+
+    expect(positions).to all(be_a(Integer))
+    expect(positions).to eq(positions.sort)
   end
 
   def catalogue_product_variant_label_for_test(variant)

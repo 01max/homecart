@@ -3,63 +3,35 @@ require "rails_helper"
 RSpec.describe "Receipt-line matching workflow", type: :system do
   let(:store) { create(:store) }
 
-  it "shows grouped matching suggestions and confirms one line with a price observation" do
-    variant = create_prior_label_variant
+  it "browses and filters unmatched queue groups" do
     create_lait_lines
-
-    visit matching_queue_path
-    expect(page).to have_content(I18n.t("matching.queue.index.table.line_count", count: 2))
-    click_button I18n.t("matching.queue.index.suggestions.confirm"), match: :first
-
-    expect(page).to have_content("Confirmed")
-    expect(ReceiptLineMatch.confirmed.where(product_variant: variant).count).to eq(2)
-    expect(PriceObservation.where(product_variant: variant).count).to eq(2)
-  end
-
-  it "creates an inline variant from the queue and confirms the line" do
-    records = create_inline_catalogue_records
     create_line(label: "Compote pomme")
 
     visit matching_queue_path
-    fill_inline_catalogue_form(**records)
-    click_button I18n.t("matching.queue.index.inline_catalogue.create")
+    expect_unfiltered_queue_groups
 
-    expect(page).to have_content("Created 12 x 90g and confirmed Compote pomme.")
-    expect_inline_catalogue_confirmation(records.fetch(:retail_brand))
+    fill_in I18n.t("matching.queue.index.filters.label_filter"), with: "compote"
+    click_button I18n.t("matching.queue.index.filters.submit")
+    expect_filtered_queue_groups
   end
 
-  it "bulk-confirms a grouped label after previewing the affected count" do
-    create_prior_label_variant
+  it "falls back to default ordering for unsupported queue sort params" do
+    create_orderable_queue_groups
+
+    visit matching_queue_path(sort: "unsupported", direction: "sideways")
+
+    rows = all("tbody tr").map(&:text)
+    expect(rows.first).to include("Banane")
+    expect(rows.second).to include("Abricot")
+    expect(rows.third).to include("Zeste citron")
+  end
+
+  it "does not render matching action forms on the queue index" do
     create_lait_lines
 
     visit matching_queue_path
-    click_link I18n.t("matching.queue.index.bulk.preview_action"), match: :first
-    click_button I18n.t("matching.queue.index.bulk.confirm", count: 2)
 
-    expect(page).to have_content("Confirmed 2 lines")
-    expect(ReceiptLineMatch.confirmed.count).to eq(3)
-  end
-
-  it "rejects and ignores queue entries without creating price observations" do
-    create_rejectable_compote_line
-
-    visit matching_queue_path
-    click_button I18n.t("matching.queue.index.suggestions.reject"), match: :first
-    expect(page).to have_content("Rejected suggestion for Compote pomme.")
-
-    click_button I18n.t("matching.queue.index.ignore.line_action"), match: :first
-    expect_rejected_line_to_be_ignored
-  end
-
-  it "ignores a grouped label from the queue" do
-    create_lait_lines
-
-    visit matching_queue_path
-    click_button I18n.t("matching.queue.index.ignore.group_action", count: 2)
-
-    expect(page).to have_content("Ignored 2 lines")
-    expect(ReceiptLineMatch.ignored.count).to eq(2)
-    expect(page).to have_content(I18n.t("matching.queue.index.queue.empty"))
+    expect_no_queue_action_controls
   end
 
   it "matches only one reviewed receipt without auto-confirming suggestions" do
@@ -73,6 +45,26 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
     expect(page).to have_content("Maison Dupont")
     expect(page).not_to have_content("Other receipt line")
     expect(ReceiptLineMatch.confirmed.exists?(receipt_line: records.fetch(:line))).to be(false)
+  end
+
+  def expect_unfiltered_queue_groups
+    expect(page).to have_content(I18n.t("matching.queue.index.table.line_count", count: 2))
+    expect(page).to have_content("Lait demi écrémé")
+    expect(page).to have_content("Compote pomme")
+  end
+
+  def expect_filtered_queue_groups
+    expect(page).to have_content("Compote pomme")
+    expect(page).to have_no_content("Lait demi écrémé")
+  end
+
+  def expect_no_queue_action_controls
+    expect(page).to have_no_button(I18n.t("matching.queue.index.suggestions.confirm"))
+    expect(page).to have_no_button(I18n.t("matching.queue.index.suggestions.reject"))
+    expect(page).to have_no_button(I18n.t("matching.queue.index.ignore.line_action"))
+    expect(page).to have_no_link(I18n.t("matching.queue.index.bulk.preview_action"))
+    expect(page).to have_no_field(I18n.t("matching.queue.index.search.query"))
+    expect(page).to have_no_content(I18n.t("matching.queue.index.inline_catalogue.heading"))
   end
 
   def create_line(label:, receipt: create(:receipt, :reviewed, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12)))
@@ -91,55 +83,11 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
     create(:product_variant, product: product, name: variant_name)
   end
 
-  def create_prior_label_variant
-    create_variant(
-      product_brand_name: "Maison Dupont",
-      product_name: "Lait demi ecreme",
-      variant_name: "6 x 1L"
-    ).tap do |variant|
-      prior_line = create_line(label: "Lait demi ecreme")
-      ReceiptLineMatching::ConfirmMatchService.call(receipt_line: prior_line, product_variant: variant)
-    end
-  end
-
-  def create_compote_variant
-    create_variant(
-      product_brand_name: "Bio Village",
-      product_name: "Compotes pomme",
-      variant_name: "12 x 90g"
-    )
-  end
-
-  def create_inline_catalogue_records
-    {
-      category: create(:category, name: "Compotes"),
-      retail_brand: create(:retail_brand, name: "Leclerc Matching #{Faker::Alphanumeric.unique.alpha(number: 8)}")
-    }
-  end
-
-  def create_rejectable_compote_line
-    create_compote_variant
-    create_line(label: "Compote pomme")
-  end
-
-  def fill_inline_catalogue_form(category:, retail_brand:)
-    fill_in I18n.t("matching.queue.index.inline_catalogue.product_brand_name"), with: "Bio Village"
-    select retail_brand.name, from: I18n.t("matching.queue.index.inline_catalogue.retail_brand")
-    fill_in I18n.t("matching.queue.index.inline_catalogue.product_name"), with: "Compotes pomme"
-    select category.name, from: I18n.t("matching.queue.index.inline_catalogue.category")
-    fill_in I18n.t("matching.queue.index.inline_catalogue.variant_name"), with: "12 x 90g"
-  end
-
-  def expect_inline_catalogue_confirmation(retail_brand)
-    expect(ProductBrand.last).to have_attributes(name: "Bio Village", retail_brand: retail_brand)
-    expect(ReceiptLineMatch.confirmed.last.product_variant.name).to eq("12 x 90g")
-  end
-
-  def expect_rejected_line_to_be_ignored
-    expect(page).to have_content("Ignored Compote pomme.")
-    expect(ReceiptLineMatch.rejected.count).to eq(1)
-    expect(ReceiptLineMatch.ignored.count).to eq(1)
-    expect(PriceObservation.count).to eq(0)
+  def create_orderable_queue_groups
+    create_line(label: "Zeste citron")
+    create_line(label: "Abricot")
+    create_line(label: "Banane")
+    create_line(label: "Banane")
   end
 
   def create_receipt_specific_records
