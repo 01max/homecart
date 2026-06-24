@@ -16,6 +16,9 @@
        direction: t(".sort.directions.#{next_direction}")
      )
    end %>
+<% queue_context_params = lambda do
+     { label_filter: @label_filter.presence, sort: @sort_column, direction: @sort_direction }.compact
+   end %>
 
 <section class="hc-stack">
   <%= render "catalogue/shared/page_header",
@@ -108,6 +111,7 @@
               </th>
               <th><%= t(".table.prices") %></th>
               <th><%= t(".table.quantities") %></th>
+              <th><%= t(".table.actions") %></th>
             </tr>
           </thead>
           <tbody>
@@ -123,6 +127,11 @@
                 <td class="whitespace-nowrap"><%= matching_queue_date_label(group.last_purchased_at) %></td>
                 <td><%= matching_queue_price_context(group.price_context) %></td>
                 <td><%= matching_queue_quantity_context(group.price_context) %></td>
+                <td>
+                  <%= link_to t(".actions.open_group"),
+                              matching_group_path(group.receipt_lines.first.id, queue_context_params.call),
+                              class: "hc-button hc-button--secondary hc-button--compact" %>
+                </td>
               </tr>
             <% end %>
           </tbody>

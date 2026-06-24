@@ -9,6 +9,7 @@ en:
         date_range: "%{first} to %{last}"
         actions:
           catalogue: "Catalogue"
+          open_group: "Open group"
         filters:
           heading: "Queue filters"
           description: "Narrow the backlog by receipt label while keeping the current queue order."
@@ -33,6 +34,7 @@ en:
           last_purchased_at: "Last purchased"
           prices: "Prices"
           quantities: "Quantities"
+          actions: "Actions"
           suggestions: "Suggestions"
           line_count:
             one: "%{count} line"
@@ -93,6 +95,42 @@ en:
         quantity_context:
           quantities: "quantities %{values}"
           units: "units %{values}"
+    groups:
+      show:
+        eyebrow: "Focused matching"
+        title: "Match %{label}"
+        description: "Work through one unmatched normalized label group at a time."
+        empty_value: "Not available"
+        actions:
+          back_to_queue: "Back to queue"
+        errors:
+          stale_group: "That matching queue item is no longer available."
+        summary:
+          heading: "Group context"
+          description: "Current queue context for this normalized receipt-label group."
+          label: "Receipt label"
+          stores: "Stores"
+          dates: "Dates"
+          prices: "Prices"
+          quantities: "Quantities"
+          count:
+            one: "%{count} line"
+            other: "%{count} lines"
+        lines:
+          heading: "Receipt lines"
+          description: "Only currently eligible unmatched item lines in this normalized label group are shown."
+          count:
+            one: "%{count} line"
+            other: "%{count} lines"
+        table:
+          receipt: "Receipt"
+          receipt_action: "View receipt"
+          store: "Store"
+          purchased_at: "Purchased"
+          label: "Label"
+          quantity: "Qty"
+          quantity_value: "%{quantity} %{unit}"
+          total: "Total"
     receipt_lines:
       errors:
         receipt_not_reviewed: "Review the receipt before matching its lines."

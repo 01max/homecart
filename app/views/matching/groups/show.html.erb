@@ -1,0 +1,91 @@
+<% content_for :title, t(".title", label: @group.representative_label) %>
+
+<section class="hc-stack">
+  <%= render "catalogue/shared/page_header",
+             eyebrow: t(".eyebrow"),
+             title: t(".title", label: @group.representative_label),
+             description: t(".description"),
+             actions: link_to(t(".actions.back_to_queue"), matching_queue_path(@queue_params), class: "hc-button hc-button--secondary") %>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t(".summary.heading") %></h2>
+        <p class="hc-block-description"><%= t(".summary.description") %></p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t(".summary.count", count: @group.line_count) %></p>
+    </div>
+
+    <div class="hc-table-frame">
+      <table class="hc-table hc-table--dense min-w-[56rem]">
+        <tbody>
+          <tr>
+            <th><%= t(".summary.label") %></th>
+            <td>
+              <span class="font-semibold"><%= @group.representative_label %></span>
+              <span class="mt-1 block text-xs text-[var(--hc-on-surface-variant)]"><%= @group.normalized_label %></span>
+            </td>
+          </tr>
+          <tr>
+            <th><%= t(".summary.stores") %></th>
+            <td><%= matching_queue_store_list(@group.stores) %></td>
+          </tr>
+          <tr>
+            <th><%= t(".summary.dates") %></th>
+            <td><%= matching_queue_date_range(@group) %></td>
+          </tr>
+          <tr>
+            <th><%= t(".summary.prices") %></th>
+            <td><%= matching_queue_price_context(@group.price_context) %></td>
+          </tr>
+          <tr>
+            <th><%= t(".summary.quantities") %></th>
+            <td><%= matching_queue_quantity_context(@group.price_context) %></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="hc-table-block">
+    <div class="hc-block-header">
+      <div class="hc-block-heading">
+        <h2 class="hc-block-title"><%= t(".lines.heading") %></h2>
+        <p class="hc-block-description"><%= t(".lines.description") %></p>
+      </div>
+      <p class="hc-badge hc-badge--neutral"><%= t(".lines.count", count: @receipt_lines.size) %></p>
+    </div>
+
+    <div class="hc-table-frame">
+      <table class="hc-table hc-table--dense min-w-[72rem]">
+        <thead>
+          <tr>
+            <th><%= t(".table.receipt") %></th>
+            <th><%= t(".table.store") %></th>
+            <th><%= t(".table.purchased_at") %></th>
+            <th><%= t(".table.label") %></th>
+            <th><%= t(".table.quantity") %></th>
+            <th><%= t(".table.total") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @receipt_lines.each do |line| %>
+            <tr>
+              <td><%= link_to t(".table.receipt_action"), receipt_path(line.receipt), class: "hc-link" %></td>
+              <td><%= store_label(line.receipt.store) %></td>
+              <td class="whitespace-nowrap"><%= matching_queue_date_label(line.receipt.purchased_at) %></td>
+              <td>
+                <span class="font-semibold"><%= line.label %></span>
+                <span class="mt-1 block text-xs text-[var(--hc-on-surface-variant)]"><%= line.section_label.presence || t(".empty_value") %></span>
+              </td>
+              <td class="whitespace-nowrap">
+                <%= t(".table.quantity_value", quantity: matching_queue_quantity_value(line), unit: t("receipts.unit_of_measures.#{line.unit_of_measure}")) %>
+              </td>
+              <td class="whitespace-nowrap"><%= matching_queue_money_label(line.total_cents) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>

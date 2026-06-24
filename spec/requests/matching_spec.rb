@@ -57,6 +57,35 @@ RSpec.describe "Matching", type: :request do
     end
   end
 
+  describe "GET /matching/groups/:id" do
+    it "links queue groups to the focused matching page" do
+      line = create_line(label: "Compote pomme")
+
+      get matching_root_path, params: { label_filter: "compote", sort: "label", direction: "asc" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(focused_group_href(line, label_filter: "compote", sort: "label", direction: "asc"))
+    end
+
+    it "renders the current queue group from a representative receipt line" do
+      records = create_focused_group_records
+
+      get matching_group_path(records.fetch(:representative_line))
+
+      expect_focused_group(records)
+    end
+
+    it "redirects stale focused groups back to the queue with localized feedback" do
+      line = create_line(label: "Lait demi ecreme")
+      create(:receipt_line_match, :ignored, receipt_line: line)
+
+      get matching_group_path(line, label_filter: "lait", sort: "label", direction: "asc")
+
+      expect(response).to redirect_to(matching_queue_path(label_filter: "lait", sort: "label", direction: "asc"))
+      expect(flash[:alert]).to eq(I18n.t("matching.groups.show.errors.stale_group"))
+    end
+  end
+
   describe "GET /matching/receipts/:id" do
     it "renders only one receipt's unmatched item lines with prior-label suggestions" do
       records = create_receipt_specific_matching_records
@@ -387,6 +416,14 @@ RSpec.describe "Matching", type: :request do
     create_line(label: "Banane")
   end
 
+  def create_focused_group_records
+    representative_line = create_line(label: "Lait demi écrémé")
+    sibling_line = create_line(label: "LAIT DEMI ECREME")
+    other_line = create_line(label: "Compote pomme")
+
+    { representative_line: representative_line, sibling_line: sibling_line, other_line: other_line }
+  end
+
   def include_matching_queue_group
     include("Lait demi écrémé")
       .and include("lait demi ecreme")
@@ -415,6 +452,18 @@ RSpec.describe "Matching", type: :request do
     expect(response.body).not_to include(I18n.t("matching.queue.index.search.query"))
     expect(response.body).not_to include(I18n.t("matching.queue.index.ignore.line_action"))
     expect(response.body).not_to include(I18n.t("matching.queue.index.inline_catalogue.heading"))
+  end
+
+  def expect_focused_group(records)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(I18n.t("matching.groups.show.eyebrow"))
+    expect(response.body).to include(records.fetch(:representative_line).label)
+    expect(response.body).to include(records.fetch(:sibling_line).label)
+    expect(response.body).not_to include(records.fetch(:other_line).label)
+  end
+
+  def focused_group_href(line, params)
+    ERB::Util.html_escape(matching_group_path(line, params))
   end
 
   def include_receipt_matching_page(line, variant)
