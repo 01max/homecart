@@ -102,6 +102,8 @@ en:
         description: "Work through one unmatched normalized label group at a time."
         empty_value: "Not available"
         actions:
+          previous_group: "Previous group"
+          next_group: "Next group"
           back_to_queue: "Back to queue"
         errors:
           stale_group: "That matching queue item is no longer available."

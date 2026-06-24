@@ -2,6 +2,24 @@
 <% focused_path_params = lambda do |extra = {}|
      @queue_params.merge(variant_search_query: @variant_search_query.presence).merge(extra).compact
    end %>
+<% navigation_group_path = lambda do |group|
+     matching_group_path(group.receipt_lines.first, @queue_params)
+   end %>
+<% navigation_actions = capture do %>
+  <% if @previous_group.present? %>
+    <%= link_to t(".actions.previous_group"),
+                navigation_group_path.call(@previous_group),
+                class: "hc-button hc-button--secondary" %>
+  <% end %>
+  <% if @next_group.present? %>
+    <%= link_to t(".actions.next_group"),
+                navigation_group_path.call(@next_group),
+                class: "hc-button hc-button--primary" %>
+  <% end %>
+  <%= link_to t(".actions.back_to_queue"),
+              matching_queue_path(@queue_params),
+              class: "hc-button hc-button--subtle" %>
+<% end %>
 <% return_to_path = request.fullpath %>
 
 <section class="hc-stack">
@@ -9,7 +27,7 @@
              eyebrow: t(".eyebrow"),
              title: t(".title", label: @group.representative_label),
              description: t(".description"),
-             actions: link_to(t(".actions.back_to_queue"), matching_queue_path(@queue_params), class: "hc-button hc-button--secondary") %>
+             actions: navigation_actions %>
 
   <section class="hc-table-block">
     <div class="hc-block-header">
