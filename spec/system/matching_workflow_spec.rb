@@ -96,12 +96,12 @@ RSpec.describe "Receipt-line matching workflow", type: :system do
   end
 
   def expect_no_queue_action_controls
-    expect(page).to have_no_button(I18n.t("matching.queue.index.suggestions.confirm"))
-    expect(page).to have_no_button(I18n.t("matching.queue.index.suggestions.reject"))
-    expect(page).to have_no_button(I18n.t("matching.queue.index.ignore.line_action"))
-    expect(page).to have_no_link(I18n.t("matching.queue.index.bulk.preview_action"))
-    expect(page).to have_no_field(I18n.t("matching.queue.index.search.query"))
-    expect(page).to have_no_content(I18n.t("matching.queue.index.inline_catalogue.heading"))
+    expect(page).to have_no_button(I18n.t("matching.groups.show.suggestions.confirm"))
+    expect(page).to have_no_button(I18n.t("matching.groups.show.suggestions.reject"))
+    expect(page).to have_no_button(I18n.t("matching.groups.show.ignore.line_action"))
+    expect(page).to have_no_link(I18n.t("matching.groups.show.bulk.preview_action"))
+    expect(page).to have_no_field(I18n.t("matching.groups.show.search.query"))
+    expect(page).to have_no_content(I18n.t("matching.groups.show.inline_catalogue.heading"))
   end
 
   def expect_focused_group_page(records)

@@ -645,10 +645,10 @@ RSpec.describe "Matching", type: :request do
     expect(response.body).not_to match(%r{action="/matching/receipt_lines/[^"]+"})
     expect(response.body).not_to include(%(action="#{matching_bulk_confirmations_path}"))
     expect(response.body).not_to include(%(action="#{matching_ignored_groups_path}"))
-    expect(response.body).not_to include(I18n.t("matching.queue.index.bulk.preview_action"))
-    expect(response.body).not_to include(I18n.t("matching.queue.index.search.query"))
-    expect(response.body).not_to include(I18n.t("matching.queue.index.ignore.line_action"))
-    expect(response.body).not_to include(I18n.t("matching.queue.index.inline_catalogue.heading"))
+    expect(response.body).not_to include(I18n.t("matching.groups.show.bulk.preview_action"))
+    expect(response.body).not_to include(I18n.t("matching.groups.show.search.query"))
+    expect(response.body).not_to include(I18n.t("matching.groups.show.ignore.line_action"))
+    expect(response.body).not_to include(I18n.t("matching.groups.show.inline_catalogue.heading"))
   end
 
   def expect_focused_group(records)
@@ -760,7 +760,7 @@ RSpec.describe "Matching", type: :request do
     include(I18n.t("matching.receipts.show.title"))
       .and include(line.label)
       .and include(catalogue_product_variant_label_for_test(variant))
-      .and include(I18n.t("matching.queue.index.suggestions.reasons.prior_confirmed_label"))
+      .and include(I18n.t("matching.workflow.suggestions.reasons.prior_confirmed_label"))
   end
 
   def expect_receipt_matching_page_to_exclude_other_lines

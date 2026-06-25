@@ -1,12 +1,24 @@
 en:
   matching:
+    workflow:
+      empty_value: "Not available"
+      date_range: "%{first} to %{last}"
+      suggestions:
+        metadata: "%{reason}, %{confidence}"
+        reasons:
+          prior_confirmed_label: "Prior label match"
+          catalogue_search: "Catalogue search"
+      price_context:
+        total: "totals %{values}"
+        unit: "unit prices %{values}"
+      quantity_context:
+        quantities: "quantities %{values}"
+        units: "units %{values}"
     queue:
       index:
         eyebrow: "Matching"
         title: "Matching queue"
         description: "Match receipt-line observations to catalogue variants and keep ignored lines out of the queue."
-        empty_value: "Not available"
-        date_range: "%{first} to %{last}"
         actions:
           catalogue: "Catalogue"
           open_group: "Open group"
@@ -44,57 +56,6 @@ en:
           directions:
             asc: "ascending"
             desc: "descending"
-        suggestions:
-          empty: "No deterministic suggestions yet."
-          confirm: "Confirm"
-          reject: "Reject"
-          metadata: "%{reason}, %{confidence}"
-          reasons:
-            prior_confirmed_label: "Prior label match"
-            catalogue_search: "Catalogue search"
-        search:
-          query: "Search variants"
-          placeholder: "Product, brand, or variant"
-          submit: "Search"
-          confirm: "Confirm"
-          empty: "No existing variants matched this search."
-        bulk:
-          preview_action: "Preview bulk"
-          heading: "Bulk confirmation preview"
-          description:
-            one: "%{count} line will be confirmed as %{variant}."
-            other: "%{count} lines will be confirmed as %{variant}."
-          confirm:
-            one: "Confirm %{count} line"
-            other: "Confirm %{count} lines"
-        ignore:
-          heading: "Ignore"
-          description: "Remove receipt lines that should not map to a product variant."
-          line_action: "Ignore line"
-          group_action:
-            one: "Ignore %{count} line"
-            other: "Ignore %{count} lines"
-          group_confirm:
-            one: "Ignore %{count} line in this group?"
-            other: "Ignore %{count} lines in this group?"
-        inline_catalogue:
-          heading: "Create and confirm"
-          description: "Create a missing catalogue variant and confirm this receipt line in one step."
-          product_brand_name: "Product brand"
-          retail_brand: "Retail brand"
-          no_retail_brand: "National brand"
-          product_name: "Product name"
-          category: "Category"
-          select_category: "Select a category"
-          manufacturer_name: "Manufacturer"
-          variant_name: "Variant name"
-          create: "Create and confirm"
-        price_context:
-          total: "totals %{values}"
-          unit: "unit prices %{values}"
-        quantity_context:
-          quantities: "quantities %{values}"
-          units: "units %{values}"
     groups:
       show:
         eyebrow: "Focused matching"
@@ -140,10 +101,6 @@ en:
           empty: "No deterministic suggestions yet."
           confirm: "Confirm"
           reject: "Reject"
-          metadata: "%{reason}, %{confidence}"
-          reasons:
-            prior_confirmed_label: "Prior label match"
-            catalogue_search: "Catalogue search"
         search:
           query: "Search variants"
           placeholder: "Product, brand, or variant"
