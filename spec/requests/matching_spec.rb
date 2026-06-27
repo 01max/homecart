@@ -48,6 +48,17 @@ RSpec.describe "Matching", type: :request do
       expect_queue_labels_in_order([ "Banane", "Abricot", "Zeste citron" ])
     end
 
+    it "uses default directions when switching to inactive sort columns" do
+      create_orderable_queue_groups
+
+      get matching_root_path, params: { sort: "label", direction: "asc" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matching_queue_href(sort: "label", direction: "desc"))
+      expect(response.body).to include(matching_queue_href(sort: "line_count", direction: "desc"))
+      expect(response.body).to include(matching_queue_href(sort: "last_purchased_at", direction: "desc"))
+    end
+
     it "omits full matching action forms from the queue index" do
       create_action_ready_queue_group
 
@@ -101,6 +112,28 @@ RSpec.describe "Matching", type: :request do
       get matching_group_path(records.fetch(:next_line), sequential_queue_params)
 
       expect_focused_end_of_queue_navigation(records)
+    end
+
+    it "targets one-line terminal decisions at the next queue group" do
+      records = create_sequential_queue_group_records
+      current_line = records.fetch(:current_line)
+
+      get matching_group_path(current_line, sequential_queue_params)
+
+      next_group_path = matching_group_path(records.fetch(:next_line), sequential_queue_params)
+      expect_form_return_to(ignore_matching_receipt_line_path(current_line), next_group_path)
+      expect_form_return_to(matching_ignored_groups_path, next_group_path)
+      expect_form_return_to(create_variant_matching_receipt_line_path(current_line), next_group_path)
+    end
+
+    it "keeps multi-line decisions focused while group-wide decisions continue to the next group" do
+      records = create_focused_action_records
+      line = records.fetch(:line)
+      entry_line = focused_group_entry_line(line)
+
+      get matching_group_path(line, bulk_preview_variant_id: records.fetch(:variant).id)
+
+      expect_multi_line_decision_return_targets(records, entry_line)
     end
 
     it "redirects stale focused groups back to the queue with localized feedback" do
@@ -748,8 +781,37 @@ RSpec.describe "Matching", type: :request do
     ERB::Util.html_escape(matching_group_path(line, params))
   end
 
+  def focused_group_entry_line(line)
+    normalized_label = ProductCatalog::NormalizeTextService.call(line.label)
+    ReceiptLineMatching::QueueService.call
+      .find { |group| group.normalized_label == normalized_label }
+      .receipt_lines
+      .first
+  end
+
+  def expect_multi_line_decision_return_targets(records, entry_line)
+    current_group_path = matching_group_path(records.fetch(:line), bulk_preview_variant_id: records.fetch(:variant).id)
+    next_group_path = matching_group_path(records.fetch(:other_line), sort: "line_count", direction: "desc")
+    expect_form_return_to(ignore_matching_receipt_line_path(entry_line), current_group_path)
+    expect_form_return_to(create_variant_matching_receipt_line_path(entry_line), current_group_path)
+    expect_form_return_to(matching_ignored_groups_path, next_group_path)
+    expect_form_return_to(matching_bulk_confirmations_path, next_group_path)
+  end
+
   def matching_queue_href(params)
     ERB::Util.html_escape(matching_queue_path(params))
+  end
+
+  def form_return_to_value(action)
+    response_document.at_css(%(form[action="#{action}"] input[name="return_to"]))&.[]("value")
+  end
+
+  def expect_form_return_to(action, path)
+    expect(form_return_to_value(action)).to eq(path)
+  end
+
+  def response_document
+    Nokogiri::HTML(response.body)
   end
 
   def sequential_queue_params

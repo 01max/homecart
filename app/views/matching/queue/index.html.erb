@@ -1,7 +1,11 @@
 <% content_for :title, t(".title") %>
+<% next_sort_direction = lambda do |column|
+     next ReceiptLineMatching::QueueService::DEFAULT_DIRECTIONS.fetch(column) unless @sort_column == column
+
+     @sort_direction == "asc" ? "desc" : "asc"
+   end %>
 <% sort_link_params = lambda do |column|
-     next_direction = @sort_column == column && @sort_direction == "asc" ? "desc" : "asc"
-     { label_filter: @label_filter.presence, sort: column, direction: next_direction }.compact
+     { label_filter: @label_filter.presence, sort: column, direction: next_sort_direction.call(column) }.compact
    end %>
 <% sort_indicator = lambda do |column|
      next "" unless @sort_column == column
@@ -9,11 +13,10 @@
      @sort_direction == "asc" ? "↑" : "↓"
    end %>
 <% sort_label = lambda do |column, label|
-     next_direction = @sort_column == column && @sort_direction == "asc" ? "desc" : "asc"
      t(
        ".sort.label",
        column: label,
-       direction: t(".sort.directions.#{next_direction}")
+       direction: t(".sort.directions.#{next_sort_direction.call(column)}")
      )
    end %>
 <% queue_context_params = lambda do

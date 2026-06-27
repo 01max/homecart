@@ -20,7 +20,10 @@
               matching_queue_path(@queue_params),
               class: "hc-button hc-button--subtle" %>
 <% end %>
-<% return_to_path = request.fullpath %>
+<% current_group_path = request.fullpath %>
+<% next_queue_target_path = @next_group.present? ? navigation_group_path.call(@next_group) : matching_queue_path(@queue_params) %>
+<% line_decision_return_to_path = @group.line_count == 1 ? next_queue_target_path : current_group_path %>
+<% group_decision_return_to_path = next_queue_target_path %>
 
 <section class="hc-stack">
   <%= render "catalogue/shared/page_header",
@@ -87,12 +90,12 @@
           <div class="hc-table-cell-actions mt-3 justify-start">
             <%= button_to t(".ignore.line_action"),
                           ignore_matching_receipt_line_path(@entry.receipt_line),
-                          params: { return_to: return_to_path },
+                          params: { return_to: line_decision_return_to_path },
                           class: "hc-button hc-button--subtle" %>
             <%= button_to t(".ignore.group_action", count: @group.line_count),
                           matching_ignored_groups_path,
                           params: {
-                            return_to: return_to_path,
+                            return_to: group_decision_return_to_path,
                             ignored_group: {
                               normalized_label: @group.normalized_label,
                               receipt_line_ids: @group.receipt_lines.map(&:id)
@@ -118,7 +121,7 @@
                                 confirm_matching_receipt_line_path(@entry.receipt_line),
                                 params: {
                                   product_variant_id: suggestion.product_variant.id,
-                                  return_to: return_to_path
+                                  return_to: line_decision_return_to_path
                                 },
                                 class: "hc-button hc-button--primary" %>
                   <%= link_to t(".bulk.preview_action"),
@@ -128,7 +131,7 @@
                                 reject_matching_receipt_line_path(@entry.receipt_line),
                                 params: {
                                   product_variant_id: suggestion.product_variant.id,
-                                  return_to: return_to_path
+                                  return_to: current_group_path
                                 },
                                 class: "hc-button hc-button--subtle" %>
                 </div>
@@ -166,7 +169,7 @@
                                   confirm_matching_receipt_line_path(@entry.receipt_line),
                                   params: {
                                     product_variant_id: product_variant.id,
-                                    return_to: return_to_path
+                                    return_to: line_decision_return_to_path
                                   },
                                   class: "hc-button hc-button--primary" %>
                     <%= link_to t(".bulk.preview_action"),
@@ -195,7 +198,7 @@
             <%= form_with scope: :bulk_confirmation,
                           url: matching_bulk_confirmations_path,
                           class: "hc-table-cell-actions mt-4 justify-start" do |form| %>
-              <%= hidden_field_tag :return_to, return_to_path %>
+              <%= hidden_field_tag :return_to, group_decision_return_to_path %>
               <%= form.hidden_field :normalized_label, value: @entry.bulk_preview.normalized_label %>
               <%= form.hidden_field :product_variant_id, value: @entry.bulk_preview_variant.id %>
               <% @entry.bulk_preview.receipt_line_ids.each do |receipt_line_id| %>
@@ -211,7 +214,7 @@
                    categories: @categories,
                    comparison_units: @comparison_units,
                    retail_brands: @retail_brands,
-                   return_to: return_to_path %>
+                   return_to: line_decision_return_to_path %>
       </div>
     </div>
   </section>

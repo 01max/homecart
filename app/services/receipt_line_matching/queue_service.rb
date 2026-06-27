@@ -48,7 +48,7 @@ module ReceiptLineMatching
 
     def label_filter_match?(group)
       group.representative_label.downcase.include?(label_filter.downcase) ||
-        group.normalized_label.include?(normalized_label_filter)
+        normalized_label_filter.present? && group.normalized_label.include?(normalized_label_filter)
     end
 
     def normalized_label_filter

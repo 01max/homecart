@@ -44,6 +44,10 @@ RSpec.describe ReceiptLineMatching::QueueService do
     expect(described_class.call(label_filter: "undated")).to be_empty
   end
 
+  it "does not match every group when the normalized filter is blank" do
+    expect(described_class.call(label_filter: "?")).to be_empty
+  end
+
   it "orders groups by label and line count" do
     create_orderable_groups
 
