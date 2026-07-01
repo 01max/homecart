@@ -15,8 +15,9 @@ services:
       POSTGRES_PASSWORD: homecart
       RAILS_ENV: development
       RAILS_LOG_LEVEL: debug
+      APP_HOST_PORT: ${HOMECART_WEB_PORT:-3001}
     ports:
-      - "3000:3000"
+      - "${HOMECART_WEB_PORT:-3001}:3000"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3000/up >/dev/null"]
       interval: 5s
@@ -44,6 +45,7 @@ services:
       POSTGRES_PASSWORD: homecart
       RAILS_ENV: development
       RAILS_LOG_LEVEL: debug
+      APP_HOST_PORT: ${HOMECART_WEB_PORT:-3001}
     volumes:
       - .:/rails
       - bundle_cache:/usr/local/bundle

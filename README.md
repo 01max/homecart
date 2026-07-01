@@ -85,7 +85,7 @@ From a fresh checkout with Docker installed, start the development app stack wit
 docker compose up
 ```
 
-The default compose file is development-shaped. It bind-mounts the repository into `/rails`, sets `RAILS_ENV=development`, runs the Tailwind watcher, and exposes Rails on <http://localhost:3000>. Code, route, view, and CSS changes are visible without rebuilding the image.
+The default compose file is development-shaped. It bind-mounts the repository into `/rails`, sets `RAILS_ENV=development`, runs the Tailwind watcher, and exposes Rails on <http://localhost:3001>. Override the host port with `HOMECART_WEB_PORT=3002 docker compose up` when needed. Code, route, view, and CSS changes are visible without rebuilding the image.
 
 Open a development console:
 
