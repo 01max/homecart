@@ -8,14 +8,14 @@ module Matching
         expected_receipt_line_ids: bulk_confirmation_params[:receipt_line_ids]
       )
 
-      redirect_to matching_queue_path,
+      redirect_to decision_redirect_path,
                   notice: t(
                     "matching.bulk_confirmations.create.success",
                     count: result.confirmations.size,
                     label: result.preview.representative_label
                   )
     rescue ArgumentError
-      redirect_to matching_queue_path, alert: t("matching.bulk_confirmations.create.errors.stale_preview")
+      redirect_to decision_redirect_path, alert: t("matching.bulk_confirmations.create.errors.stale_preview")
     end
 
     private
@@ -26,6 +26,10 @@ module Matching
 
     def product_variant
       ProductVariant.find(bulk_confirmation_params[:product_variant_id])
+    end
+
+    def decision_redirect_path
+      url_from(params[:return_to]) || matching_queue_path
     end
   end
 end

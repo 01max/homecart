@@ -31,56 +31,119 @@ RSpec.describe "Matching", type: :request do
       expect(response.body).not_to include("Immediate discount")
     end
 
-    it "renders deterministic suggestions with confirm and reject actions" do
-      create_prior_jambon_confirmation
-      create_line(label: "JAMBON BLANC 4 TRANCHES")
+    it "filters the queue by receipt label while keeping non-item and terminal lines excluded" do
+      create_filterable_queue_groups
 
-      expect do
-        get matching_root_path
-      end.not_to change(ReceiptLineMatch.suggested, :count)
+      get matching_root_path, params: { label_filter: "lait" }
 
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include_matching_suggestion_actions
+      expect_filtered_matching_queue
     end
 
-    it "renders existing variant search results for the selected group" do
-      create_variant(product_brand_name: "Bio Village", product_name: "Compotes pomme", variant_name: "12 x 90g")
-      create_line(label: "Compote pomme")
+    it "falls back to the default queue order for unsupported ordering params" do
+      create_orderable_queue_groups
 
-      get matching_root_path, params: variant_search_params("Compote pomme", "Bio Village compote")
-
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include_variant_search_result
-    end
-
-    it "renders a bulk confirmation preview with the affected line count" do
-      variant = create_variant(product_brand_name: "Bio Village", product_name: "Compotes pomme", variant_name: "12 x 90g")
-      create_lait_lines
-
-      get matching_root_path, params: bulk_preview_params("Lait demi ecreme", variant)
+      get matching_root_path, params: { sort: "unsupported", direction: "sideways" }
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include_bulk_preview
+      expect_queue_labels_in_order([ "Banane", "Abricot", "Zeste citron" ])
     end
 
-    it "renders ignore actions for one line and the current group" do
-      create_lait_lines
+    it "uses default directions when switching to inactive sort columns" do
+      create_orderable_queue_groups
+
+      get matching_root_path, params: { sort: "label", direction: "asc" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matching_queue_href(sort: "label", direction: "desc"))
+      expect(response.body).to include(matching_queue_href(sort: "line_count", direction: "desc"))
+      expect(response.body).to include(matching_queue_href(sort: "last_purchased_at", direction: "desc"))
+    end
+
+    it "omits full matching action forms from the queue index" do
+      create_action_ready_queue_group
 
       get matching_root_path
 
+      expect_browse_only_matching_queue
+    end
+  end
+
+  describe "GET /matching/groups/:id" do
+    it "links queue groups to the focused matching page" do
+      line = create_line(label: "Compote pomme")
+
+      get matching_root_path, params: { label_filter: "compote", sort: "label", direction: "asc" }
+
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include_ignore_actions
+      expect(response.body).to include(focused_group_href(line, label_filter: "compote", sort: "label", direction: "asc"))
     end
 
-    it "renders inline catalogue creation controls" do
-      create(:category, name: "Compotes")
-      create(:retail_brand, name: "E.Leclerc")
-      create_line(label: "Compote pomme")
+    it "renders the current queue group from a representative receipt line" do
+      records = create_focused_group_records
 
-      get matching_root_path
+      get matching_group_path(records.fetch(:representative_line))
 
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include_inline_catalogue_form
+      expect_focused_group(records)
+    end
+
+    it "renders focused matching controls for the current group" do
+      records = create_actionable_focused_group_records
+
+      get matching_group_path(
+        records.fetch(:line),
+        variant_search_query: "Bio Village compote",
+        bulk_preview_variant_id: records.fetch(:search_variant).id
+      )
+
+      expect_focused_matching_controls(records)
+    end
+
+    it "renders previous and next navigation links with queue context" do
+      records = create_sequential_queue_group_records
+
+      get matching_group_path(records.fetch(:current_line), sequential_queue_params)
+
+      expect_focused_navigation_links(records)
+    end
+
+    it "omits next navigation at the end of the queue" do
+      records = create_sequential_queue_group_records
+
+      get matching_group_path(records.fetch(:next_line), sequential_queue_params)
+
+      expect_focused_end_of_queue_navigation(records)
+    end
+
+    it "targets one-line terminal decisions at the next queue group" do
+      records = create_sequential_queue_group_records
+      current_line = records.fetch(:current_line)
+
+      get matching_group_path(current_line, sequential_queue_params)
+
+      next_group_path = matching_group_path(records.fetch(:next_line), sequential_queue_params)
+      expect_form_return_to(ignore_matching_receipt_line_path(current_line), next_group_path)
+      expect_form_return_to(matching_ignored_groups_path, next_group_path)
+      expect_form_return_to(create_variant_matching_receipt_line_path(current_line), next_group_path)
+    end
+
+    it "keeps multi-line decisions focused while group-wide decisions continue to the next group" do
+      records = create_focused_action_records
+      line = records.fetch(:line)
+      entry_line = focused_group_entry_line(line)
+
+      get matching_group_path(line, bulk_preview_variant_id: records.fetch(:variant).id)
+
+      expect_multi_line_decision_return_targets(records, entry_line)
+    end
+
+    it "redirects stale focused groups back to the queue with localized feedback" do
+      line = create_line(label: "Lait demi ecreme")
+      create(:receipt_line_match, :ignored, receipt_line: line)
+
+      get matching_group_path(line, label_filter: "lait", sort: "label", direction: "asc")
+
+      expect(response).to redirect_to(matching_queue_path(label_filter: "lait", sort: "label", direction: "asc"))
+      expect(flash[:alert]).to eq(I18n.t("matching.groups.show.errors.stale_group"))
     end
   end
 
@@ -145,6 +208,25 @@ RSpec.describe "Matching", type: :request do
 
       expect(response).to redirect_to(matching_receipt_path(line.receipt))
     end
+
+    it "returns to the focused matching page" do
+      variant = create(:product_variant)
+      line = create_line(label: "Compote pomme")
+
+      post confirm_matching_receipt_line_path(line),
+           params: { product_variant_id: variant.id, return_to: matching_group_path(line) }
+
+      expect(response).to redirect_to(matching_group_path(line))
+    end
+
+    it "confirms only the focused line without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      post confirm_matching_receipt_line_path(records.fetch(:line)), params: focused_variant_decision_params(records)
+
+      expect_selected_line_decision(records, status: :confirmed, evidence: evidence)
+    end
   end
 
   describe "POST /matching/receipt_lines/:id/ignore" do
@@ -160,6 +242,15 @@ RSpec.describe "Matching", type: :request do
       expect_catalogue_and_price_counts(counts)
       expect(ReceiptLineMatching::QueueService.call.flat_map(&:receipt_lines)).not_to include(line)
     end
+
+    it "ignores only the focused line without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      post ignore_matching_receipt_line_path(records.fetch(:line)), params: focused_return_params(records)
+
+      expect_selected_line_decision(records, status: :ignored, evidence: evidence)
+    end
   end
 
   describe "POST /matching/receipt_lines/:id/reject" do
@@ -173,6 +264,15 @@ RSpec.describe "Matching", type: :request do
 
       expect(response).to redirect_to(matching_queue_path)
       expect(line.receipt_line_matches.rejected.last.product_variant).to eq(variant)
+    end
+
+    it "rejects only the focused line without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      post reject_matching_receipt_line_path(records.fetch(:line)), params: focused_variant_decision_params(records)
+
+      expect_selected_line_decision(records, status: :rejected, evidence: evidence)
     end
   end
 
@@ -200,6 +300,15 @@ RSpec.describe "Matching", type: :request do
       expect(response).to redirect_to(matching_queue_path)
       expect(flash[:alert]).to eq(I18n.t("matching.receipt_lines.create_variant.errors.category_required"))
     end
+
+    it "creates a variant only for the focused line without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      expect { post_focused_inline_variant(records) }.to change(ProductVariant, :count).by(1)
+
+      expect_selected_line_decision(records, status: :confirmed, evidence: evidence)
+    end
   end
 
   describe "POST /matching/bulk_confirmations" do
@@ -214,6 +323,26 @@ RSpec.describe "Matching", type: :request do
 
       expect(response).to redirect_to(matching_queue_path)
       expect(flash[:notice]).to include("Confirmed 2 lines")
+    end
+
+    it "returns to a focused matching page when requested" do
+      variant = create(:product_variant)
+      create_lait_lines
+      preview = ReceiptLineMatching::BulkConfirmService.preview(normalized_label: "Lait demi ecreme")
+      return_to = focused_group_path_for(preview)
+
+      post_bulk_confirmation("Lait demi ecreme", variant, receipt_line_ids: preview.receipt_line_ids, return_to: return_to)
+
+      expect(response).to redirect_to(return_to)
+    end
+
+    it "confirms only the focused group without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      expect { post_focused_bulk_confirmation(records) }.to change(ReceiptLineMatch.confirmed, :count).by(2)
+
+      expect_group_decision(records, status: :confirmed, evidence: evidence)
     end
 
     it "rejects stale bulk confirmations" do
@@ -240,6 +369,25 @@ RSpec.describe "Matching", type: :request do
       end.to change(ReceiptLineMatch.ignored, :count).by(2)
 
       expect_group_ignore_success(counts)
+    end
+
+    it "returns to a focused matching page when requested" do
+      create_lait_lines
+      preview = ReceiptLineMatching::BulkConfirmService.preview(normalized_label: "Lait demi ecreme")
+      return_to = focused_group_path_for(preview)
+
+      post_ignored_group("Lait demi ecreme", receipt_line_ids: preview.receipt_line_ids, return_to: return_to)
+
+      expect(response).to redirect_to(return_to)
+    end
+
+    it "ignores only the focused group without changing receipt evidence" do
+      records = create_focused_action_records
+      evidence = receipt_evidence_snapshot(records.fetch(:receipt))
+
+      expect { post_focused_ignored_group(records) }.to change(ReceiptLineMatch.ignored, :count).by(2)
+
+      expect_group_decision(records, status: :ignored, evidence: evidence)
     end
 
     it "rejects stale grouped ignores" do
@@ -311,30 +459,39 @@ RSpec.describe "Matching", type: :request do
     }
   end
 
-  def post_create_inline_variant(line, category:, retail_brand: nil)
+  def post_create_inline_variant(line, category:, retail_brand: nil, return_to: nil)
     post create_variant_matching_receipt_line_path(line),
-         params: { inline_product_variant: inline_variant_params(category: category, retail_brand: retail_brand) }
+         params: {
+           return_to: return_to,
+           inline_product_variant: inline_variant_params(category: category, retail_brand: retail_brand)
+         }.compact
   end
 
-  def post_bulk_confirmation(normalized_label, variant, receipt_line_ids:)
+  def post_bulk_confirmation(normalized_label, variant, receipt_line_ids:, return_to: nil)
     post matching_bulk_confirmations_path,
          params: {
+           return_to: return_to,
            bulk_confirmation: {
              normalized_label: normalized_label,
              product_variant_id: variant.id,
              receipt_line_ids: receipt_line_ids
            }
-         }
+         }.compact
   end
 
-  def post_ignored_group(normalized_label, receipt_line_ids:)
+  def post_ignored_group(normalized_label, receipt_line_ids:, return_to: nil)
     post matching_ignored_groups_path,
          params: {
+           return_to: return_to,
            ignored_group: {
              normalized_label: normalized_label,
              receipt_line_ids: receipt_line_ids
            }
-         }
+         }.compact
+  end
+
+  def focused_group_path_for(preview)
+    matching_group_path(preview.receipt_lines.first)
   end
 
   def catalogue_and_price_counts
@@ -390,22 +547,111 @@ RSpec.describe "Matching", type: :request do
     create_line(store: store, label: "LAIT DEMI ECREME", total_cents: 695, unit_price_cents: 695)
   end
 
-  def create_prior_jambon_confirmation
-    create_prior_confirmation(label: "Jambon blanc 4 tranches")
+  def create_filterable_queue_groups
+    create_lait_lines
+    create_line(label: "Compote pomme")
+    create_line(label: "Lait reusable bag", kind: "fee")
+    ignored_line = create_line(label: "Lait ignored")
+    create(:receipt_line_match, :ignored, receipt_line: ignored_line)
+    confirmed_line = create_line(label: "Lait confirmed")
+    create(:receipt_line_match, receipt_line: confirmed_line)
   end
 
-  def variant_search_params(label, query)
+  def create_action_ready_queue_group
+    create_prior_confirmation(label: "Lait demi ecreme")
+    create_lait_lines
+    create(:category, name: "Dairy")
+    create(:retail_brand, name: "E.Leclerc")
+  end
+
+  def create_orderable_queue_groups
+    create_line(label: "Zeste citron")
+    create_line(label: "Abricot")
+    create_line(label: "Banane")
+    create_line(label: "Banane")
+  end
+
+  def create_sequential_queue_group_records
     {
-      variant_search_label: ProductCatalog::NormalizeTextService.call(label),
-      variant_search_query: query
+      previous_line: create_line(label: "Fruit Abricot"),
+      current_line: create_line(label: "Fruit Banane"),
+      next_line: create_line(label: "Fruit Zeste"),
+      filtered_out_line: create_line(label: "Compote pomme")
     }
   end
 
-  def bulk_preview_params(label, variant)
+  def create_focused_group_records
+    representative_line = create_line(label: "Lait demi écrémé")
+    sibling_line = create_line(label: "LAIT DEMI ECREME")
+    other_line = create_line(label: "Compote pomme")
+
+    { representative_line: representative_line, sibling_line: sibling_line, other_line: other_line }
+  end
+
+  def create_actionable_focused_group_records
+    create_inline_catalogue_records
+    suggestion_variant = create_prior_confirmation(label: "Lait demi ecreme")
+    search_variant = create_variant(product_brand_name: "Bio Village", product_name: "Compotes pomme", variant_name: "12 x 90g")
+    line = create_line(label: "Lait demi écrémé")
+    create_line(label: "LAIT DEMI ECREME")
+
+    { line: line, suggestion_variant: suggestion_variant, search_variant: search_variant }
+  end
+
+  def create_focused_action_records
+    store = create(:store, location_name: "Massy")
+    receipt = create(:receipt, :reviewed, store: store, purchased_at: Time.zone.local(2026, 6, 13, 12))
+    inline_records = create_inline_catalogue_records
+
     {
-      bulk_preview_label: ProductCatalog::NormalizeTextService.call(label),
-      bulk_preview_variant_id: variant.id
-    }
+      receipt: receipt,
+      line: create_line(store: store, receipt: receipt, label: "Lait demi écrémé", total_cents: 672),
+      sibling_line: create_line(store: store, receipt: receipt, label: "LAIT DEMI ECREME", total_cents: 695),
+      other_line: create_line(store: store, receipt: receipt, label: "Compote pomme", total_cents: 312),
+      variant: create_variant(product_brand_name: "Maison Dupont", product_name: "Lait demi ecreme", variant_name: "1 L")
+    }.merge(inline_records)
+  end
+
+  def focused_variant_decision_params(records)
+    focused_return_params(records).merge(product_variant_id: records.fetch(:variant).id)
+  end
+
+  def focused_return_params(records)
+    { return_to: matching_group_path(records.fetch(:line)) }
+  end
+
+  def post_focused_inline_variant(records)
+    post_create_inline_variant(
+      records.fetch(:line),
+      category: records.fetch(:category),
+      retail_brand: records.fetch(:retail_brand),
+      return_to: matching_group_path(records.fetch(:line))
+    )
+  end
+
+  def post_focused_bulk_confirmation(records)
+    preview = focused_group_preview(records)
+
+    post_bulk_confirmation(
+      preview.normalized_label,
+      records.fetch(:variant),
+      receipt_line_ids: preview.receipt_line_ids,
+      return_to: matching_group_path(records.fetch(:line))
+    )
+  end
+
+  def post_focused_ignored_group(records)
+    preview = focused_group_preview(records)
+
+    post_ignored_group(
+      preview.normalized_label,
+      receipt_line_ids: preview.receipt_line_ids,
+      return_to: matching_group_path(records.fetch(:line))
+    )
+  end
+
+  def focused_group_preview(records)
+    ReceiptLineMatching::BulkConfirmService.preview(normalized_label: records.fetch(:line).label)
   end
 
   def include_matching_queue_group
@@ -417,36 +663,166 @@ RSpec.describe "Matching", type: :request do
       .and include("6,95 €")
   end
 
-  def include_matching_suggestion_actions
-    include("Maison Dupont")
-      .and include(I18n.t("matching.queue.index.suggestions.reasons.prior_confirmed_label"))
-      .and include(I18n.t("matching.queue.index.suggestions.confirm"))
-      .and include(I18n.t("matching.queue.index.suggestions.reject"))
+  def expect_filtered_matching_queue
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include_matching_queue_group
+    expect(response.body).not_to include("Compote pomme")
+    expect(response.body).not_to include("Lait reusable bag")
+    expect(response.body).not_to include("Lait ignored")
+    expect(response.body).not_to include("Lait confirmed")
   end
 
-  def include_variant_search_result
-    include("Bio Village")
-      .and include("12 x 90g")
-      .and include(I18n.t("matching.queue.index.search.confirm"))
+  def expect_browse_only_matching_queue
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include_matching_queue_group
+    expect(response.body).not_to match(%r{action="/matching/receipt_lines/[^"]+"})
+    expect(response.body).not_to include(%(action="#{matching_bulk_confirmations_path}"))
+    expect(response.body).not_to include(%(action="#{matching_ignored_groups_path}"))
+    expect(response.body).not_to include(I18n.t("matching.groups.show.bulk.preview_action"))
+    expect(response.body).not_to include(I18n.t("matching.groups.show.search.query"))
+    expect(response.body).not_to include(I18n.t("matching.groups.show.ignore.line_action"))
+    expect(response.body).not_to include(I18n.t("matching.groups.show.inline_catalogue.heading"))
   end
 
-  def include_bulk_preview
-    include(I18n.t("matching.queue.index.bulk.heading"))
-      .and include(I18n.t("matching.queue.index.bulk.confirm", count: 2))
-      .and include("2 lines will be confirmed")
+  def expect_focused_group(records)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(I18n.t("matching.groups.show.eyebrow"))
+    expect(response.body).to include(records.fetch(:representative_line).label)
+    expect(response.body).to include(records.fetch(:sibling_line).label)
+    expect(response.body).not_to include(records.fetch(:other_line).label)
   end
 
-  def include_ignore_actions
-    include(I18n.t("matching.queue.index.ignore.heading"))
-      .and include(I18n.t("matching.queue.index.ignore.line_action"))
-      .and include(I18n.t("matching.queue.index.ignore.group_action", count: 2))
+  def expect_focused_matching_controls(records)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(catalogue_product_variant_label_for_test(records.fetch(:suggestion_variant)))
+    expect(response.body).to include(catalogue_product_variant_label_for_test(records.fetch(:search_variant)))
+    expect(response.body).to include(I18n.t("matching.groups.show.suggestions.confirm"))
+    expect(response.body).to include(I18n.t("matching.groups.show.bulk.heading"))
+    expect(response.body).to include(I18n.t("matching.groups.show.ignore.group_action", count: 2))
+    expect(response.body).to include(I18n.t("matching.groups.show.inline_catalogue.heading"))
+  end
+
+  def expect_focused_navigation_links(records)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(I18n.t("matching.groups.show.actions.previous_group"))
+    expect(response.body).to include(focused_group_href(records.fetch(:previous_line), sequential_queue_params))
+    expect(response.body).to include(I18n.t("matching.groups.show.actions.next_group"))
+    expect(response.body).to include(focused_group_href(records.fetch(:next_line), sequential_queue_params))
+    expect(response.body).to include(matching_queue_href(sequential_queue_params))
+  end
+
+  def expect_focused_end_of_queue_navigation(records)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(I18n.t("matching.groups.show.actions.previous_group"))
+    expect(response.body).not_to include(I18n.t("matching.groups.show.actions.next_group"))
+    expect(response.body).to include(matching_queue_href(sequential_queue_params))
+    expect(response.body).not_to include(focused_group_href(records.fetch(:filtered_out_line), sequential_queue_params))
+  end
+
+  def expect_selected_line_decision(records, status:, evidence:)
+    expect(response).to redirect_to(matching_group_path(records.fetch(:line)))
+    expect_line_decided(records.fetch(:line), status)
+    expect_lines_undecided(records.fetch_values(:sibling_line, :other_line), status)
+    expect_receipt_evidence_unchanged(evidence)
+  end
+
+  def expect_group_decision(records, status:, evidence:)
+    expect(response).to redirect_to(matching_group_path(records.fetch(:line)))
+    expect_lines_decided(records.fetch_values(:line, :sibling_line), status)
+    expect_lines_undecided([ records.fetch(:other_line) ], status)
+    expect_receipt_evidence_unchanged(evidence)
+  end
+
+  def expect_lines_decided(lines, status)
+    lines.each { |line| expect_line_decided(line, status) }
+  end
+
+  def expect_line_decided(line, status)
+    expect(ReceiptLineMatch.public_send(status).exists?(receipt_line: line)).to be(true)
+  end
+
+  def expect_lines_undecided(lines, status)
+    lines.each do |line|
+      expect(ReceiptLineMatch.public_send(status).exists?(receipt_line: line)).to be(false)
+    end
+  end
+
+  def receipt_evidence_snapshot(*receipts)
+    receipts.to_h { |receipt| [ receipt.id, receipt_evidence_attributes(receipt) ] }
+  end
+
+  def expect_receipt_evidence_unchanged(evidence)
+    current_evidence = evidence.keys.to_h { |receipt_id| [ receipt_id, receipt_evidence_attributes(Receipt.find(receipt_id)) ] }
+
+    expect(current_evidence).to eq(evidence)
+  end
+
+  def receipt_evidence_attributes(receipt)
+    {
+      receipt: receipt.reload.attributes.slice("parser_status", "purchased_at", "total_cents", "declared_article_count"),
+      lines: receipt.receipt_lines.order(:position, :id).map { |line| receipt_line_evidence_attributes(line) }
+    }
+  end
+
+  def receipt_line_evidence_attributes(line)
+    line.attributes.slice(
+      "label",
+      "raw_text",
+      "kind",
+      "quantity",
+      "unit_of_measure",
+      "total_cents",
+      "unit_price_cents",
+      "position"
+    )
+  end
+
+  def focused_group_href(line, params)
+    ERB::Util.html_escape(matching_group_path(line, params))
+  end
+
+  def focused_group_entry_line(line)
+    normalized_label = ProductCatalog::NormalizeTextService.call(line.label)
+    ReceiptLineMatching::QueueService.call
+      .find { |group| group.normalized_label == normalized_label }
+      .receipt_lines
+      .first
+  end
+
+  def expect_multi_line_decision_return_targets(records, entry_line)
+    current_group_path = matching_group_path(records.fetch(:line), bulk_preview_variant_id: records.fetch(:variant).id)
+    next_group_path = matching_group_path(records.fetch(:other_line), sort: "line_count", direction: "desc")
+    expect_form_return_to(ignore_matching_receipt_line_path(entry_line), current_group_path)
+    expect_form_return_to(create_variant_matching_receipt_line_path(entry_line), current_group_path)
+    expect_form_return_to(matching_ignored_groups_path, next_group_path)
+    expect_form_return_to(matching_bulk_confirmations_path, next_group_path)
+  end
+
+  def matching_queue_href(params)
+    ERB::Util.html_escape(matching_queue_path(params))
+  end
+
+  def form_return_to_value(action)
+    response_document.at_css(%(form[action="#{action}"] input[name="return_to"]))&.[]("value")
+  end
+
+  def expect_form_return_to(action, path)
+    expect(form_return_to_value(action)).to eq(path)
+  end
+
+  def response_document
+    Nokogiri::HTML(response.body)
+  end
+
+  def sequential_queue_params
+    { label_filter: "fruit", sort: "label", direction: "asc" }
   end
 
   def include_receipt_matching_page(line, variant)
     include(I18n.t("matching.receipts.show.title"))
       .and include(line.label)
       .and include(catalogue_product_variant_label_for_test(variant))
-      .and include(I18n.t("matching.queue.index.suggestions.reasons.prior_confirmed_label"))
+      .and include(I18n.t("matching.workflow.suggestions.reasons.prior_confirmed_label"))
   end
 
   def expect_receipt_matching_page_to_exclude_other_lines
@@ -455,12 +831,17 @@ RSpec.describe "Matching", type: :request do
     expect(response.body).not_to include("Other receipt line")
   end
 
-  def include_inline_catalogue_form
-    include(I18n.t("matching.queue.index.inline_catalogue.heading"))
-      .and include(I18n.t("matching.queue.index.inline_catalogue.product_brand_name"))
-      .and include(I18n.t("matching.queue.index.inline_catalogue.no_retail_brand"))
-      .and include("E.Leclerc")
-      .and include("Compotes")
+  def queue_rows
+    response.body.scan(%r{<tr(?:\s[^>]*)?>.*?</tr>}m)
+  end
+
+  def expect_queue_labels_in_order(labels)
+    positions = labels.map do |label|
+      queue_rows.index { |row| row.include?(label) }
+    end
+
+    expect(positions).to all(be_a(Integer))
+    expect(positions).to eq(positions.sort)
   end
 
   def catalogue_product_variant_label_for_test(variant)

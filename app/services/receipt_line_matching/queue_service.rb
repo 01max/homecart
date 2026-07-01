@@ -1,6 +1,16 @@
 module ReceiptLineMatching
   # Builds the global backlog of unmatched receipt item lines grouped by label.
   class QueueService < ApplicationService
+    DEFAULT_SORT = "line_count"
+    DIRECTIONS = %w[asc desc].freeze
+    SORT_FIELDS = %w[line_count label first_purchased_at last_purchased_at].freeze
+    DEFAULT_DIRECTIONS = {
+      "line_count" => "desc",
+      "label" => "asc",
+      "first_purchased_at" => "asc",
+      "last_purchased_at" => "desc"
+    }.freeze
+
     Group = Data.define(
       :normalized_label,
       :representative_label,
@@ -13,18 +23,67 @@ module ReceiptLineMatching
     )
     PriceContext = Data.define(:total_cents, :unit_price_cents, :quantities, :units)
 
-    def initialize(scope: ReceiptLine.all)
+    def initialize(scope: ReceiptLine.all, label_filter: nil, sort: nil, direction: nil)
       @scope = scope
+      @label_filter = label_filter.to_s.strip
+      @sort = sort.to_s
+      @direction = direction.to_s
     end
 
     def call
-      grouped_lines.map { |normalized_label, lines| build_group(normalized_label, lines) }
-        .sort_by { |group| [ -group.line_count, group.normalized_label ] }
+      groups = grouped_lines.map { |normalized_label, lines| build_group(normalized_label, lines) }
+
+      ordered_groups(filtered_groups(groups))
     end
 
     private
 
-    attr_reader :scope
+    attr_reader :scope, :label_filter, :sort, :direction
+
+    def filtered_groups(groups)
+      return groups if label_filter.blank?
+
+      groups.select { |group| label_filter_match?(group) }
+    end
+
+    def label_filter_match?(group)
+      group.representative_label.downcase.include?(label_filter.downcase) ||
+        normalized_label_filter.present? && group.normalized_label.include?(normalized_label_filter)
+    end
+
+    def normalized_label_filter
+      @normalized_label_filter ||= normalized(label_filter)
+    end
+
+    def ordered_groups(groups)
+      groups.sort do |left, right|
+        comparison = sort_value(left) <=> sort_value(right)
+        comparison *= -1 if sort_direction == "desc"
+
+        comparison.zero? ? left.normalized_label <=> right.normalized_label : comparison
+      end
+    end
+
+    def sort_value(group)
+      case sort_field
+      when "line_count"
+        group.line_count
+      when "label"
+        group.representative_label.downcase
+      when "first_purchased_at"
+        group.first_purchased_at
+      when "last_purchased_at"
+        group.last_purchased_at
+      end
+    end
+
+    def sort_field
+      @sort_field ||= SORT_FIELDS.include?(sort) ? sort : DEFAULT_SORT
+    end
+
+    def sort_direction
+      @sort_direction ||= DIRECTIONS.include?(direction) ? direction : DEFAULT_DIRECTIONS.fetch(sort_field)
+    end
 
     def grouped_lines
       unmatched_item_lines.group_by { |line| normalized(line.label) }
