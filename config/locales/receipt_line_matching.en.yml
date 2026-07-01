@@ -1,17 +1,38 @@
 en:
   matching:
+    workflow:
+      empty_value: "Not available"
+      date_range: "%{first} to %{last}"
+      suggestions:
+        metadata: "%{reason}, %{confidence}"
+        reasons:
+          prior_confirmed_label: "Prior label match"
+          catalogue_search: "Catalogue search"
+      price_context:
+        total: "totals %{values}"
+        unit: "unit prices %{values}"
+      quantity_context:
+        quantities: "quantities %{values}"
+        units: "units %{values}"
     queue:
       index:
         eyebrow: "Matching"
         title: "Matching queue"
         description: "Match receipt-line observations to catalogue variants and keep ignored lines out of the queue."
-        empty_value: "Not available"
-        date_range: "%{first} to %{last}"
         actions:
           catalogue: "Catalogue"
+          open_group: "Open group"
+        filters:
+          heading: "Queue filters"
+          description: "Narrow the backlog by receipt label while keeping the current queue order."
+          label_filter: "Receipt label"
+          label_placeholder: "Milk, bread, yoghurt"
+          submit: "Apply filters"
+          clear: "Clear"
         queue:
           heading: "Unmatched item labels"
           description: "Item receipt lines grouped by normalized label. Fees, discounts, confirmed lines, and ignored lines are left out."
+          filtered_description: "Item receipt lines grouped by normalized label and filtered by \"%{label}\". Fees, discounts, confirmed lines, and ignored lines are left out."
           empty: "No unmatched item lines are waiting for product matching."
           count:
             one: "%{count} line"
@@ -21,20 +42,65 @@ en:
           lines: "Lines"
           stores: "Stores"
           dates: "Dates"
+          first_purchased_at: "First purchased"
+          last_purchased_at: "Last purchased"
           prices: "Prices"
           quantities: "Quantities"
+          actions: "Actions"
           suggestions: "Suggestions"
           line_count:
             one: "%{count} line"
             other: "%{count} lines"
+        sort:
+          label: "Sort by %{column} %{direction}"
+          directions:
+            asc: "ascending"
+            desc: "descending"
+    groups:
+      show:
+        eyebrow: "Focused matching"
+        title: "Match %{label}"
+        description: "Work through one unmatched normalized label group at a time."
+        empty_value: "Not available"
+        actions:
+          previous_group: "Previous group"
+          next_group: "Next group"
+          back_to_queue: "Back to queue"
+        errors:
+          stale_group: "That matching queue item is no longer available."
+        actions_panel:
+          heading: "Matching actions"
+          description: "Review suggestions, search catalogue variants, create a missing variant, or ignore the current queue group."
+        summary:
+          heading: "Group context"
+          description: "Current queue context for this normalized receipt-label group."
+          label: "Receipt label"
+          stores: "Stores"
+          dates: "Dates"
+          prices: "Prices"
+          quantities: "Quantities"
+          count:
+            one: "%{count} line"
+            other: "%{count} lines"
+        lines:
+          heading: "Receipt lines"
+          description: "Only currently eligible unmatched item lines in this normalized label group are shown."
+          count:
+            one: "%{count} line"
+            other: "%{count} lines"
+        table:
+          receipt: "Receipt"
+          receipt_action: "View receipt"
+          store: "Store"
+          purchased_at: "Purchased"
+          label: "Label"
+          quantity: "Qty"
+          quantity_value: "%{quantity} %{unit}"
+          total: "Total"
         suggestions:
           empty: "No deterministic suggestions yet."
           confirm: "Confirm"
           reject: "Reject"
-          metadata: "%{reason}, %{confidence}"
-          reasons:
-            prior_confirmed_label: "Prior label match"
-            catalogue_search: "Catalogue search"
         search:
           query: "Search variants"
           placeholder: "Product, brand, or variant"
@@ -72,12 +138,6 @@ en:
           manufacturer_name: "Manufacturer"
           variant_name: "Variant name"
           create: "Create and confirm"
-        price_context:
-          total: "totals %{values}"
-          unit: "unit prices %{values}"
-        quantity_context:
-          quantities: "quantities %{values}"
-          units: "units %{values}"
     receipt_lines:
       errors:
         receipt_not_reviewed: "Review the receipt before matching its lines."
