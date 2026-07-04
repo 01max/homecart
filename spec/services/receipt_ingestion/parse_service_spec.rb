@@ -94,6 +94,7 @@ RSpec.describe ReceiptIngestion::ParseService do
 
   def expect_persisted_children(result)
     expect(result.lines.map(&:label)).to contain_exactly("ARTICLE A", "ARTICLE B")
+    expect(result.lines.find { |line| line.position == 1 }.source_reference).to eq("REF-A")
     expect(result.payments.map(&:raw_label)).to contain_exactly("CARTE BANCAIRE")
     expect(result.promotions.sole.linked_line).to eq(result.lines.find { |line| line.position == 1 })
   end
@@ -144,6 +145,7 @@ RSpec.describe ReceiptIngestion::ParseService do
       {
         position: 1,
         raw_text: "ARTICLE A 2,00",
+        source_reference: "REF-A",
         label: "ARTICLE A",
         total_cents: 200,
         quantity: BigDecimal("1"),

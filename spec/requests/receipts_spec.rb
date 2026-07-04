@@ -133,7 +133,16 @@ RSpec.describe "Receipts", type: :request do
       declared_article_count: 2,
       parser_status: "needs_review"
     )
-    create(:receipt_line, receipt: receipt, position: 1, label: "Original label", raw_text: "ORIGINAL RAW", unit_price_cents: 1_234, total_cents: 1_234)
+    create(
+      :receipt_line,
+      receipt: receipt,
+      position: 1,
+      label: "Original label",
+      raw_text: "ORIGINAL RAW",
+      source_reference: "ORIGINAL-REF",
+      unit_price_cents: 1_234,
+      total_cents: 1_234
+    )
     receipt
   end
 
@@ -160,6 +169,7 @@ RSpec.describe "Receipts", type: :request do
             id: edited_line.id,
             position: "1",
             raw_text: "UPDATED RAW",
+            source_reference: "UPDATED-REF",
             label: "Updated label",
             quantity: "2",
             unit_of_measure: "piece",
@@ -173,6 +183,7 @@ RSpec.describe "Receipts", type: :request do
           "2" => {
             position: "3",
             raw_text: "NEW RAW",
+            source_reference: "NEW-REF",
             label: "New label",
             quantity: "1",
             unit_of_measure: "kg",
@@ -253,6 +264,7 @@ RSpec.describe "Receipts", type: :request do
             id: line.id,
             position: line.position.to_s,
             raw_text: line.raw_text,
+            source_reference: "",
             label: line.label,
             quantity: line.quantity.to_s,
             unit_of_measure: line.unit_of_measure,
@@ -263,6 +275,7 @@ RSpec.describe "Receipts", type: :request do
           "1" => {
             position: "2",
             raw_text: "",
+            source_reference: "",
             label: "",
             quantity: "1.0",
             unit_of_measure: "piece",
@@ -329,8 +342,9 @@ RSpec.describe "Receipts", type: :request do
     expect(response.body).to include(%(name="receipt[total_cents]"))
     expect(response.body).to include(%q(name="receipt[receipt_lines_attributes]))
     expect(response.body).to include("lg:grid-cols-2")
-    expect(response.body).to include("min-w-[72rem]")
+    expect(response.body).to include("min-w-[80rem]")
     expect(response.body).to include("hc-table-frame")
+    expect(response.body).to include(I18n.t("receipts.edit.lines.source_reference"))
     expect(response.body).to include(I18n.t("receipts.edit.lines.tr_eligible"))
     expect(response.body).to include(I18n.t("receipts.edit.promotions.heading"))
     expect(response.body).to include(I18n.t("receipts.edit.payments.heading"))
@@ -349,6 +363,7 @@ RSpec.describe "Receipts", type: :request do
     document = Nokogiri::HTML(response.body)
     purchased_at_field = document.at_css(%(input[name="receipt[purchased_at]"]))
     position_field = document.css(%(input[name$="[position]"])).first
+    source_reference_field = document.css(%(input[name$="[source_reference]"])).first
     quantity_field = document.at_css(%(input[data-receipt-validators-target="lineQuantity"]))
     unit_price_field = document.at_css(%(input[data-receipt-validators-target="lineUnitPrice"]))
     total_field = document.at_css(%(input[data-receipt-validators-target="lineTotal"]))
@@ -358,6 +373,7 @@ RSpec.describe "Receipts", type: :request do
     expect(purchased_at_field["placeholder"]).to eq(I18n.t("receipts.edit.form.purchased_at_placeholder"))
     expect(position_field["type"]).to eq("text")
     expect(position_field["value"]).to eq("1")
+    expect(source_reference_field["value"]).to eq("ORIGINAL-REF")
     expect(quantity_field["value"]).to eq("1")
     expect(quantity_field["step"]).to eq("1")
     expect(unit_price_field["value"]).to eq("1234")
@@ -421,9 +437,20 @@ RSpec.describe "Receipts", type: :request do
 
     expect(receipt.store).to eq(replacement_store)
     expect(receipt.receipt_lines.count).to eq(2)
-    expect(edited_line).to have_attributes(label: "Updated label", raw_text: "UPDATED RAW", total_cents: 500)
+    expect(edited_line).to have_attributes(
+      label: "Updated label",
+      raw_text: "UPDATED RAW",
+      source_reference: "UPDATED-REF",
+      total_cents: 500
+    )
     expect(edited_line).to be_tr_eligible
-    expect(new_line).to have_attributes(label: "New label", unit_of_measure: "kg", kind: "fee", total_cents: 345)
+    expect(new_line).to have_attributes(
+      label: "New label",
+      source_reference: "NEW-REF",
+      unit_of_measure: "kg",
+      kind: "fee",
+      total_cents: 345
+    )
   end
 
   def expect_promotions_and_payments_to_be_updated(receipt)
@@ -479,10 +506,12 @@ RSpec.describe "Receipts", type: :request do
       I18n.t("receipts.show.title"),
       I18n.t("receipts.show.details.heading"),
       I18n.t("receipts.show.lines.heading"),
+      I18n.t("receipts.show.lines.table.source_reference"),
       I18n.t("receipts.show.promotions.heading"),
       I18n.t("receipts.show.payments.heading"),
       "RAW LINE\nTOTAL 12,34",
       "Original label",
+      "ORIGINAL-REF",
       "12,34 €",
       "Test promo",
       "CARD"

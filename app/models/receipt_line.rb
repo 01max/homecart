@@ -38,6 +38,7 @@ end
 #
 #  position         :integer          not null, indexed => [receipt_id]
 #  raw_text         :text             not null
+#  source_reference :text
 #  label            :text             not null
 #  label_truncated  :boolean          default(FALSE), not null
 #  quantity         :decimal(10, 3)   default(1.0), not null
