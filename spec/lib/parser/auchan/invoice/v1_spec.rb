@@ -62,6 +62,34 @@ RSpec.describe Parser::Auchan::Invoice::V1 do
 
       expect_invoice_reconciliation(result)
     end
+
+    it "routes invoice line total mismatches to needs_review" do
+      result = parse_text(fixture_text.sub("0,15        3,09", "0,15        3,19"))
+
+      expect(result.receipt).to include(parser_status: "needs_review")
+      expect(result.warnings).to contain_exactly(
+        a_hash_including(code: "totals_sum_mismatch", validator: "validate_totals_sum", value: 10)
+      )
+    end
+
+    it "routes invoice payment total mismatches to needs_review" do
+      result = parse_text(fixture_text.sub("CARTE BANCAIRE                           4,65", "CARTE BANCAIRE                           4,60"))
+
+      expect(result.receipt).to include(parser_status: "needs_review")
+      expect(result.warnings).to contain_exactly(
+        a_hash_including(code: "payments_sum_mismatch", validator: "validate_payments_sum", value: -5)
+      )
+    end
+
+    it "skips malformed product totals and routes the discrepancy to review" do
+      result = parse_text(fixture_text.sub("0,15        3,09", "0,15        BROKEN"))
+
+      expect(result.receipt).to include(parser_status: "needs_review")
+      expect(line_named(result, "AUC CAFE SOLUBLE CAPPUCCINO")).to be_nil
+      expect(result.warnings).to contain_exactly(
+        a_hash_including(code: "totals_sum_mismatch", validator: "validate_totals_sum", value: -309)
+      )
+    end
   end
 
   def parser_format
@@ -69,7 +97,11 @@ RSpec.describe Parser::Auchan::Invoice::V1 do
   end
 
   def parse_fixture
-    described_class.new(text: fixture_text).call
+    parse_text(fixture_text)
+  end
+
+  def parse_text(text)
+    described_class.new(text: text).call
   end
 
   def fixture_text

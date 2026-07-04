@@ -43,6 +43,8 @@ module Parser
           return unless match
 
           row = parsed_product_row(match)
+          return unless row
+
           {
             raw_text: product_raw_text(line, index),
             source_reference: match[:source_reference],
@@ -62,10 +64,13 @@ module Parser
         def parsed_product_row(match)
           columns = split_columns(match[:rest])
           vat_index = vat_column_index(columns)
+          total_cents = invoice_cents_from(columns.last)
+          return unless total_cents
+
           {
             label: columns.first,
             quantity: quantity_from(columns),
-            total_cents: cents_from(columns.last),
+            total_cents: total_cents,
             vat_rate_bp: vat_rate_bp_from(vat_index ? columns[vat_index] : nil),
             waaoh_cents: waaoh_cents_from(columns, vat_index)
           }
@@ -86,7 +91,9 @@ module Parser
           match = line.match(ECO_PARTICIPATION_ROW_PATTERN)
           return unless match
 
-          amount_cents = cents_from(split_columns(match[:rest]).last)
+          amount_cents = invoice_cents_from(split_columns(match[:rest]).last)
+          return unless amount_cents
+
           {
             raw_text: line,
             source_reference: nil,
@@ -164,7 +171,7 @@ module Parser
           {
             raw_label: match[:raw_label].strip,
             category: payment_category(match[:raw_label]),
-            amount_cents: cents_from(match[:amount])
+            amount_cents: invoice_cents_from(match[:amount])
           }
         end
 
@@ -182,7 +189,7 @@ module Parser
 
         def total_cents
           match = text_lines.lazy.filter_map { |line| line.match(SUMMARY_TOTAL_PATTERN) }.first
-          cents_from(match[:amount]) if match
+          invoice_cents_from(match[:amount]) if match
         end
 
         def product_rows_by_reference
@@ -190,7 +197,8 @@ module Parser
             match = line.match(PRODUCT_ROW_PATTERN)
             next unless match
 
-            rows[match[:source_reference]] = parsed_product_row(match)
+            row = parsed_product_row(match)
+            rows[match[:source_reference]] = row if row
           end
         end
 
@@ -208,10 +216,17 @@ module Parser
         end
 
         def unit_price_cents(total_cents, quantity)
+          return unless total_cents
           return if quantity.zero?
 
           unit_price = BigDecimal(total_cents.to_s) / quantity
           unit_price.to_i if unit_price == unit_price.to_i
+        end
+
+        def invoice_cents_from(amount)
+          return unless amount.to_s.match?(/\A-?\d+,\d{2}\z/)
+
+          cents_from(amount)
         end
 
         def vat_column_index(columns)
@@ -238,7 +253,7 @@ module Parser
           return unless waaoh_text
           return if waaoh_text == columns.last
 
-          cents_from(waaoh_text)
+          invoice_cents_from(waaoh_text)
         end
       end
     end
