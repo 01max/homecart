@@ -5,6 +5,7 @@ module Parser
   # mirror that hierarchy under the singular `Parser` namespace.
   module Registry
     FORMATS = {
+      auchan_invoice_v1: "auchan.invoice.v1",
       auchan_paper_v1: "auchan.paper.v1",
       leclerc_paper_v1: "leclerc.paper.v1",
       leclerc_paper_v2: "leclerc.paper.v2",
