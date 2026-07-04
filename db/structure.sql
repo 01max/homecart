@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict tvWih6r4w99GIlmvfmxMKi02EitPZNaZuxfnKRaaCiXRrnywqQbqGhnO0xPCntw
+\restrict TRBusyaerwMASUZiwwAkweFsjbZRSYQXv2Omr3iXTe8anZRSMoJ2MkRrCI7ChGk
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -72,6 +72,7 @@ COMMENT ON EXTENSION unaccent IS 'text search dictionary that removes accents';
 --
 
 CREATE TYPE public.parser_format AS ENUM (
+    'auchan.invoice.v1',
     'auchan.paper.v1',
     'leclerc.paper.v1',
     'leclerc.paper.v2',
@@ -641,7 +642,8 @@ CREATE TABLE public.receipt_lines (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    receipt_id uuid NOT NULL
+    receipt_id uuid NOT NULL,
+    source_reference text
 );
 
 
@@ -1757,13 +1759,13 @@ ALTER TABLE ONLY public.products
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tvWih6r4w99GIlmvfmxMKi02EitPZNaZuxfnKRaaCiXRrnywqQbqGhnO0xPCntw
+\unrestrict TRBusyaerwMASUZiwwAkweFsjbZRSYQXv2Omr3iXTe8anZRSMoJ2MkRrCI7ChGk
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict 7Sg1sfYmM2wMAGJ0mVPIdO5UOTDSzq4i5eKZdvybcyWANh2eBpn8ihacUyvYXaq
+\restrict 0tfywUfJa94TRrMKbWnG1ouxbxkiUAHKyh16Uq4eThUyCJ7qe6hjCsshTYRInJL
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
@@ -1783,51 +1785,54 @@ SET row_security = off;
 -- Data for Name: ar_internal_metadata; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('environment', 'development', '2026-06-03 21:07:33.464585', '2026-06-03 21:07:33.464587');
-INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('schema_sha1', '264f20968604ad4dd6fcd4a0eeaa5fa36b3d9e33', '2026-06-03 21:07:33.467199', '2026-06-03 21:07:33.4672');
+INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('environment', 'test', '2026-07-04 10:19:08.548361', '2026-07-04 10:19:08.548363');
+INSERT INTO public.ar_internal_metadata (key, value, created_at, updated_at) VALUES ('schema_sha1', '31c9de72c8f4464090202f15a1c12e86d6314d00', '2026-07-04 10:19:08.549742', '2026-07-04 10:19:08.549742');
 
 
 --
 -- Data for Name: schema_migrations; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.schema_migrations (version) VALUES ('20260531093116');
-INSERT INTO public.schema_migrations (version) VALUES ('20260601064235');
-INSERT INTO public.schema_migrations (version) VALUES ('20260601085807');
-INSERT INTO public.schema_migrations (version) VALUES ('20260601093241');
-INSERT INTO public.schema_migrations (version) VALUES ('20260601104500');
-INSERT INTO public.schema_migrations (version) VALUES ('20260601110500');
-INSERT INTO public.schema_migrations (version) VALUES ('20260601111500');
-INSERT INTO public.schema_migrations (version) VALUES ('20260601112500');
-INSERT INTO public.schema_migrations (version) VALUES ('20260601113500');
-INSERT INTO public.schema_migrations (version) VALUES ('20260601124500');
-INSERT INTO public.schema_migrations (version) VALUES ('20260601130500');
-INSERT INTO public.schema_migrations (version) VALUES ('20260606200500');
-INSERT INTO public.schema_migrations (version) VALUES ('20260608120000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260608121000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260608122000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260608123000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260608124000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260608125000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260609090000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260609091000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260609092000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260609093000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260609094000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260609095000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260609100000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260609101000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260614130000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260615191000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260617220000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260617221000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260620090000');
-INSERT INTO public.schema_migrations (version) VALUES ('20260620091000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260704091000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260704090000');
 INSERT INTO public.schema_migrations (version) VALUES ('20260621140000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260620091000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260620090000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260617221000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260617220000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260615191000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260614130000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609101000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609100000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609095000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609094000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609093000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609092000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609091000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260609090000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608125000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608124000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608123000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608122000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608121000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260608120000');
+INSERT INTO public.schema_migrations (version) VALUES ('20260606200500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601130500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601124500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601113500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601112500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601111500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601110500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601104500');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601093241');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601085807');
+INSERT INTO public.schema_migrations (version) VALUES ('20260601064235');
+INSERT INTO public.schema_migrations (version) VALUES ('20260531093116');
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7Sg1sfYmM2wMAGJ0mVPIdO5UOTDSzq4i5eKZdvybcyWANh2eBpn8ihacUyvYXaq
+\unrestrict 0tfywUfJa94TRrMKbWnG1ouxbxkiUAHKyh16Uq4eThUyCJ7qe6hjCsshTYRInJL
+
