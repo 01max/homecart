@@ -218,6 +218,19 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
     end
   end
 
+  it "detects auchan.invoice.v1 from invoice layout markers" do
+    pending("source detection rules for auchan.invoice.v1 are implemented in OpenSpec task 4.3")
+
+    result = call_service(text_extraction_for(auchan_invoice_marker_text))
+
+    expect(result).to be_classified
+    expect_detected_parser_marker(
+      result,
+      parser_format: "auchan.invoice.v1",
+      marker: "auchan_invoice_layout"
+    )
+  end
+
   it "persists a classified detection from explicit source document fields" do
     text_extraction = create(:text_extraction, text: "NO SOURCE MARKERS")
     result = nil
@@ -416,6 +429,18 @@ RSpec.describe ReceiptIngestion::DetectSourceDocumentService do
 
   def identifier_match_text
     "Magasin 95191\nPRIVATE ENTITY\nHEADER MARKER\nPRIVATE CASHIER"
+  end
+
+  def auchan_invoice_marker_text
+    <<~TEXT
+      Auchan
+      Votre facture
+      Facture éditée le : 03/02/2026
+      Date de commande : 01/02/2026
+      Référence Caractéristiques produit Qte. Prix total Net (TTC) €
+      Mode de paiement
+      CARTE BANCAIRE 10,00
+    TEXT
   end
 
   def combined_conflict_context
