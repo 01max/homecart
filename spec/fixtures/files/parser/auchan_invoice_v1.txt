@@ -1,0 +1,88 @@
+Auchan
+
+Service Clients - Groupe Auchan
+CC AUCHAN, N 111, ROUTE ANONYMIZED
+00000 ANONYMIZED-CITY
+N° Téléphone : 00 00 00 00 00
+
+Votre commande :        Votre facture :        Id Waaoh :
+                        AHY00000000000001      00000000
+Votre code-barres : 0000000000000000000000
+
+Mme Client Exemple
+
+Facture éditée le :
+20/06/2026
+Date de commande :
+28/03/2026
+
+Référence        Caractéristiques produit             Prix U.   Remises U.   Qte.   Prix total Net   Taux TVA   Cagnotte    Prix total Net
+                                                       (HT) €    (HT) €              (HT) €           %          WAAOH!      (TTC) €
+
+3245678041727    AUC CAFE SOLUBLE CAPPUCCINO          2,93                  1       2,93             5,50       0,15        3,09
+3123349014556    JOKER LE FRUIT MULTIFRUIT 1L         2,04                  1       2,00             5,50                   2,12
+                 Eco-participation :                  0,03                          0,03                                      0,03
+3596710379927    AUCHAN PUR JUS POMME PET 2L          2,08                  1       2,04             5,50       0,11        2,15
+                 Eco-participation :                  0,03                          0,03                                      0,04
+3327272108096    MENGUY S PEANUT CHOCO 430G           3,85                  2       7,70             5,50                   8,58
+
+1/3
+
+Auchan
+
+Votre commande :        Votre facture :        Id Waaoh :
+                        AHY00000000000001      00000000
+Votre code-barres : 0000000000000000000000
+
+Référence        Caractéristiques produit             Prix U.   Remises U.   Qte.   Prix total Net   Taux TVA   Cagnotte    Prix total Net
+                                                       (HT) €    (HT) €              (HT) €           %          WAAOH!      (TTC) €
+
+3596710560097    AUCHAN COTON DOUX X180               3,03                  3       9,10             20,00                  10,92
+3329770071391    YOPLAIT PAW PATROL PANACHE X12       1,57                  2       3,08             5,50                   3,25
+                 Eco-participation :                  0,03                          0,07                                      0,07
+3180950019509    STOEF FLAMMEKUECHE ORIG 380G         3,70      1,11        1       2,59             5,50                   2,73
+
+2/3
+
+Auchan
+
+Votre commande :        Votre facture :        Id Waaoh :
+                        AHY00000000000001      00000000
+Votre code-barres : 0000000000000000000000
+
+Référence        Caractéristiques produit             Prix U.   Remises U.   Qte.   Prix total Net   Taux TVA   Cagnotte    Prix total Net
+                                                       (HT) €    (HT) €              (HT) €           %          WAAOH!      (TTC) €
+
+3273050420099    COCORETTE OEUF PLN AIR MOY X12       3,26                  1       3,26             5,50                   3,44
+3701292643353    SG BOX DU MOIS 255G                                         1                                                   0,00
+                 Produit non facturable
+
+Taux TVA (%)        Prix HT (€)        TVA (€)        Prix TTC (€)
+20,00               9,10               1,82           10,92
+5,50                24,17              1,33           25,50
+Total               33,27              3,15           36,42
+
+TVA non récupérable
+
+Mode de paiement                         Montant réglé (€)
+BON DE REDUCTION AUCHAN                  5,00
+BON REDUCTION EURO                       0,30
+CARTE BANCAIRE                           25,00
+WAAOH                                    1,47
+CARTE BANCAIRE                           4,65
+
+Total Éco-Part (€)                       0,14
+Total Copie Privée (€)                   0,00
+Total Facture TTC (€)                    37,59
+Total Remises (€)                       -1,17
+Total à payer (€)                        36,42
+
+Cagnotte Waaoh                           0,26
+
+Pour plus d'infos, rendez vous dans votre espace carte
+https://mon-compte.auchan.fr/avantages-fidelite
+
+AUCHAN ANONYMIZED STORE (ANONYMIZED-CITY)
+AUCHAN HYPERMARCHE SAS au capital de 56 882 160 euros
+
+3/3
