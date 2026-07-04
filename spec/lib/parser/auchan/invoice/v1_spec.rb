@@ -48,6 +48,38 @@ RSpec.describe "Parser::Auchan::Invoice::V1" do
 
       expect(line_named(result, "AUC CAFE SOLUBLE CAPPUCCINO")).to include(raw_text: cappuccino_raw_text)
     end
+
+    it "parses eco-participation rows as separate fee lines" do
+      pending(pending_implementation)
+
+      result = parse_fixture
+
+      expect(fee_lines(result)).to match_array(eco_participation_fee_lines)
+    end
+
+    it "captures line-level WAAOH credits and WAAOH cash spend" do
+      pending(pending_implementation)
+
+      result = parse_fixture
+
+      expect(result.promotions).to match_array(invoice_promotions)
+    end
+
+    it "parses coupon, WAAOH, and bank-card payment rows" do
+      pending(pending_implementation)
+
+      result = parse_fixture
+
+      expect(result.payments).to match_array(invoice_payments)
+    end
+
+    it "reconciles invoice lines and payments against the paid total" do
+      pending(pending_implementation)
+
+      result = parse_fixture
+
+      expect_invoice_reconciliation(result)
+    end
   end
 
   def pending_implementation
@@ -74,6 +106,10 @@ RSpec.describe "Parser::Auchan::Invoice::V1" do
     result.lines.select { |line| line.fetch(:kind) == "item" }
   end
 
+  def fee_lines(result)
+    result.lines.select { |line| line.fetch(:kind) == "fee" }
+  end
+
   def line_named(result, label)
     item_lines(result).find { |line| line.fetch(:label) == label }
   end
@@ -98,6 +134,42 @@ RSpec.describe "Parser::Auchan::Invoice::V1" do
     )
   end
 
+  def eco_participation_fee_lines
+    [
+      joker_eco_participation_fee,
+      apple_juice_eco_participation_fee,
+      yoplait_eco_participation_fee
+    ]
+  end
+
+  def invoice_promotions
+    [
+      cappuccino_waaoh_credit,
+      apple_juice_waaoh_credit,
+      waaoh_debit_promotion
+    ]
+  end
+
+  def invoice_payments
+    [
+      auchan_reduction_payment,
+      euro_reduction_payment,
+      bank_card_payment(amount_cents: 2_500),
+      waaoh_payment,
+      bank_card_payment(amount_cents: 465)
+    ]
+  end
+
+  def expect_invoice_reconciliation(result)
+    aggregate_failures do
+      expect(result.receipt).to include(total_cents: 3_642, parser_status: "parsed")
+      expect(result.lines.sum { |line| line.fetch(:total_cents) }).to eq(3_642)
+      expect(result.payments.sum { |payment| payment.fetch(:amount_cents) }).to eq(3_642)
+      expect(fee_lines(result).sum { |line| line.fetch(:total_cents) }).to eq(14)
+      expect(result.warnings).to be_empty
+    end
+  end
+
   def cappuccino_line
     hash_including(
       position: 1,
@@ -113,6 +185,7 @@ RSpec.describe "Parser::Auchan::Invoice::V1" do
 
   def peanut_line
     hash_including(
+      position: 6,
       source_reference: "3327272108096",
       label: "MENGUY S PEANUT CHOCO 430G",
       quantity: BigDecimal("2"),
@@ -125,6 +198,7 @@ RSpec.describe "Parser::Auchan::Invoice::V1" do
 
   def cotton_line
     hash_including(
+      position: 7,
       source_reference: "3596710560097",
       label: "AUCHAN COTON DOUX X180",
       quantity: BigDecimal("3"),
@@ -133,5 +207,85 @@ RSpec.describe "Parser::Auchan::Invoice::V1" do
       vat_rate_bp: 2_000,
       kind: "item"
     )
+  end
+
+  def joker_eco_participation_fee
+    eco_participation_fee(position: 3, amount_cents: 3)
+  end
+
+  def apple_juice_eco_participation_fee
+    eco_participation_fee(position: 5, amount_cents: 4)
+  end
+
+  def yoplait_eco_participation_fee
+    eco_participation_fee(position: 9, amount_cents: 7)
+  end
+
+  def eco_participation_fee(position:, amount_cents:)
+    hash_including(
+      position: position,
+      source_reference: nil,
+      raw_text: a_string_including("Eco-participation", cents_text(amount_cents)),
+      label: "Eco-participation",
+      quantity: BigDecimal("1"),
+      total_cents: amount_cents,
+      kind: "fee"
+    )
+  end
+
+  def cappuccino_waaoh_credit
+    waaoh_credit(label: "AUC CAFE SOLUBLE CAPPUCCINO", delta: 15, linked_line_position: 1)
+  end
+
+  def apple_juice_waaoh_credit
+    waaoh_credit(label: "AUCHAN PUR JUS POMME PET 2L", delta: 11, linked_line_position: 4)
+  end
+
+  def waaoh_credit(label:, delta:, linked_line_position:)
+    {
+      program: "auchan_waaoh",
+      unit: "euro_cents",
+      delta: delta,
+      label: label,
+      kind: "loyalty_cash_credit",
+      linked_line_position: linked_line_position,
+      linking_method: "parser_inferred"
+    }
+  end
+
+  def waaoh_debit_promotion
+    {
+      program: "auchan_waaoh",
+      unit: "euro_cents",
+      delta: -147,
+      label: "WAAOH",
+      kind: "loyalty_cash_debit",
+      linked_line_position: nil,
+      linking_method: "unallocated"
+    }
+  end
+
+  def auchan_reduction_payment
+    invoice_payment(raw_label: "BON DE REDUCTION AUCHAN", category: "other", amount_cents: 500)
+  end
+
+  def euro_reduction_payment
+    invoice_payment(raw_label: "BON REDUCTION EURO", category: "other", amount_cents: 30)
+  end
+
+  def bank_card_payment(amount_cents:)
+    invoice_payment(raw_label: "CARTE BANCAIRE", category: "bank_card", amount_cents: amount_cents)
+  end
+
+  def waaoh_payment
+    invoice_payment(raw_label: "WAAOH", category: "other", amount_cents: 147)
+  end
+
+  def invoice_payment(raw_label:, category:, amount_cents:)
+    hash_including(raw_label: raw_label, category: category, amount_cents: amount_cents)
+  end
+
+  def cents_text(amount_cents)
+    format("%<euros>d,%<cents>02d", euros: amount_cents / 100, cents: amount_cents % 100)
   end
 end
