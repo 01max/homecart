@@ -1,19 +1,15 @@
 require "rails_helper"
 
-RSpec.describe "Parser::Auchan::Invoice::V1" do
+RSpec.describe Parser::Auchan::Invoice::V1 do
   describe "registry" do
     it "registers the parser under the Auchan invoice v1 format" do
-      pending(pending_implementation)
-
-      expect(Parser::Registry.for(parser_format)).to eq(parser_class)
+      expect(Parser::Registry.for(parser_format)).to eq(described_class)
       expect(Parser::Registry.for("auchan.paper.v1")).to eq(Parser::Auchan::Paper::V1)
     end
   end
 
   describe "#call" do
     it "parses invoice header fields without till identity" do
-      pending(pending_implementation)
-
       result = parse_fixture
 
       expect_invoice_header(result)
@@ -21,8 +17,6 @@ RSpec.describe "Parser::Auchan::Invoice::V1" do
     end
 
     it "parses invoice item rows with source references and VAT rates" do
-      pending(pending_implementation)
-
       result = parse_fixture
 
       expect(item_lines(result)).to include(
@@ -33,8 +27,6 @@ RSpec.describe "Parser::Auchan::Invoice::V1" do
     end
 
     it "derives unit prices only when item totals divide evenly into cents" do
-      pending(pending_implementation)
-
       result = parse_fixture
 
       expect(line_named(result, "MENGUY S PEANUT CHOCO 430G")).to include(unit_price_cents: 429)
@@ -42,48 +34,34 @@ RSpec.describe "Parser::Auchan::Invoice::V1" do
     end
 
     it "keeps raw invoice rows as receipt-line evidence" do
-      pending(pending_implementation)
-
       result = parse_fixture
 
       expect(line_named(result, "AUC CAFE SOLUBLE CAPPUCCINO")).to include(raw_text: cappuccino_raw_text)
     end
 
     it "parses eco-participation rows as separate fee lines" do
-      pending(pending_implementation)
-
       result = parse_fixture
 
       expect(fee_lines(result)).to match_array(eco_participation_fee_lines)
     end
 
     it "captures line-level WAAOH credits and WAAOH cash spend" do
-      pending(pending_implementation)
-
       result = parse_fixture
 
       expect(result.promotions).to match_array(invoice_promotions)
     end
 
     it "parses coupon, WAAOH, and bank-card payment rows" do
-      pending(pending_implementation)
-
       result = parse_fixture
 
       expect(result.payments).to match_array(invoice_payments)
     end
 
     it "reconciles invoice lines and payments against the paid total" do
-      pending(pending_implementation)
-
       result = parse_fixture
 
       expect_invoice_reconciliation(result)
     end
-  end
-
-  def pending_implementation
-    "Parser::Auchan::Invoice::V1 is implemented in OpenSpec task 3.1"
   end
 
   def parser_format
@@ -91,11 +69,7 @@ RSpec.describe "Parser::Auchan::Invoice::V1" do
   end
 
   def parse_fixture
-    parser_class.new(text: fixture_text).call
-  end
-
-  def parser_class
-    Parser::Auchan::Invoice::V1
+    described_class.new(text: fixture_text).call
   end
 
   def fixture_text
