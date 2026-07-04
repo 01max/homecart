@@ -7,11 +7,12 @@
   </div>
 
   <div class="hc-table-frame">
-    <table class="hc-table hc-table--dense hc-table--fixed min-w-[72rem]">
+    <table class="hc-table hc-table--dense hc-table--fixed min-w-[80rem]">
       <thead>
         <tr>
           <th class="w-12"><%= t("receipts.edit.lines.position") %></th>
           <th class="w-36"><%= t("receipts.edit.lines.label") %></th>
+          <th class="w-32"><%= t("receipts.edit.lines.source_reference") %></th>
           <th class="w-40"><%= t("receipts.edit.lines.raw_text") %></th>
           <th class="w-20"><%= t("receipts.edit.lines.quantity") %></th>
           <th class="w-20"><%= t("receipts.edit.lines.unit_of_measure") %></th>
@@ -41,6 +42,11 @@
               <%= line_form.text_field :label,
                                        data: { receipt_validators_target: "lineLabel" },
                                        class: "hc-input hc-input--compact" %>
+            </td>
+            <td>
+              <%= line_form.label :source_reference, t("receipts.edit.lines.source_reference"), class: "sr-only" %>
+              <%= line_form.text_field :source_reference,
+                                       class: "hc-input hc-input--compact hc-code" %>
             </td>
             <td>
               <%= line_form.label :raw_text, t("receipts.edit.lines.raw_text"), class: "sr-only" %>

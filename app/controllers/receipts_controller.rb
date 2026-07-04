@@ -306,6 +306,7 @@ class ReceiptsController < ApplicationController
         :id,
         :position,
         :raw_text,
+        :source_reference,
         :label,
         :quantity,
         :unit_of_measure,

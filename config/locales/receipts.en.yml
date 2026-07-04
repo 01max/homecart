@@ -116,6 +116,7 @@ en:
         table:
           position: "#"
           label: "Label"
+          source_reference: "Reference"
           quantity: "Qty"
           unit: "Unit"
           unit_price: "Unit"
@@ -180,6 +181,7 @@ en:
         add_hint: "Use the blank row at the bottom to add one line. Select remove to delete an existing line on save."
         position: "#"
         label: "Label"
+        source_reference: "Reference"
         raw_text: "Raw text"
         quantity: "Qty"
         unit_of_measure: "Unit"

@@ -3,6 +3,7 @@ FactoryBot.define do
     association :receipt
     sequence(:position) { |number| number }
     raw_text { "#{label}  12.34" }
+    source_reference { nil }
     label { Faker::Commerce.product_name }
     label_truncated { false }
     quantity { 1 }

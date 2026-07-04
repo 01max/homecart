@@ -38,11 +38,12 @@
 
         <% if @receipt.receipt_lines.any? %>
           <div class="hc-table-frame">
-            <table class="hc-table hc-table--dense min-w-[72rem]">
+            <table class="hc-table hc-table--dense min-w-[80rem]">
               <thead>
                 <tr>
                   <th><%= t(".lines.table.position") %></th>
                   <th><%= t(".lines.table.label") %></th>
+                  <th><%= t(".lines.table.source_reference") %></th>
                   <th><%= t(".lines.table.quantity") %></th>
                   <th><%= t(".lines.table.unit") %></th>
                   <th><%= t(".lines.table.unit_price") %></th>
@@ -56,6 +57,7 @@
                   <tr>
                     <td class="whitespace-nowrap"><%= line.position %></td>
                     <td><%= line.label %></td>
+                    <td class="hc-code"><%= line.source_reference.presence || t(".empty_value") %></td>
                     <td class="whitespace-nowrap"><%= receipt_quantity_field_value(line) %></td>
                     <td class="whitespace-nowrap"><%= unit_of_measure_label(line.unit_of_measure) %></td>
                     <td class="whitespace-nowrap"><%= receipt_total_label(line.unit_price_cents) %></td>
